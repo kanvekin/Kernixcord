@@ -5,6 +5,7 @@
  */
 
 import { DonateButton } from "@components/settings";
+import BadgeAPI from "@plugins/_api/badges";
 import { KERNIXCORD_DONOR_ROLE_ID, KERNIXCORD_GUILD_ID } from "@utils/constants";
 import { Button, GuildMemberStore } from "@webpack/common";
 
