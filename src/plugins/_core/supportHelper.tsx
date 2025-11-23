@@ -39,7 +39,7 @@ import { onlyOnce } from "@utils/onlyOnce";
 import { makeCodeblock } from "@utils/text";
 import definePlugin from "@utils/types";
 import { checkForUpdates, isOutdated, update } from "@utils/updater";
-import { Alerts, Button, ChannelStore, GuildMemberStore, Parser, PermissionsBits, PermissionStore, RelationshipStore, SelectedChannelStore, showToast, Toasts, UserStore } from "@webpack/common";
+import { Alerts, Button, ChannelStore, Forms, GuildMemberStore, Parser, PermissionsBits, PermissionStore, RelationshipStore, SelectedChannelStore, showToast, Toasts, UserStore } from "@webpack/common";
 import { JSX } from "react";
 
 import gitHash from "~git-hash";
