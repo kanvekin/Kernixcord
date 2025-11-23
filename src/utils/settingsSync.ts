@@ -22,7 +22,7 @@ import { PlainSettings, Settings } from "@api/Settings";
 import { moment, SettingsRouter, Toasts } from "@webpack/common";
 import { deflateSync, inflateSync } from "fflate";
 
-import { getCloudAuth, getCloudUrl } from "./cloud";
+import { getCloudAuth, getCloudUrl } from "@api/SettingsSync/cloudSetup";
 import { Logger } from "./Logger";
 import { relaunch } from "./native";
 import { chooseFile, saveFile } from "./web";
@@ -164,13 +164,16 @@ export async function putCloudSettings(manual?: boolean) {
     const settings = await exportSettings({ minify: true });
 
     try {
+        const compressed = deflateSync(new TextEncoder().encode(settings));
+        const payload = compressed.buffer.slice(compressed.byteOffset, compressed.byteOffset + compressed.byteLength) as ArrayBuffer;
+
         const res = await fetch(new URL("/v1/settings", getCloudUrl()), {
             method: "PUT",
             headers: {
                 Authorization: await getCloudAuth(),
                 "Content-Type": "application/octet-stream"
             },
-            body: deflateSync(new TextEncoder().encode(settings))
+            body: payload
         });
 
         if (!res.ok) {

@@ -16,8 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import { Card } from "@components/Card";
 import { Switch } from "@components/Switch";
-import { Card, Forms } from "@webpack/common";
+import { Forms } from "@webpack/common";
 import React from "react";
 
 export interface SettingsModalItemProps extends Pick<React.ComponentProps<"div">,
@@ -30,16 +31,18 @@ export interface SettingsModalItemProps extends Pick<React.ComponentProps<"div">
 }
 
 export const SettingsModalCard = ({ children, title, switchProps, switchEnabled, flex, cardProps }: SettingsModalItemProps) => {
+    const mergedCardProps: React.ComponentProps<typeof Card> = cardProps ?? {};
+
     return (
         <Card
-            {...cardProps}
+            {...mergedCardProps}
             style={{
                 padding: "1em",
                 boxSizing: "border-box",
                 display: "flex",
                 flexDirection: "column",
                 flex: flex ?? 1,
-                ...(cardProps?.style ? cardProps.style : {})
+                ...(mergedCardProps.style ? mergedCardProps.style : {})
             }}>
             {title && <Forms.FormTitle tag="h5" style={{ margin: 0 }}>{title}</Forms.FormTitle>}
             <div style={{

@@ -17,6 +17,7 @@ import { shouldShowContributorBadge, shouldShowEquicordContributorBadge, shouldS
 import definePlugin from "@utils/types";
 import { User } from "@vencord/discord-types";
 import { ContextMenuApi, Menu, Toasts, UserStore } from "@webpack/common";
+import Plugins, { PluginMeta } from "~plugins";
 import { EquicordDonorModal, KernixcordDonorModal, VencordDonorModal } from "./modals";
 
 const CONTRIBUTOR_BADGE = "https://cdn.discordapp.com/emojis/1092089799109775453.png?size=64";

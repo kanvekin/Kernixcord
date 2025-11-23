@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import type { CardProps } from "@components/Card";
 import { Flex } from "@components/Flex";
 import { React } from "@webpack/common";
 import { Settings } from "Vencord";
@@ -31,7 +32,7 @@ const ReplacedStreamSettings = () => {
 
     const { audioSourceEnabled, setAudioSourceEnabled } = use();
 
-    const cardProps = { style: { border: "1px solid var(--primary-800)" } };
+    const cardProps: CardProps = { style: { border: "1px solid var(--primary-800)" } };
 
     return (
         <div style={{ margin: "1em", display: "flex", flexDirection: "column", gap: "1em" }}>

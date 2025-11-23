@@ -4,15 +4,12 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { startDependenciesRecursive, startPlugin } from "@api/PluginManager";
 import { definePluginSettings, Settings as SettingsApi } from "@api/Settings";
 import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType, Plugin } from "@utils/types";
 
 import gitRemote from "~git-remote";
-
-// Avoid circular dependency by lazy requiring
-
-const PluginsModule = () => require("~plugins") as typeof import("~plugins");
 
 type Manifest = {
     plugins: Array<{
@@ -90,7 +87,6 @@ export default definePlugin({
     }),
 
     async start() {
-        const { startPlugin, startDependenciesRecursive } = PluginsModule();
         const settings = SettingsApi.plugins.KernixcordRemoteLoader as unknown as {
             manifestUrl: string; autoStart: boolean;
         };
