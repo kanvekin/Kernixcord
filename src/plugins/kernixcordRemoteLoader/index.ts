@@ -12,7 +12,7 @@ import gitRemote from "~git-remote";
 
 // Avoid circular dependency by lazy requiring
 
-const PluginsModule = () => require("plugins") as typeof import("../../plugins");
+const PluginsModule = () => require("~plugins") as typeof import("~plugins");
 
 type Manifest = {
     plugins: Array<{
