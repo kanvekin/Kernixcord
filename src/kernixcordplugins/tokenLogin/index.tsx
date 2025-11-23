@@ -7,10 +7,11 @@
 import "./styles.css";
 
 import { DataStore } from "@api/index";
+import { Flex } from "@components/Flex";
 import { Devs } from "@utils/constants";
 import * as Modal from "@utils/modal";
 import definePlugin from "@utils/types";
-import { Button, Flex, React, Text, TextInput } from "@webpack/common";
+import { Button, React, Text, TextInput } from "@webpack/common";
 
 const loginWithToken = (token: string) => {
     const iframe = document.createElement("iframe");
@@ -89,7 +90,7 @@ const AddAccountModal = ({ manager, onClose, ...props }: Modal.ModalProps & {
                 </div>
             </Modal.ModalContent>
             <Modal.ModalFooter className="token-login-footer">
-                <Flex justify={Flex.Justify.END} gap={10}>
+                <Flex justifyContent="flex-end" gap={10}>
                     <Button
                         color={Button.Colors.BRAND}
                         disabled={!username || !token}
@@ -116,6 +117,7 @@ const AccountEntryComponent = ({ account, manager, onDelete }: {
     account: Account;
     manager: TokenLoginManager;
     onDelete: () => void;
+    key?: string;
 }) => {
     const [showToken, setShowToken] = React.useState(false);
 
@@ -169,7 +171,7 @@ class TokenLoginManagerUI {
 
         return (
             <div className="token-login-container">
-                <Flex justify={Flex.Justify.BETWEEN} align={Flex.Align.CENTER}>
+                <Flex justifyContent="space-between" alignItems="center">
                     <Text variant="heading-lg/semibold">Token Login Manager</Text>
                     <Button
                         onClick={() => {
