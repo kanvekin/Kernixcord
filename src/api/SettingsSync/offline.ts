@@ -86,7 +86,7 @@ export async function downloadSettingsBackup(type: BackupType, { minify }: { min
             throw new Error("Invalid backup type");
     }
 
-    const filename = `equicord-${type}-backup-${moment().format("YYYY-MM-DD")}.json`;
+    const filename = `kernixcord-${type}-backup-${moment().format("YYYY-MM-DD")}.json`;
     const data = new TextEncoder().encode(backup);
 
     if (IS_DISCORD_DESKTOP) {
