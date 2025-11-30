@@ -76,17 +76,19 @@ jobs:
             - name: Build web
               if: steps.check.outputs.release == 'true'
               run: pnpm buildWebStandalone
-              
-      - name: Publish extension
-        if: ${{ steps.check.outputs.release == 'true' && secrets.CHROME_EXTENSION_ID != '' && secrets.CHROME_CLIENT_ID != '' && secrets.CHROME_CLIENT_SECRET != '' && secrets.CHROME_REFRESH_TOKEN != '' }}
-        run: |
-          cd dist/browser/chromium-unpacked
-          pnpx chrome-webstore-upload-cli@2.1.0 upload --auto-publish
-        env:
-          EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
-          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
-          REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
-      - name: Skip publish (missing Chrome secrets)
-        if: ${{ steps.check.outputs.release == 'true' && (secrets.CHROME_EXTENSION_ID == '' || secrets.CHROME_CLIENT_ID == '' || secrets.CHROME_CLIENT_SECRET == '' || secrets.CHROME_REFRESH_TOKEN == '') }}
-        run: echo "Skipping Chrome Web Store publish: missing CHROME_* secrets"
+
+            - name: Create sources zip
+              if: steps.check.outputs.release == 'true'
+              run: zip -r dist/extension-sources.zip . -x "node_modules/*" -x "dist/*" -x ".git/*"
+
+            - name: Publish extension
+              if: steps.check.outputs.release == 'true'
+              run: pnpx publish-browser-extension@latest --chrome-zip dist/extension-chrome.zip --firefox-zip dist/extension-firefox.zip --firefox-sources-zip dist/extension-sources.zip
+              env:
+                  CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+                  CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+                  CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+                  CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+                  FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
+                  FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+                  FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
