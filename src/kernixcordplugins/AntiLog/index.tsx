@@ -92,7 +92,7 @@ export default definePlugin({
                 channel: ChannelStore.getChannel(msg.channel_id),
                 onClick: handleClick
             };
-        });
+        }, AntiLogIcon);
     },
 
     stop() {
