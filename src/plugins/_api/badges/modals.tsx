@@ -6,7 +6,7 @@
 
 import { Flex } from "@components/Flex";
 import { Heart } from "@components/Heart";
-import { DonateButton, ErrorBoundary, HeadingPrimary, Paragraph, VCDonateButton } from "@components/index";
+import { DonateButton, ErrorBoundary, HeadingPrimary, Paragraph } from "@components/index";
 import { Margins } from "@utils/margins";
 import { closeModal, ModalContent, ModalFooter, ModalHeader, ModalRoot, openModal } from "@utils/modal";
 import { Forms } from "@webpack/common";
@@ -58,7 +58,7 @@ export function VencordDonorModal() {
                 </ModalContent>
                 <ModalFooter>
                     <Flex justifyContent="center" style={{ width: "100%" }}>
-                        <VCDonateButton />
+                        <DonateButton />
                     </Flex>
                 </ModalFooter>
             </ModalRoot>
@@ -171,7 +171,7 @@ export function KernixcordDonorModal() {
                 </ModalContent>
                 <ModalFooter>
                     <Flex justifyContent="center" style={{ width: "100%" }}>
-                        <DonateButton />
+                        <DonateButton equicord={true} />
                     </Flex>
                 </ModalFooter>
             </ModalRoot>

@@ -1073,7 +1073,7 @@ export default definePlugin({
         },
         {
             // Adds a maxDigits prop to the LowerBadge component which allows for not truncating, or for truncating at a specific threshold.
-            find: "STATUS_DANGER,disableColor",
+            find: '"renderBadgeCount"])',
             group: true,
             replacement: [
                 {
@@ -1137,7 +1137,7 @@ export default definePlugin({
         },
         {
             // Adds the "Questify" sort option to the sort dropdown.
-            find: "NOT_SHAREABLE}",
+            find: '" has no rewards configured"',
             replacement: {
                 match: /(?=case (\i.\i).SUGGESTED)/,
                 replace: "case $1.QUESTIFY:return \"Questify\";"

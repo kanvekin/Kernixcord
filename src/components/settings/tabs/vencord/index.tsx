@@ -8,6 +8,9 @@ import "./VencordTab.css";
 
 import { openNotificationLogModal } from "@api/Notifications/notificationLog";
 import { useSettings } from "@api/Settings";
+import { classNameFactory } from "@api/Styles";
+import { Alert } from "@components/Alert";
+import { Button } from "@components/Button";
 import { Divider } from "@components/Divider";
 import { Flex } from "@components/Flex";
 import { FormSwitch } from "@components/FormSwitch";
@@ -22,7 +25,7 @@ import { DONOR_ROLE_ID, GUILD_ID, KERNIXCORD_DONOR_ROLE_ID, KERNIXCORD_GUILD_ID,
 import { Margins } from "@utils/margins";
 import { identity, isAnyPluginDev } from "@utils/misc";
 import { relaunch } from "@utils/native";
-import { Button, GuildMemberStore, React, Select, UserStore } from "@webpack/common";
+import { GuildMemberStore, React, Select, UserStore } from "@webpack/common";
 import BadgeAPI from "plugins/_api/badges";
 
 import { openNotificationSettingsModal } from "./NotificationSettings";
@@ -36,6 +39,8 @@ const COZY_CONTRIB_IMAGE = "https://cdn.discordapp.com/emojis/102653307095587233
 const DONOR_BACKGROUND_IMAGE = "https://media.discordapp.net/stickers/1311070116305436712.png?size=2048";
 const CONTRIB_BACKGROUND_IMAGE = "https://media.discordapp.net/stickers/1311070166481895484.png?size=2048";
 
+const cl = classNameFactory("vc-vencord-tab-");
+
 type KeysOfType<Object, Type> = {
     [K in keyof Object]: Object[K] extends Type ? K : never;
 }[keyof Object];
@@ -48,9 +53,7 @@ function KernixcordSettings() {
         [],
     );
 
-    const isWindows = navigator.platform.toLowerCase().startsWith("win");
-    const isMac = navigator.platform.toLowerCase().startsWith("mac");
-    const needsVibrancySettings = IS_DISCORD_DESKTOP && isMac;
+    const needsVibrancySettings = IS_DISCORD_DESKTOP && IS_MAC;
 
     const user = UserStore?.getCurrentUser();
 
@@ -75,7 +78,7 @@ function KernixcordSettings() {
                 warning: { enabled: false },
             },
             !IS_WEB &&
-            (!IS_DISCORD_DESKTOP || !isWindows
+            (!IS_DISCORD_DESKTOP || !IS_WINDOWS
                 ? {
                     key: "frameless",
                     title: "Disable the Window Frame",
@@ -95,7 +98,7 @@ function KernixcordSettings() {
                 description: "A theme that supports transparency is required or this will do nothing. Stops the window from being resizable as a side effect",
                 restartRequired: true,
                 warning: {
-                    enabled: isWindows,
+                    enabled: IS_WINDOWS,
                     message: "Enabling this will prevent you from snapping this window.",
                 },
             },
@@ -106,7 +109,7 @@ function KernixcordSettings() {
                 warning: { enabled: false },
             },
             !IS_WEB &&
-            isWindows && {
+            IS_WINDOWS && {
                 key: "winCtrlQ",
                 title:
                     "Register Ctrl+Q as shortcut to close Discord (Alternative to Alt+F4)",
@@ -205,8 +208,9 @@ function KernixcordSettings() {
                 <Paragraph className={Margins.bottom20} style={{ color: "var(--text-muted)" }}>
                     Hint: You can change the position of this settings section in the{" "}
                     <Button
-                        look={Button.Looks.LINK}
-                        style={{ color: "var(--text-link)", display: "inline-block" }}
+                        variant="none"
+                        size="small"
+                        className={cl("settings-link")}
                         onClick={() => openPluginModal(Vencord.Plugins.plugins.Settings)}
                     >
                         settings of the Settings plugin
@@ -226,9 +230,9 @@ function KernixcordSettings() {
                                     s.warning.enabled ? (
                                         <>
                                             {s.description}
-                                            <div className="form-switch-warning">
+                                            <Alert.Warning className={Margins.top8} style={{ width: "100%" }}>
                                                 {s.warning.message}
-                                            </div>
+                                            </Alert.Warning>
                                         </>
                                     ) : (
                                         s.description
@@ -330,12 +334,9 @@ function DonateButtonComponent() {
     return (
         <Flex>
             <DonateButton
-                look={Button.Looks.FILLED}
-                color={Button.Colors.TRANSPARENT}
+                equicord={true}
                 style={{ marginTop: "1em" }} />
             <InviteButton
-                look={Button.Looks.FILLED}
-                color={Button.Colors.TRANSPARENT}
                 style={{ marginTop: "1em" }} />
         </Flex>
     );
