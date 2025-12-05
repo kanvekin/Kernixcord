@@ -53,21 +53,6 @@ export default definePlugin({
                 }
             };
         }
-
-        const originalCreateOffer = window.RTCPeerConnection?.prototype.createOffer;
-        if (originalCreateOffer) {
-            window.RTCPeerConnection.prototype.createOffer = function (options?: RTCOfferOptions) {
-                try {
-                    return originalCreateOffer.call(this, options);
-                } catch (error: any) {
-                    if (settings.store.preventCrash && error.message?.includes("crash")) {
-                        console.warn("[VoiceCrashPreventer] createOffer error prevented:", error);
-                        return Promise.resolve({ type: "offer", sdp: "" } as RTCSessionDescriptionInit);
-                    }
-                    throw error;
-                }
-            };
-        }
     },
 
     patchScreenShare() {
