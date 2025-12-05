@@ -21,7 +21,7 @@ import { DonateButton, InviteButton, openContributorModal, openPluginModal, Sett
 import { QuickAction, QuickActionCard } from "@components/settings/QuickAction";
 import { SpecialCard } from "@components/settings/SpecialCard";
 import { gitRemote } from "@shared/vencordUserAgent";
-import { DONOR_ROLE_ID, GUILD_ID, KERNIXCORD_DONOR_ROLE_ID, KERNIXCORD_GUILD_ID, VC_DONOR_ROLE_ID, VC_GUILD_ID, IS_MAC, IS_WINDOWS, IS_WEB, IS_DISCORD_DESKTOP } from "@utils/constants";
+import { DONOR_ROLE_ID, GUILD_ID, KERNIXCORD_DONOR_ROLE_ID, KERNIXCORD_GUILD_ID, VC_DONOR_ROLE_ID, VC_GUILD_ID, IS_MAC, IS_WINDOWS } from "@utils/constants";
 import { Margins } from "@utils/margins";
 import { identity, isAnyPluginDev } from "@utils/misc";
 import { relaunch } from "@utils/native";
