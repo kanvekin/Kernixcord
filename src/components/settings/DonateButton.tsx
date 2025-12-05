@@ -25,7 +25,7 @@ import { showToast } from "@webpack/common";
 export function DonateButton({
     equicord = false,
     ...props
-}: Partial<ButtonProps> & { equicord?: boolean; }) {
+}: Omit<Partial<ButtonProps>, 'type'> & { equicord?: boolean; }) {
     const link = equicord ? "https://github.com/sponsors/thororen1234" : "https://github.com/sponsors/Vendicated";
     return (
         <Button
@@ -41,7 +41,7 @@ export function DonateButton({
 
 export function InviteButton({
     ...props
-}: Partial<ButtonProps>) {
+}: Omit<Partial<ButtonProps>, 'type'>) {
     return (
         <Button
             {...props}

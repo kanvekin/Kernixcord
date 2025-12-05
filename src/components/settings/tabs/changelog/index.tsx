@@ -20,7 +20,7 @@ import { gitHashShort } from "@shared/vencordUserAgent";
 import { Margins } from "@utils/margins";
 import { useAwaiter } from "@utils/react";
 import { getRepo, UpdateLogger } from "@utils/updater";
-import { Forms, React, Toasts } from "@webpack/common";
+import { Forms, React, Toasts, Alerts } from "@webpack/common";
 
 import gitHash from "~git-hash";
 
