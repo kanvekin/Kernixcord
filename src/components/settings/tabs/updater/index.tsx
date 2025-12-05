@@ -31,7 +31,7 @@ import { classes } from "@utils/misc";
 import { relaunch } from "@utils/native";
 import { useAwaiter } from "@utils/react";
 import { changes, checkForUpdates, getRepo, isNewer, update, updateError, UpdateLogger } from "@utils/updater";
-import { Alerts, Button, Forms, Parser, React, Toasts } from "@webpack/common";
+import { Alerts, Forms, Parser, React, Toasts } from "@webpack/common";
 
 import gitHash from "~git-hash";
 
