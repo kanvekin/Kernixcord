@@ -110,7 +110,7 @@ function CloudTab() {
     }
 
     return (
-        <SettingsTab title="Kernixcord Cloud">
+        <SettingsTab>
             <section className={Margins.top16}>
                 <Card defaultPadding={true} className={Margins.bottom16}>
                     <Paragraph size="md">

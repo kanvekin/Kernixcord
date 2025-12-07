@@ -224,7 +224,9 @@ export default definePlugin({
 
             const selfId = UserStore.getCurrentUser()?.id;
             if (!selfId || isAnyPluginDev(selfId)) return;
-            if (VC_SUPPORT_CHANNEL_IDS.includes(channelId) && Vencord.Plugins.isPluginEnabled("VCSupport") && !clicked) {
+
+            let clicked = false;
+            if (SUPPORT_CHANNEL_IDS.includes(channelId) && Vencord.Plugins.isPluginEnabled("VCSupport") && !clicked) {
                 return Alerts.show({
                     title: "You are entering the support channel!",
                     body: <div>

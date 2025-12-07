@@ -28,7 +28,7 @@ import { relaunch } from "@utils/native";
 import { GuildMemberStore, React, Select, UserStore } from "@webpack/common";
 import BadgeAPI from "plugins/_api/badges";
 
-import { DonateButtonComponent } from "./DonateButton";
+import { DonateButton, InviteButton } from "@components/settings/DonateButton";
 import { openNotificationSettingsModal } from "./NotificationSettings";
 
 const DEFAULT_DONATE_IMAGE = "https://cdn.discordapp.com/emojis/1026533090627174460.png";
@@ -120,7 +120,7 @@ function KernixcordSettings() {
         ];
 
     return (
-        <SettingsTab title="Kernixcord Settings">
+        <SettingsTab>
             {(isEquicordDonor(user?.id) || isVencordDonor(user?.id) || isKernixcordDonor(user?.id)) ? (
                 <SpecialCard
                     title="Donations"

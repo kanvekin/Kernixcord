@@ -183,7 +183,7 @@ function Updater() {
     };
 
     return (
-        <SettingsTab title="Kernixcord Updater">
+        <SettingsTab>
             <Forms.FormTitle tag="h5">Updater Settings</Forms.FormTitle>
             <FormSwitch
                 title="Automatically update"
