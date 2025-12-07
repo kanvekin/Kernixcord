@@ -243,7 +243,7 @@ export default definePlugin({
                     confirmText: "Go to Kernixcord Support",
                     onConfirm() {
                         clicked = true;
-                        VencordNative.native.openExternal("https://discord.gg/kernix");
+                        VencordNative.native.openExternal("https://discord.gg/champions");
                     },
                     cancelText: "Okay continue",
                     onCancel() {
@@ -282,7 +282,7 @@ export default definePlugin({
                     body: <div>
                         <Forms.FormText>You are using an externally updated Kernixcord version, the ability to help you here may be limited.</Forms.FormText>
                         <Forms.FormText className={Margins.top8}>
-                            Please join the <Link href="https://discord.gg/9E9tXjecqy">Kernixcord Server</Link> for support,
+                            Please join the <Link href="https://discord.gg/champions">Kernixcord Server</Link> for support,
                             or if this issue persists on Kernixcord, continue on.
                         </Forms.FormText>
                     </div>

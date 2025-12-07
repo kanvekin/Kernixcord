@@ -2,10 +2,10 @@
 
 [![Privbop]](https://github.com/kanvekin/Privbop)
 [![Tests](https://github.com/kanvekin/Kernixcord/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/kanvekin/Kernixcord/actions/workflows/test.yml)
-[![Discord](https://img.shields.io/discord/1173279886065029291.svg?color=768AD4&label=Discord&logo=discord&logoColor=white)](https://discord.gg/Kernixcord)
+[![Discord](https://img.shields.io/discord/1173279886065029291.svg?color=768AD4&label=Discord&logo=discord&logoColor=white)](https://discord.gg/champions)
 
 Kernixcord is a fork of [Equicord](https://github.com/Equicord/Equicord), with over 100+ plugins.
-You can join our [Discord server](https://discord.gg/Kernixcord) for commits, changes, chatting, or even support.
+You can join our [Discord server](https://discord.gg/champions) for commits, changes, chatting, or even support.
 
 ### Dependencies
 
