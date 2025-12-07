@@ -18,6 +18,7 @@
 
 import { Button, ButtonProps } from "@components/Button";
 import { Heart } from "@components/Heart";
+import { OpenExternalIcon } from "@components/Icons";
 import { openInviteModal } from "@utils/discord";
 import { showToast } from "@webpack/common";
 
@@ -44,7 +45,7 @@ export function InviteButton({
     return (
         <Button
             {...props}
-            variant="link"
+            variant="none"
             size="medium"
             type="button"
             onClick={async e => {
@@ -53,9 +54,10 @@ export function InviteButton({
                     showToast("Invalid or expired invite"),
                 );
             }}
-            className="vc-donate-button"
+            className="vc-invite-button"
         >
             Invite
+            <OpenExternalIcon className="vc-invite-link" />
         </Button>
     );
 }
