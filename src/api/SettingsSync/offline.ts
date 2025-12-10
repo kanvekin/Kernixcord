@@ -107,6 +107,9 @@ export async function exportSettings({ syncDataStore = true, type = "all", minif
         case "datastore": {
             return JSON.stringify({ dataStore }, null, minify ? undefined : 4);
         }
+        case "settings": {
+            return JSON.stringify({ settings }, null, minify ? undefined : 4);
+        }
     }
 }
 

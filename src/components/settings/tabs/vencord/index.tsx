@@ -29,6 +29,7 @@ import { GuildMemberStore, React, Select, UserStore } from "@webpack/common";
 import BadgeAPI from "plugins/_api/badges";
 
 import { DonateButton, InviteButton } from "@components/settings/DonateButton";
+import { DonateButtonComponent } from "./DonateButton";
 import { openNotificationSettingsModal } from "./NotificationSettings";
 
 const DEFAULT_DONATE_IMAGE = "https://cdn.discordapp.com/emojis/1026533090627174460.png";
@@ -346,18 +347,6 @@ function KernixcordSettings() {
                 </Flex>
             </section>
         </SettingsTab>
-    );
-}
-
-function DonateButtonComponent() {
-    return (
-        <Flex>
-            <DonateButton
-                equicord={true}
-                style={{ marginTop: "1em" }} />
-            <InviteButton
-                style={{ marginTop: "1em" }} />
-        </Flex>
     );
 }
 
