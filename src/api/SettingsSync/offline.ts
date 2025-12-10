@@ -11,7 +11,7 @@ import { moment, Toasts } from "@webpack/common";
 
 import { DataStore } from "..";
 
-type BackupType = "all" | "plugins" | "css" | "datastore";
+type BackupType = "all" | "plugins" | "css" | "datastore" | "settings";
 
 const toast = (type: string, message: string) =>
     Toasts.show({
@@ -125,7 +125,6 @@ export async function exportDataStores({ minify }: { minify?: boolean; } = {}) {
     return JSON.stringify({ dataStore }, null, minify ? undefined : 4);
 }
 
-type BackupType = "settings" | "plugins" | "css" | "datastore";
 
 export async function downloadSettingsBackup(type: BackupType, { minify }: { minify?: boolean; } = {}) {
     let backup: string;
