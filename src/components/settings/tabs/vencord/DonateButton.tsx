@@ -15,7 +15,11 @@ export const isDonor = (userId: string) => !!(
     || GuildMemberStore.getMember(KERNIXCORD_GUILD_ID, userId)?.roles.includes(KERNIXCORD_DONOR_ROLE_ID)
 );
 
-export function DonateButtonComponent({ donated = false }) {
+interface DonateButtonComponentProps {
+    donated?: boolean;
+}
+
+export function DonateButtonComponent({ donated = false }: DonateButtonComponentProps) {
     return (
         <Flex>
             <DonateButton
