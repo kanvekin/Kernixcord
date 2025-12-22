@@ -39,7 +39,7 @@ import { onlyOnce } from "@utils/onlyOnce";
 import { makeCodeblock } from "@utils/text";
 import definePlugin from "@utils/types";
 import { checkForUpdates, isOutdated, update } from "@utils/updater";
-import { Alerts, Button, ChannelStore, GuildMemberStore, Parser, PermissionsBits, PermissionStore, RelationshipStore, SelectedChannelStore, showToast, Toasts, UserStore } from "@webpack/common";
+import { Alerts, Button, ChannelStore, Forms, GuildMemberStore, Parser, PermissionsBits, PermissionStore, RelationshipStore, SelectedChannelStore, showToast, Toasts, UserStore } from "@webpack/common";
 import { JSX } from "react";
 
 import plugins, { PluginMeta } from "~plugins";
@@ -143,11 +143,11 @@ async function generateDebugInfoMessage() {
         : platformName();
 
     const info = {
-        Equicord:
-            `v${VERSION} • [${gitHashShort}](<https://github.com/Equicord/Equicord/commit/${gitHash}>)` +
-            `${IS_EQUIBOP ? "" : SettingsPlugin.getVersionInfo()} - ${Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(BUILD_TIMESTAMP)}`,
+        Kernixcord:
+            `v${VERSION} • [${gitHashShort}](<https://github.com/kanvekin/Kernixcord/commit/${gitHash}>)` +
+            `${SettingsPlugin.getVersionInfo()} - ${Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(BUILD_TIMESTAMP)}`,
         Client: `${RELEASE_CHANNEL} ~ ${clientString}`,
-        Platform: platformDisplay
+        Platform: platformName()
     };
 
     if (IS_DISCORD_DESKTOP) {
@@ -169,9 +169,7 @@ async function generateDebugInfoMessage() {
     const commonIssues = {
         "Activity Sharing Disabled": tryOrElse(() => !ShowCurrentGame.getSetting(), false),
         "Link Embeds Disabled": tryOrElse(() => !ShowEmbeds.getSetting(), false),
-        "Equicord DevBuild": !IS_STANDALONE,
-        "Equibop DevBuild": IS_EQUIBOP && tryOrElse(() => VesktopNative.app.isDevBuild?.(), false),
-        "Platform Spoofed": spoofInfo?.spoofed ?? false,
+        "Kernixcord DevBuild": !IS_STANDALONE,
         "Has UserPlugins": Object.values(PluginMeta).some(m => m.userPlugin),
         ">2 Weeks Outdated": BUILD_TIMESTAMP < Date.now() - 12096e5,
         [`Potentially Problematic Plugins: ${potentiallyProblematicPlugins.join(", ")}\n${potentiallyProblematicPluginsNote}`]: potentiallyProblematicPlugins.length
@@ -274,6 +272,33 @@ export default definePlugin({
             const selfId = UserStore.getCurrentUser()?.id;
             if (!selfId || isAnyPluginDev(selfId)) return;
 
+            let clicked = false;
+            if (SUPPORT_CHANNEL_IDS.includes(channelId) && Vencord.Plugins.isPluginEnabled("VCSupport") && !clicked) {
+                return Alerts.show({
+                    title: "You are entering the support channel!",
+                    body: <div>
+                        <style>
+                            {'[class*="backdrop_"][style*="backdrop-filter"]{backdrop-filter:blur(16px) brightness(0.25) !important;}'}
+                        </style>
+                        <div style={{ display: "flex", justifyContent: "center", marginBottom: "1rem" }}>
+                            <img src="https://media.tenor.com/QtGqjwBpRzwAAAAi/wumpus-dancing.gif" />
+                        </div>
+                        <Forms.FormText>Before you ask for help,</Forms.FormText>
+                        <Forms.FormText>Check for updates and if this</Forms.FormText>
+                        <Forms.FormText>issue could be caused by Kernixcord!</Forms.FormText>
+                    </div>,
+                    confirmText: "Go to Kernixcord Support",
+                    onConfirm() {
+                        clicked = true;
+                        VencordNative.native.openExternal("https://discord.gg/champions");
+                    },
+                    cancelText: "Okay continue",
+                    onCancel() {
+                        clicked = true;
+                    },
+                });
+            }
+
             if (!IS_UPDATER_DISABLED) {
                 await checkForUpdatesOnce().catch(() => { });
 
@@ -281,10 +306,10 @@ export default definePlugin({
                     return Alerts.show({
                         title: "Hold on!",
                         body: <div>
-                            <Paragraph>You are using an outdated version of Equicord! Chances are, your issue is already fixed.</Paragraph>
-                            <Paragraph className={Margins.top8}>
+                            <Forms.FormText>You are using an outdated version of Kernixcord! Chances are, your issue is already fixed.</Forms.FormText>
+                            <Forms.FormText className={Margins.top8}>
                                 Please first update before asking for support!
-                            </Paragraph>
+                            </Forms.FormText>
                         </div>,
                         onCancel: () => openSettingsTabModal(UpdaterTab!),
                         cancelText: "View Updates",
@@ -302,11 +327,11 @@ export default definePlugin({
                 return Alerts.show({
                     title: "Hold on!",
                     body: <div>
-                        <Paragraph>You are using an externally updated Equicord version, the ability to help you here may be limited.</Paragraph>
-                        <Paragraph className={Margins.top8}>
-                            Please join the <Link href="https://equicord.org/discord">Equicord Server</Link> for support,
-                            or if this issue persists on Vencord, continue on.
-                        </Paragraph>
+                        <Forms.FormText>You are using an externally updated Kernixcord version, the ability to help you here may be limited.</Forms.FormText>
+                        <Forms.FormText className={Margins.top8}>
+                            Please join the <Link href="https://discord.gg/champions">Kernixcord Server</Link> for support,
+                            or if this issue persists on Kernixcord, continue on.
+                        </Forms.FormText>
                     </div>
                 });
             }
@@ -315,12 +340,12 @@ export default definePlugin({
                 return Alerts.show({
                     title: "Hold on!",
                     body: <div>
-                        <Paragraph>You are using a custom build of Equicord, which we do not provide support for!</Paragraph>
+                        <Forms.FormText>You are using a custom build of Kernixcord, which we do not provide support for!</Forms.FormText>
 
-                        <Paragraph className={Margins.top8}>
-                            We only provide support for <Link href="https://github.com/Equicord/Equicord">official builds</Link>.
-                            Either <Link href="https://github.com/Equicord/Equilotl">switch to an official build</Link> or figure your issue out yourself.
-                        </Paragraph>
+                        <Forms.FormText className={Margins.top8}>
+                            We only provide support for <Link href="https://github.com/kanvekin/Kernixcord">official builds</Link>.
+                            Either <Link href="https://github.com/kanvekin/Kernixcord">switch to an official build</Link> or figure your issue out yourself.
+                        </Forms.FormText>
 
                         <BaseText size="md" weight="bold" className={Margins.top8}>You will be banned from receiving support if you ignore this rule.</BaseText>
                     </div>,
@@ -431,7 +456,7 @@ export default definePlugin({
 
         return (
             <Card variant="warning" className={Margins.top8} defaultPadding>
-                Please do not private message Equicord & Vencord plugin developers for support!
+                Please do not private message Kernixcord & Equicord & Vencord plugin developers for support!
                 <br />
                 Instead, use the support channel: {Parser.parse("https://discord.com/channels/1173279886065029291/1297590739911573585")}
                 {!ChannelStore.getChannel(SUPPORT_CHANNEL_ID) && " (Click the link to join)"}

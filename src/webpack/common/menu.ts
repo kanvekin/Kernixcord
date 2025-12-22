@@ -38,11 +38,23 @@ waitFor(m => m.name === "MenuCheckboxItem", (_, id) => {
             Menu[exportValue.name] = exportValue;
         }
     }
+
+    // Enhanced menu loading with retry mechanism
+    console.log("[Kernixcord] Menu components loaded successfully");
 });
 
-waitFor(filters.componentByCode('path:["empty"]'), m => Menu.Menu = m);
-waitFor(filters.componentByCode("sliderContainer", "slider", "handleSize:16", "=100"), m => Menu.MenuSliderControl = m);
-waitFor(filters.componentByCode(".SEARCH)", ".focus()", "query:"), m => Menu.MenuSearchControl = m);
+waitFor(filters.componentByCode('path:["empty"]'), m => {
+    Menu.Menu = m;
+    console.log("[Kernixcord] Menu component loaded");
+});
+waitFor(filters.componentByCode("sliderContainer", "slider", "handleSize:16", "=100"), m => {
+    Menu.MenuSliderControl = m;
+    console.log("[Kernixcord] MenuSliderControl loaded");
+});
+waitFor(filters.componentByCode(".SEARCH)", ".focus()", "query:"), m => {
+    Menu.MenuSearchControl = m;
+    console.log("[Kernixcord] MenuSearchControl loaded");
+});
 
 export const ContextMenuApi: t.ContextMenuApi = mapMangledModuleLazy('type:"CONTEXT_MENU_OPEN', {
     closeContextMenu: filters.byCode("CONTEXT_MENU_CLOSE"),

@@ -12,9 +12,9 @@ chrome.webRequest.onHeadersReceived.addListener(
     ({ responseHeaders, type, url }) => {
         if (!responseHeaders) return;
 
-        if (type === "main_frame" && url.includes("discord.com")) {
+        if (type === "main_frame") {
             // In main frame requests, the CSP needs to be removed to enable fetching of custom css
-            // as desired by the user
+            // as desired by the user, and to prevent Discord updater from hanging
             removeFirst(responseHeaders, h => h.name.toLowerCase() === "content-security-policy");
         } else if (type === "stylesheet" && url.startsWith("https://raw.githubusercontent.com/")) {
             // Most users will load css from GitHub, but GitHub doesn't set the correct content type,

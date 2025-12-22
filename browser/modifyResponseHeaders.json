@@ -15,16 +15,11 @@
             ]
         },
         "condition": {
-<<<<<<< Updated upstream
-            "resourceTypes": ["main_frame", "sub_frame"],
-            "urlFilter": "||discord.com^"
-=======
             "resourceTypes": [
                 "main_frame",
                 "sub_frame"
             ],
-            "urlFilter": "*"
->>>>>>> Stashed changes
+            "urlFilter": "||discord.com^"
         }
     },
     {
@@ -40,7 +35,9 @@
             ]
         },
         "condition": {
-            "resourceTypes": ["stylesheet"],
+            "resourceTypes": [
+                "stylesheet"
+            ],
             "urlFilter": "||raw.githubusercontent.com^"
         }
     }

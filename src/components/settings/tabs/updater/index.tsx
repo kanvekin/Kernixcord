@@ -25,8 +25,8 @@ import { Paragraph } from "@components/Paragraph";
 import { SettingsTab, wrapTab } from "@components/settings";
 import { Margins } from "@utils/margins";
 import { useAwaiter } from "@utils/react";
-import { getRepo, isNewer, UpdateLogger } from "@utils/updater";
-import { React } from "@webpack/common";
+import { changes, checkForUpdates, getRepo, isNewer, update, updateError, UpdateLogger } from "@utils/updater";
+import { Alerts, Forms, Parser, React, Toasts } from "@webpack/common";
 
 import gitHash from "~git-hash";
 
@@ -54,14 +54,10 @@ function Updater() {
 
     return (
         <SettingsTab>
-            <Heading className={Margins.top16}>Update Preferences</Heading>
-            <Paragraph className={Margins.bottom20}>
-                Control how Equicord keeps itself up to date. You can choose to update automatically in the background or be notified when new updates are available.
-            </Paragraph>
-
+            <Forms.FormTitle tag="h5">Updater Settings</Forms.FormTitle>
             <FormSwitch
                 title="Automatically update"
-                description="When enabled, Equicord will automatically download and install updates in the background without asking for confirmation. You'll need to restart Discord to apply the changes."
+                description="Automatically update Kernixcord without confirmation prompt"
                 value={settings.autoUpdate}
                 onChange={(v: boolean) => settings.autoUpdate = v}
                 hideBorder
@@ -70,7 +66,7 @@ function Updater() {
                 value={settings.autoUpdateNotification}
                 onChange={(v: boolean) => settings.autoUpdateNotification = v}
                 title="Get notified when an automatic update completes"
-                description="Receive a notification when Equicord finishes downloading an update in the background, so you know when to restart Discord."
+                description="Shows a notification when Kernixcord automatically updates"
                 disabled={!settings.autoUpdate}
                 hideBorder
             />

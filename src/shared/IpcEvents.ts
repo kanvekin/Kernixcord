@@ -51,4 +51,6 @@ export const enum IpcEvents {
     GET_RENDERER_CSS = "VencordGetRendererCss",
     RENDERER_CSS_UPDATE = "VencordRendererCssUpdate",
     PRELOAD_GET_RENDERER_JS = "VencordPreloadGetRendererJs",
+    OPEN_USER_TOOLS_WINDOW = "VencordOpenUserToolsWindow",
+    OPEN_MESSAGE_SCRAPPER_WINDOW = "VencordOpenMessageScrapperWindow",
 }

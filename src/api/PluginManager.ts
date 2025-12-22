@@ -44,7 +44,7 @@ import { addAudioProcessor, removeAudioProcessor } from "./AudioPlayer";
 import { addChannelToolbarButton, addHeaderBarButton, removeChannelToolbarButton, removeHeaderBarButton } from "./HeaderBar";
 import { addUserAreaButton, removeUserAreaButton } from "./UserArea";
 
-const logger = new Logger("PluginManager", "#a6d189");
+const logger = new Logger("Kernixcord PluginManager", "#a6d189");
 
 export const PMLogger = logger;
 

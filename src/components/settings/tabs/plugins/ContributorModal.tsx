@@ -11,7 +11,7 @@ import ErrorBoundary from "@components/ErrorBoundary";
 import { HeadingPrimary } from "@components/Heading";
 import { Link } from "@components/Link";
 import { Paragraph } from "@components/Paragraph";
-import { EquicordDevsById, VencordDevsById } from "@utils/constants";
+import { EquicordDevsById, KernixcordDevsById, VencordDevsById } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { fetchUserProfile } from "@utils/discord";
 import { pluralise } from "@utils/misc";
@@ -51,19 +51,22 @@ function ContributorModal({ user }: { user: User; }) {
 
     const plugins = useMemo(() => {
         const allPlugins = Object.values(Plugins);
-        const pluginsByAuthor = (VencordDevsById[user.id] || EquicordDevsById[user.id])
-            ? allPlugins.filter(p => p.authors.includes(VencordDevsById[user.id] || EquicordDevsById[user.id]))
-            : allPlugins.filter(p =>
-                PluginMeta[p.name]?.userPlugin && p.authors.some(a => a.id.toString() === user.id)
-                || p.authors.some(a => a.name === user.username)
-            );
+        const authorInfo =
+            VencordDevsById[user.id] ||
+            EquicordDevsById[user.id] ||
+            KernixcordDevsById[user.id];
+
+        const pluginsByAuthor = authorInfo
+            ? allPlugins.filter(p => p.authors.includes(authorInfo))
+            : allPlugins.filter(p => p.authors.some(a => a.name === user.username));
 
         return pluginsByAuthor
             .filter(p => !p.name.endsWith("API"))
             .sort((a, b) => Number(a.required ?? false) - Number(b.required ?? false));
     }, [user.id, user.username]);
 
-    const ContributedHyperLink = <Link href="https://github.com/Equicord/Equicord">contributed</Link>;
+
+    const ContributedHyperLink = <Link href="https://github.com/kanvekin/Kernixcord">contributed</Link>;
 
     const hasLinks = website || githubName;
 
