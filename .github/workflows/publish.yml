@@ -81,18 +81,6 @@ jobs:
               if: steps.check.outputs.release == 'true'
               run: zip -r dist/extension-sources.zip . -x "node_modules/*" -x "dist/*" -x ".git/*"
 
-            - name: Publish extension
+            - name: Skip extension publishing (secrets not configured)
               if: steps.check.outputs.release == 'true'
-              run: pnpx publish-browser-extension@latest --chrome-zip dist/extension-chrome.zip --firefox-zip dist/extension-firefox.zip --firefox-sources-zip dist/extension-sources.zip --edge-zip dist/extension-chrome.zip
-
-              env:
-                  CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
-                  CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-                  CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
-                  CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
-                  FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
-                  FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
-                  FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
-                  EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
-                  EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
-                  EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
+              run: echo "Extension publishing skipped - configure secrets in repository settings to enable"

@@ -102,6 +102,8 @@ const enum SearchStatus {
     DISABLED,
     EQUICORD,
     VENCORD,
+    KERNIXCORD,
+    CUSTOM,
     NEW,
     USER_PLUGINS,
     API_PLUGINS
@@ -212,32 +214,19 @@ export default function PluginSettings() {
 
     const pluginFilter = useCallback((plugin: typeof Plugins[keyof typeof Plugins], newPluginsSet: Set<string> | null) => {
         const { status } = searchValue;
-        const enabled = isPluginEnabled(plugin.name);
+        const enabled = Vencord.Plugins.isPluginEnabled(plugin.name);
+        const pluginMeta = PluginMeta[plugin.name];
+        const isEquicordPlugin = pluginMeta.folderName.startsWith("src/equicordplugins/") ?? false;
+        const isKernixcordPlugin = pluginMeta.folderName.startsWith("src/kernixcordplugins/") ?? false;
+        const isUserplugin = pluginMeta.userPlugin ?? false;
 
-        switch (status) {
-            case SearchStatus.DISABLED:
-                if (enabled) return false;
-                break;
-            case SearchStatus.ENABLED:
-                if (!enabled) return false;
-                break;
-            case SearchStatus.EQUICORD:
-                if (!PluginMeta[plugin.name].folderName.startsWith("src/equicordplugins/")) return false;
-                break;
-            case SearchStatus.VENCORD:
-                if (!PluginMeta[plugin.name].folderName.startsWith("src/plugins/")) return false;
-                break;
-            case SearchStatus.NEW:
-                if (!newPluginsSet?.has(plugin.name)) return false;
-                break;
-            case SearchStatus.USER_PLUGINS:
-                if (!PluginMeta[plugin.name]?.userPlugin) return false;
-                break;
-            case SearchStatus.API_PLUGINS:
-                if (!plugin.name.endsWith("API")) return false;
-                break;
-        }
-
+        if (enabled && status === SearchStatus.DISABLED) return false;
+        if (!enabled && status === SearchStatus.ENABLED) return false;
+        if (status === SearchStatus.NEW && !newPluginsSet?.has(plugin.name)) return false;
+        if (status === SearchStatus.EQUICORD && !isEquicordPlugin) return false;
+        if (status === SearchStatus.VENCORD && (isEquicordPlugin || isKernixcordPlugin)) return false;
+        if (status === SearchStatus.KERNIXCORD && !isKernixcordPlugin) return false;
+        if (status === SearchStatus.CUSTOM && !isUserplugin) return false;
         if (!search.length) return true;
 
         return (
@@ -410,25 +399,23 @@ export default function PluginSettings() {
                 <ErrorBoundary noop>
                     <TextInput autoFocus value={searchInput} placeholder="Search for a plugin..." onChange={onSearch} />
                 </ErrorBoundary>
-                <div>
-                    <ErrorBoundary noop>
-                        <Select
-                            options={[
-                                { label: "Show All", value: SearchStatus.ALL, default: true },
-                                { label: "Show Enabled", value: SearchStatus.ENABLED },
-                                { label: "Show Disabled", value: SearchStatus.DISABLED },
-                                { label: "Show Equicord", value: SearchStatus.EQUICORD },
-                                { label: "Show Vencord", value: SearchStatus.VENCORD },
-                                { label: "Show New", value: SearchStatus.NEW },
-                                hasUserPlugins && { label: "Show UserPlugins", value: SearchStatus.USER_PLUGINS },
-                                { label: "Show API Plugins", value: SearchStatus.API_PLUGINS },
-                            ].filter(isTruthy)}
-                            serialize={String}
-                            select={onStatusChange}
-                            isSelected={v => v === searchValue.status}
-                            closeOnSelect={true}
-                        />
-                    </ErrorBoundary>
+                <div className={cl("select-input-wrapper")}>
+                    <Select
+                        options={[
+                            { label: "Show All", value: SearchStatus.ALL, default: true },
+                            { label: "Show Enabled", value: SearchStatus.ENABLED },
+                            { label: "Show Disabled", value: SearchStatus.DISABLED },
+                            { label: "Show Equicord", value: SearchStatus.EQUICORD },
+                            { label: "Show Vencord", value: SearchStatus.VENCORD },
+                            { label: "Show Kernixcord", value: SearchStatus.KERNIXCORD },
+                            ...(totalUserPlugins > 0 ? [{ label: "Show Custom", value: SearchStatus.CUSTOM }] : []),
+                            { label: "Show New", value: SearchStatus.NEW },
+                        ]}
+                        serialize={String}
+                        select={onStatusChange}
+                        isSelected={v => v === searchValue.status}
+                        closeOnSelect={true}
+                    />
                 </div>
             </div>
 

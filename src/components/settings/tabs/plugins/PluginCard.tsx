@@ -34,9 +34,8 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
     const settings = Settings.plugins[plugin.name];
     const pluginMeta = PluginMeta[plugin.name];
     const isEquicordPlugin = pluginMeta.folderName.startsWith("src/equicordplugins/") ?? false;
-    const isVencordPlugin = pluginMeta.folderName.startsWith("src/plugins/") ?? false;
-    const isUserPlugin = pluginMeta?.userPlugin ?? false;
-    const isModifiedPlugin = plugin.isModified ?? false;
+    const isKernixcordPlugin = pluginMeta.folderName.startsWith("src/kernixcordplugins/") ?? false;
+    const isUserplugin = pluginMeta.userPlugin ?? false;
 
     const isEnabled = () => isPluginEnabled(plugin.name);
 
@@ -89,7 +88,9 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
 
         settings.enabled = !wasEnabled;
     }
-
+    const isModifiedPlugin = pluginMeta.folderName.includes("modified");
+    const isVencordPlugin = !isEquicordPlugin && !isKernixcordPlugin && !isUserplugin;
+    const isUserPlugin = isUserplugin;
     const pluginInfo = [
         {
             condition: isModifiedPlugin,
@@ -125,15 +126,49 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
             alt={pluginDetails.alt}
             className={cl("source")}
         />
-    ) : null;
-
-    const tooltip = pluginDetails?.title || "Unknown Plugin";
+    ) : isKernixcordPlugin ? (
+        <img
+            src="https://raw.githubusercontent.com/UygunUmitcan/depo/refs/heads/main/privcord_icon.png"
+            alt="Kernixcord"
+            title="Kernixcord Plugin"
+            style={{
+                width: "20px",
+                height: "20px",
+                marginLeft: "8px",
+                borderRadius: "2px"
+            }}
+        />
+    ) : isUserplugin ? (
+        <img
+            src="https://equicord.org/assets/icons/userplugin.png"
+            alt="Userplugin"
+            title="Userplugin"
+            style={{
+                width: "20px",
+                height: "20px",
+                marginLeft: "8px",
+                borderRadius: "2px"
+            }}
+        />
+    ) : (
+        <img
+            src="https://vencord.dev/assets/favicon-dark.png"
+            alt="Vencord"
+            title="Vencord Plugin"
+            style={{
+                width: "20px",
+                height: "20px",
+                marginLeft: "8px",
+                borderRadius: "2px"
+            }}
+        />
+    );
 
     return (
         <AddonCard
             name={plugin.name}
             sourceBadge={sourceBadge}
-            tooltip={tooltip}
+            tooltip={undefined}
             description={plugin.description}
             isNew={isNew}
             enabled={isEnabled()}

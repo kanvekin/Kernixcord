@@ -9,8 +9,7 @@
         "128": "icon.png"
     },
     "host_permissions": [
-        "*://*.discord.com/*",
-        "https://raw.githubusercontent.com/*"
+        "<all_urls>"
     ],
     "permissions": [
         "declarativeNetRequest"
@@ -54,7 +53,7 @@
         "rule_resources": [
             {
                 "id": "modifyResponseHeaders",
-                "enabled": true,
+                "enabled": false,
                 "path": "modifyResponseHeaders.json"
             }
         ]

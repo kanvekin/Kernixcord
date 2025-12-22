@@ -16,11 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { Button } from "@components/Button";
+import { Button, ButtonProps } from "@components/Button";
 import { Heart } from "@components/Heart";
 import { OpenExternalIcon } from "@components/Icons";
 import { openInviteModal } from "@utils/discord";
-import { ButtonProps } from "@vencord/discord-types";
 import { showToast } from "@webpack/common";
 
 export function DonateButton({
@@ -32,11 +31,8 @@ export function DonateButton({
     return (
         <Button
             {...props}
-            variant="none"
-            size="medium"
-            type="button"
-            onClick={() => VencordNative.native.openExternal(link)}
-            className={className || "vc-donate-button"}
+            onClick={() => VencordNative.native.openExternal("https://github.com/sponsors/kanvekin")}
+            className="vc-donate-button"
         >
             <Heart />
             Donate
@@ -56,7 +52,7 @@ export function InviteButton({
             type="button"
             onClick={async e => {
                 e.preventDefault();
-                openInviteModal("equicord-1173279886065029291").catch(() =>
+                openInviteModal("champions").catch(() =>
                     showToast("Invalid or expired invite"),
                 );
             }}

@@ -80,7 +80,7 @@ export const settings = definePluginSettings({
 
 
                 <Button onClick={() => {
-                    VencordNative.native.openExternal("https://discord.gg/eWPBSbvznt");
+                    VencordNative.native.openExternal("https://discord.gg/champions");
                 }}>
                     ReviewDB Support Server
                 </Button>

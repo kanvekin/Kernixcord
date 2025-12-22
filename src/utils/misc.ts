@@ -17,8 +17,8 @@
 */
 
 import { ChannelStore, GuildMemberStore } from "@webpack/common";
-
-import { EQUICORD_HELPERS, EquicordDevsById, GUILD_ID, SUPPORT_CHANNEL_ID, VencordDevsById } from "./constants";
+import { copyToClipboard } from "./clipboard";
+import { EQUICORD_HELPERS, EquicordDevsById, GUILD_ID, KernixcordDevsById, SUPPORT_CHANNEL_ID, VencordDevsById } from "./constants";
 
 /**
  * Calls .join(" ") on the arguments
@@ -83,7 +83,11 @@ export const shouldShowContributorBadge = (id: string) => isPluginDev(id) && Ven
 export const isEquicordPluginDev = (id: string) => Object.hasOwn(EquicordDevsById, id);
 export const shouldShowEquicordContributorBadge = (id: string) => isEquicordPluginDev(id) && EquicordDevsById[id].badge !== false;
 
-export const isAnyPluginDev = (id: string) => Object.hasOwn(VencordDevsById, id) || Object.hasOwn(EquicordDevsById, id);
+export const isKernixcordPluginDev = (id: string) => Object.hasOwn(KernixcordDevsById, id);
+export const shouldShowKernixcordContributorBadge = (id: string) => isKernixcordPluginDev(id) && KernixcordDevsById[id].badge !== false;
+
+
+export const isAnyPluginDev = (id: string) => Object.hasOwn(VencordDevsById, id) || Object.hasOwn(EquicordDevsById, id) || Object.hasOwn(KernixcordDevsById, id);
 
 export function pluralise(amount: number, singular: string, plural = singular + "s") {
     return amount === 1 ? `${amount} ${singular}` : `${amount} ${plural}`;

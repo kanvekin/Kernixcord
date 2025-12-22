@@ -158,6 +158,7 @@ export default function PluginModal({ plugin, onRestartNeeded, onClose, transiti
 
     const pluginMeta = PluginMeta[plugin.name];
     const isEquicordPlugin = pluginMeta.folderName.startsWith("src/equicordplugins/") ?? false;
+    const isKernixcordPlugin = pluginMeta.folderName.startsWith("src/kernixcordplugins/") ?? false;
 
     return (
         <ModalRoot transitionState={transitionState} size={ModalSize.MEDIUM}>
@@ -180,7 +181,24 @@ export default function PluginModal({ plugin, onRestartNeeded, onClose, transiti
 
             <ModalContent className={Margins.bottom16}>
                 <section>
-                    <BaseText size="lg" weight="semibold" color="text-strong" className={Margins.bottom8}>Authors</BaseText>
+                    <Flex className={cl("info")}>
+                        <Paragraph className={cl("description")}>{plugin.description}</Paragraph>
+                        {!pluginMeta.userPlugin && (
+                            <div className="vc-settings-modal-links">
+                                {!isKernixcordPlugin && (
+                                    <WebsiteButton
+                                        text="View more info"
+                                        href={isEquicordPlugin ? `https://equicord.org/plugins/${plugin.name}` : `https://vencord.dev/plugins/${plugin.name}`}
+                                    />
+                                )}
+                                <GithubButton
+                                    text="View source code"
+                                    href={`https://github.com/${gitRemote}/tree/main/${pluginMeta.folderName}`}
+                                />
+                            </div>
+                        )}
+                    </Flex>
+                    <BaseText size="lg" weight="semibold" className={classes(Margins.top8, Margins.bottom8)}>Authors</BaseText>
                     <div style={{ width: "fit-content" }}>
                         <ErrorBoundary noop>
                             <UserSummaryItem
