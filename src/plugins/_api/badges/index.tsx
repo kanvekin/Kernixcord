@@ -195,8 +195,8 @@ export default definePlugin({
         if (!profile) return [];
 
         try {
-            props.userId ??= props.user?.id!;
-            return _getBadges(props);
+            profile.userId ??= profile.user?.id!;
+            return _getBadges(profile);
         } catch (e) {
             new Logger("BadgeAPI#useBadges").error(e);
             return [];

@@ -146,7 +146,7 @@ async function generateDebugInfoMessage() {
         Kernixcord:
             `v${VERSION} • [${gitHashShort}](<https://github.com/kanvekin/Kernixcord/commit/${gitHash}>)` +
             `${SettingsPlugin.getVersionInfo()} - ${Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(BUILD_TIMESTAMP)}`,
-        Client: `${RELEASE_CHANNEL} ~ ${client}`,
+        Client: `${RELEASE_CHANNEL} ~ ${clientString}`,
         Platform: platformName()
     };
 

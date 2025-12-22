@@ -222,7 +222,7 @@ export default function PluginSettings() {
 
         if (enabled && status === SearchStatus.DISABLED) return false;
         if (!enabled && status === SearchStatus.ENABLED) return false;
-        if (status === SearchStatus.NEW && !newPlugins?.includes(plugin.name)) return false;
+        if (status === SearchStatus.NEW && !newPluginsSet?.has(plugin.name)) return false;
         if (status === SearchStatus.EQUICORD && !isEquicordPlugin) return false;
         if (status === SearchStatus.VENCORD && (isEquicordPlugin || isKernixcordPlugin)) return false;
         if (status === SearchStatus.KERNIXCORD && !isKernixcordPlugin) return false;
