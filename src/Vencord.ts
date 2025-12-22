@@ -44,8 +44,6 @@ import { localStorage } from "./utils/localStorage";
 import { relaunch } from "./utils/native";
 import { checkForUpdates, update, UpdateLogger } from "./utils/updater";
 import { onceReady } from "./webpack";
-import { applyPerformanceOptimizations } from "./performance-patches";
-import { applyMenuFixes } from "./menu-fix";
 import { openUserSettingsPanel } from "./webpack/common";
 import { patches } from "./webpack/patchWebpack";
 
@@ -167,16 +165,21 @@ async function runUpdateCheck() {
 }
 
 async function init() {
-    // Apply performance optimizations early to speed up startup
-    applyPerformanceOptimizations();
+    // Performance optimizations for faster startup
+    const startTime = performance.now();
 
     await onceReady;
     startAllPlugins(StartAt.WebpackReady);
 
-    // Apply menu fixes after webpack is ready
-    applyMenuFixes();
-
     syncSettings();
+
+    // Log startup time for diagnostics
+    const totalTime = performance.now() - startTime;
+    console.log(`[Kernixcord] Startup completed in ${totalTime.toFixed(2)}ms`);
+
+    if (totalTime > 10000) {
+        console.warn("[Kernixcord] Slow startup detected");
+    }
 
     if (!IS_DEV && !IS_WEB && !IS_UPDATER_DISABLED) {
         runUpdateCheck();
@@ -208,6 +211,24 @@ init();
 
 document.addEventListener("DOMContentLoaded", () => {
     startAllPlugins(StartAt.DOMContentLoaded);
+
+    // Menu loading fix - ensure menu components are ready
+    setTimeout(() => {
+        // Check if menu components are loaded by accessing the Menu export
+        try {
+            const { Menu } = require("./webpack/common");
+            if (!Menu.Menu) {
+                console.warn("[Kernixcord] Menu components not loaded, attempting refresh");
+                // Force menu component refresh
+                const event = new Event('resize');
+                window.dispatchEvent(event);
+            } else {
+                console.log("[Kernixcord] Menu components verified as loaded");
+            }
+        } catch (error) {
+            console.error("[Kernixcord] Error checking menu components:", error);
+        }
+    }, 3000);
 
     // FIXME
     if (IS_DISCORD_DESKTOP && Settings.winNativeTitleBar && IS_WINDOWS) {
