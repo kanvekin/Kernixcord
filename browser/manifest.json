@@ -9,15 +9,14 @@
         "128": "icon.png"
     },
     "host_permissions": [
-        "*://*.discord.com/*",
-        "https://raw.githubusercontent.com/*"
+        "<all_urls>"
     ],
     "permissions": [
         "declarativeNetRequest"
     ],
     "content_scripts": [
         {
-            "run_at": "document_start",
+            "run_at": "document_idle",
             "matches": [
                 "*://*.discord.com/*"
             ],
@@ -28,7 +27,7 @@
             "world": "ISOLATED"
         },
         {
-            "run_at": "document_start",
+            "run_at": "document_idle",
             "matches": [
                 "*://*.discord.com/*"
             ],
@@ -54,7 +53,7 @@
         "rule_resources": [
             {
                 "id": "modifyResponseHeaders",
-                "enabled": true,
+                "enabled": false,
                 "path": "modifyResponseHeaders.json"
             }
         ]

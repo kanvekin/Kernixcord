@@ -15,8 +15,16 @@
             ]
         },
         "condition": {
+<<<<<<< Updated upstream
             "resourceTypes": ["main_frame", "sub_frame"],
             "urlFilter": "||discord.com^"
+=======
+            "resourceTypes": [
+                "main_frame",
+                "sub_frame"
+            ],
+            "urlFilter": "*"
+>>>>>>> Stashed changes
         }
     },
     {
