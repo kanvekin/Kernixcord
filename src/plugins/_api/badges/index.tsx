@@ -195,7 +195,6 @@ export default definePlugin({
         if (!profile) return [];
 
         try {
-            profile.userId ??= profile.user?.id!;
             return _getBadges(profile);
         } catch (e) {
             new Logger("BadgeAPI#useBadges").error(e);
