@@ -61,10 +61,22 @@ window.VencordNative = {
                 // need to wait for next tick for _vcUserScriptRendererCss to be set
                 return Promise.resolve().then(() => window._vcUserScriptRendererCss);
 
-            await metaReady;
+            try {
+                // Add timeout to prevent hanging
+                await Promise.race([
+                    metaReady,
+                    new Promise((_, reject) => setTimeout(() => reject(new Error("metaReady timeout")), 5000))
+                ]);
 
-            return fetch(RENDERER_CSS_URL)
-                .then(res => res.text());
+                return fetch(RENDERER_CSS_URL)
+                    .then(res => {
+                        if (!res.ok) throw new Error(`Failed to fetch CSS: ${res.status}`);
+                        return res.text();
+                    });
+            } catch (error) {
+                console.error("[Kernixcord] Failed to get renderer CSS:", error);
+                return ""; // Return empty CSS as fallback
+            }
         },
         onRendererCssUpdate: NOOP,
     },
