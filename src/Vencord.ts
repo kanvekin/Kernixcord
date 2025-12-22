@@ -43,7 +43,7 @@ import { getCloudSettings, putCloudSettings, shouldCloudSync } from "./api/Setti
 import { localStorage } from "./utils/localStorage";
 import { relaunch } from "./utils/native";
 import { checkForUpdates, update, UpdateLogger } from "./utils/updater";
-import { onceReady } from "./webpack";
+import { onceReady, _resolveReady } from "./webpack";
 import { openUserSettingsPanel } from "./webpack/common";
 import { patches } from "./webpack/patchWebpack";
 
@@ -157,7 +157,16 @@ async function runUpdateCheck() {
         notify({
             title: "A Kernixcord update is available!",
             body: "Click here to view the update",
-            onClick: () => openSettingsTabModal(UpdaterTab!)
+            onClick: () => {
+                // Fallback if UpdaterTab is not available
+                try {
+                    openSettingsTabModal(UpdaterTab!);
+                } catch (error) {
+                    console.error("[Kernixcord] Failed to open updater tab:", error);
+                    // Try alternative method
+                    openUserSettingsPanel("Kernixcord");
+                }
+            }
         });
     } catch (err) {
         UpdateLogger.error("Failed to check for updates", err);
@@ -165,10 +174,28 @@ async function runUpdateCheck() {
 }
 
 async function init() {
+    // Emergency timeout to prevent infinite loading
+    const startupTimeout = setTimeout(() => {
+        console.error("[Kernixcord] CRITICAL: Startup timeout reached, forcing initialization");
+        // Force webpack ready state to prevent hanging
+        if (typeof _resolveReady === 'function') {
+            _resolveReady();
+        }
+    }, 15000); // 15 second timeout
+
     // Performance optimizations for faster startup
     const startTime = performance.now();
 
-    await onceReady;
+    try {
+        await onceReady;
+        clearTimeout(startupTimeout);
+        console.log("[Kernixcord] Webpack ready successfully");
+    } catch (error) {
+        console.error("[Kernixcord] Webpack initialization failed:", error);
+        clearTimeout(startupTimeout);
+        // Continue anyway to prevent complete failure
+    }
+
     startAllPlugins(StartAt.WebpackReady);
 
     syncSettings();

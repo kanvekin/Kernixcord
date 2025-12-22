@@ -172,48 +172,74 @@ define(Function.prototype, "m", {
 
         // If neither of these properties setters were triggered, delete them as they are not needed anymore.
         // Reduced timeout for faster initialization
-        const bundlePathTimeout = setTimeout(() => Reflect.deleteProperty(this, "p"), 1);
-        const onChunksLoadedTimeout = setTimeout(() => Reflect.deleteProperty(this, "O"), 1);
+        const bundlePathTimeout = setTimeout(() => {
+            try {
+                Reflect.deleteProperty(this, "p");
+            } catch (e) {
+                // Ignore errors during cleanup
+            }
+        }, 1);
+        const onChunksLoadedTimeout = setTimeout(() => {
+            try {
+                Reflect.deleteProperty(this, "O");
+            } catch (e) {
+                // Ignore errors during cleanup
+            }
+        }, 1);
 
         /**
          * Patch the current Webpack instance assigned to `this` context.
          * This should only be called if this instance was later found to be one we need to patch.
          */
         const patchThisInstance = () => {
-            logger.info("Found Webpack module factories" + interpolateIfDefined` in ${fileName}`);
-            allWebpackInstances.add(this);
+            try {
+                logger.info("Found Webpack module factories" + interpolateIfDefined` in ${fileName}`);
+                allWebpackInstances.add(this);
 
-            // Proxy (and maybe patch) pre-populated factories
-            for (const moduleId in originalModules) {
-                updateExistingOrProxyFactory(originalModules, moduleId, originalModules[moduleId], originalModules, true);
-            }
-
-            define(originalModules, Symbol.toStringTag, {
-                value: "ModuleFactories",
-                enumerable: false
-            });
-
-            const proxiedModuleFactories = new Proxy(originalModules, moduleFactoriesHandler);
-            /*
-            If Webpack ever decides to set module factories using the variable of the modules object directly, instead of wreq.m, switch the proxy to the prototype
-            Reflect.setPrototypeOf(originalModules, new Proxy(originalModules, moduleFactoriesHandler));
-            */
-
-            define(this, "m", { value: proxiedModuleFactories });
-
-            // Overwrite Webpack's defineExports function to define the export descriptors configurable.
-            // This is needed so we can later blacklist specific exports from Webpack search by making them non-enumerable
-            this.d = function (exports, definition) {
-                for (const key in definition) {
-                    if (Object.hasOwn(definition, key) && !Object.hasOwn(exports, key)) {
-                        Object.defineProperty(exports, key, {
-                            enumerable: true,
-                            configurable: true,
-                            get: definition[key],
-                        });
+                // Proxy (and maybe patch) pre-populated factories
+                for (const moduleId in originalModules) {
+                    try {
+                        updateExistingOrProxyFactory(originalModules, moduleId, originalModules[moduleId], originalModules, true);
+                    } catch (factoryError) {
+                        logger.warn(`Failed to patch factory ${moduleId}:`, factoryError);
+                        // Continue with other factories
                     }
                 }
-            };
+
+                define(originalModules, Symbol.toStringTag, {
+                    value: "ModuleFactories",
+                    enumerable: false
+                });
+
+                const proxiedModuleFactories = new Proxy(originalModules, moduleFactoriesHandler);
+                /*
+                If Webpack ever decides to set module factories using the variable of the modules object directly, instead of wreq.m, switch the proxy to the prototype
+                Reflect.setPrototypeOf(originalModules, new Proxy(originalModules, moduleFactoriesHandler));
+                */
+
+                define(this, "m", { value: proxiedModuleFactories });
+
+                // Overwrite Webpack's defineExports function to define the export descriptors configurable.
+                // This is needed so we can later blacklist specific exports from Webpack search by making them non-enumerable
+                this.d = function (exports, definition) {
+                    try {
+                        for (const key in definition) {
+                            if (Object.hasOwn(definition, key) && !Object.hasOwn(exports, key)) {
+                                Object.defineProperty(exports, key, {
+                                    enumerable: true,
+                                    configurable: true,
+                                    get: definition[key],
+                                });
+                            }
+                        }
+                    } catch (defineError) {
+                        logger.warn("Error in defineExports function:", defineError);
+                    }
+                };
+            } catch (patchError) {
+                logger.error("Critical error in patchThisInstance:", patchError);
+                // Fallback: don't patch but continue
+            }
         };
     }
 });
