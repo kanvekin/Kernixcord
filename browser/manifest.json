@@ -1,10 +1,10 @@
 {
     "manifest_version": 3,
     "minimum_chrome_version": "111",
-    "name": "Equicord Web",
+    "name": "Kernixcord Web",
     "description": "The other cutest Discord mod now in your browser",
-    "author": "Equicord",
-    "homepage_url": "https://github.com/Equicord/Equicord",
+    "author": "Kanvekin",
+    "homepage_url": "https://github.com/kanvekin/Kernixcord",
     "icons": {
         "128": "icon.png"
     },
@@ -17,7 +17,7 @@
     ],
     "content_scripts": [
         {
-            "run_at": "document_start",
+            "run_at": "document_idle",
             "matches": [
                 "*://*.discord.com/*"
             ],
@@ -28,7 +28,7 @@
             "world": "ISOLATED"
         },
         {
-            "run_at": "document_start",
+            "run_at": "document_idle",
             "matches": [
                 "*://*.discord.com/*"
             ],

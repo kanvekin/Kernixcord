@@ -27,7 +27,7 @@ import type { Settings } from "@api/Settings";
 import { debounce } from "@shared/debounce";
 import { localStorage } from "@utils/localStorage";
 import { getStylusWebStoreUrl } from "@utils/web";
-import { EXTENSION_BASE_URL, metaReady, RENDERER_CSS_URL } from "@utils/web-metadata";
+import { EXTENSION_BASE_URL } from "@utils/web-metadata";
 
 // listeners for ipc.on
 const cssListeners = new Set<(css: string) => void>();
@@ -61,16 +61,13 @@ window.VencordNative = {
                 // need to wait for next tick for _vcUserScriptRendererCss to be set
                 return Promise.resolve().then(() => window._vcUserScriptRendererCss);
 
-            await metaReady;
-
-            return fetch(RENDERER_CSS_URL)
-                .then(res => res.text());
+            return "";
         },
         onRendererCssUpdate: NOOP,
     },
 
     updater: {
-        getRepo: async () => ({ ok: true, value: "https://github.com/Equicord/Equicord" }),
+        getRepo: async () => ({ ok: true, value: "https://github.com/kanvekin/Kernixcord" }),
         getUpdates: async () => ({ ok: true, value: [] }),
         update: async () => ({ ok: true, value: false }),
         rebuild: async () => ({ ok: true, value: true }),
