@@ -310,7 +310,7 @@ export default definePlugin({
         const equicordSection: SettingsLayoutNode = {
             key: "equicord_section",
             type: LayoutTypes.SECTION,
-            useLabel: () => "Kernixcord",
+            useTitle: () => "Kernixcord Settings",
             buildLayout: () => equicordEntries
         };
 

@@ -83,6 +83,7 @@ jobs:
                   git clone https://$USERNAME:$GITHUB_TOKEN@github.com/$REPO.git plugins
                   cd plugins
 
+
                   cp ../dist/*plugins.json .
                   git add -A
 

@@ -6,7 +6,7 @@
 
 import "./BaseText.css";
 
-import { classNameFactory } from "@api/Styles";
+import { classNameFactory } from "@utils/css";
 import { classes } from "@utils/misc";
 import type { Text as DiscordText } from "@vencord/discord-types";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
@@ -35,7 +35,6 @@ export const TextWeights = {
 } as const;
 
 export const TextColors = {
-    "header-primary": "var(--header-primary)",
     "text-default": "var(--text-default)",
     "text-muted": "var(--text-muted)",
     "text-link": "var(--text-link)",

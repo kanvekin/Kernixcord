@@ -14,7 +14,7 @@
     overflow: hidden;
 }
 
-.vc-channeltabs-tab [class^="wrapper_"] {
+.vc-channeltabs-tab [class*="wrapper"] {
     min-width: 1.5rem;
 }
 
@@ -79,7 +79,7 @@
 .vc-channeltabs-separator {
     width: 98%;
     height: 1px;
-    background: var(--input-border);
+    background: var(--input-border-default, var(--input-border));
     margin: 4px auto;
 }
 
@@ -314,14 +314,14 @@
     fill: var(--white-500);
 }
 
-.vc-channeltabs-container [class^="iconContainer_"] {
+.vc-channeltabs-container [class*="iconContainer"] {
     margin: 0 -0.25rem 0 0;
     pointer-events: none;
     height: 1rem;
     transform: scale(0.8);
 }
 
-.vc-channeltabs-container [class^="numberBadge"] {
+.vc-channeltabs-container [class*="numberBadge"] {
     background-color: var(--channeltabs-red) !important;
     color: var(--channeltabs-white);
     border-radius: 50%;
@@ -501,7 +501,7 @@
     padding: 0.125rem 0;
     min-width: 0;
     border-radius: 0.25rem;
-    border: 1px solid var(--input-border);
+    border: 1px solid var(--input-border-default, var(--input-border));
 }
 
 .vc-channeltabs-preview-tab-compact {
@@ -1023,12 +1023,12 @@
 }
 
 /* Enhanced caching mode - smoother transitions */
-[class*="chat_"] {
+[class*="chat"] {
     transition: opacity 0.1s ease;
 }
 
 /* Prevent flash when switching tabs with cache enabled */
-[class*="scrollerInner_"] {
+[class*="scrollerInner"] {
     scroll-behavior: auto;
 }
 
@@ -1117,14 +1117,14 @@
 .channelTabs-keybind-button {
     padding: 8px 16px;
     background-color: var(--background-base-low);
-    border: 2px solid var(--input-border);
+    border: 2px solid var(--input-border-default, var(--input-border));
     border-radius: 8px;
     cursor: pointer;
     min-width: 140px;
     text-align: center;
     font-family: var(--font-code);
     font-weight: 600;
-    color: var(--header-primary);
+    color: var(--text-strong);
     transition: all 0.2s ease;
     outline: none;
     box-shadow: 0 0 0 1px var(--background-mod-muted);
