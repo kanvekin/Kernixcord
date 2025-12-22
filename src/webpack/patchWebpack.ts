@@ -171,8 +171,9 @@ define(Function.prototype, "m", {
         });
 
         // If neither of these properties setters were triggered, delete them as they are not needed anymore.
-        const bundlePathTimeout = setTimeout(() => Reflect.deleteProperty(this, "p"), 0);
-        const onChunksLoadedTimeout = setTimeout(() => Reflect.deleteProperty(this, "O"), 0);
+        // Reduced timeout for faster initialization
+        const bundlePathTimeout = setTimeout(() => Reflect.deleteProperty(this, "p"), 1);
+        const onChunksLoadedTimeout = setTimeout(() => Reflect.deleteProperty(this, "O"), 1);
 
         /**
          * Patch the current Webpack instance assigned to `this` context.

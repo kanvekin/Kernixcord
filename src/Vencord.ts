@@ -44,6 +44,8 @@ import { localStorage } from "./utils/localStorage";
 import { relaunch } from "./utils/native";
 import { checkForUpdates, update, UpdateLogger } from "./utils/updater";
 import { onceReady } from "./webpack";
+import { applyPerformanceOptimizations } from "./performance-patches";
+import { applyMenuFixes } from "./menu-fix";
 import { openUserSettingsPanel } from "./webpack/common";
 import { patches } from "./webpack/patchWebpack";
 
@@ -165,8 +167,14 @@ async function runUpdateCheck() {
 }
 
 async function init() {
+    // Apply performance optimizations early to speed up startup
+    applyPerformanceOptimizations();
+
     await onceReady;
     startAllPlugins(StartAt.WebpackReady);
+
+    // Apply menu fixes after webpack is ready
+    applyMenuFixes();
 
     syncSettings();
 
