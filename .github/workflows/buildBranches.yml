@@ -27,7 +27,7 @@ permissions:
 
 jobs:
     Build:
-        name: Build Equicord
+        name: Build Kernixcord
         runs-on: ubuntu-latest
         if: github.repository == 'Equicord/Equicord'
 
