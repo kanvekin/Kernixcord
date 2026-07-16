@@ -7,8 +7,8 @@
 import { definePluginSettings } from "@api/Settings";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { Button, React, Toasts, UserStore } from "@webpack/common";
 import { findByPropsLazy } from "@webpack";
+import { Button, React, Toasts } from "@webpack/common";
 
 const settings = definePluginSettings({
     sourceUrl: {
@@ -34,7 +34,7 @@ async function loadUndiscordFrom(url: string) {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const code = await res.text();
         // Execute in page context, but if the script prompts for token, auto-supply it
-        // eslint-disable-next-line no-new-func
+
         const runner = new Function(code);
         const Auth: { getToken?: () => string; } = findByPropsLazy("getToken");
         const token = Auth?.getToken?.();
@@ -118,7 +118,7 @@ function patchNetworkAuth() {
 
                     // Determine full URL to decide if we must force auth
                     let urlStr = "";
-                    let methodStr = (init as RequestInit)?.method || (input instanceof Request ? input.method : "GET");
+                    const methodStr = (init as RequestInit)?.method || (input instanceof Request ? input.method : "GET");
                     try {
                         const u = typeof input === "string" ? new URL(input, location.origin) : new URL((input as Request).url ?? String(input), location.origin);
                         urlStr = u.pathname;
@@ -223,7 +223,8 @@ export default definePlugin({
     description:
         "Integrates Undiscord (bulk delete) and launches the original userscript UI inside Discord",
     authors: [Devs.feelslove],
-    tags: ["messages", "tools", "cleanup"],
+    tags: ["Chat", "Utility"],
+    searchTerms: ["messages", "cleanup", "undiscord", "bulk delete"],
     enabledByDefault: false,
     settings,
 
