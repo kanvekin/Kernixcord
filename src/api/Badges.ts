@@ -32,7 +32,7 @@ export interface ProfileBadge {
     /**
      * Badge id, unused by vencord, required by discord
      */
-    id: string,
+    id?: string,
     /** The tooltip to show on hover. Required for image badges */
     description?: string;
     /** Custom component for the badge (tooltip not included) */

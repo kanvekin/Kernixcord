@@ -43,17 +43,15 @@ function CloneModal({ role, icon }: { role: Role; icon?: string | null; }) {
     return (
         <>
             <Forms.FormTitle className={Margins.top20}>Custom Name</Forms.FormTitle>
-            <CheckedTextInput
-                value={name}
-                onChange={v => {
+            <CheckedTextInput {...({
+                value: name,
+                onChange: (v: string) => {
                     role.name = v;
                     setName(v);
-                }}
-                validate={v =>
-                    (v.length > 1 && v.length < 100)
-                    || "Name must be between 1 and 100 characters"
-                }
-            />
+                },
+                validate: (v: string) =>
+                    (v.length > 1 && v.length < 100) || "Name must be between 1 and 100 characters"
+            } as any)} />
             <p
                 style={{ display: warningText ? "block" : "none" }}
                 className="vc-rd-role-icon-warning-text"

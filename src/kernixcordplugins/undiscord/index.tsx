@@ -223,7 +223,7 @@ export default definePlugin({
     description:
         "Integrates Undiscord (bulk delete) and launches the original userscript UI inside Discord",
     authors: [Devs.feelslove],
-    tags: ["messages", "tools", "cleanup"],
+    tags: ["messages", "tools", "cleanup"] as any,
     enabledByDefault: false,
     settings,
 

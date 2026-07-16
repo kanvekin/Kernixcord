@@ -18,6 +18,7 @@ import {
 } from "@components/settings";
 import { gitHashShort } from "@shared/vencordUserAgent";
 import { Devs } from "@utils/constants";
+import { getIntlMessage } from "@utils/discord";
 import { isTruthy } from "@utils/guards";
 import definePlugin, { IconProps, OptionType } from "@utils/types";
 import { waitFor } from "@webpack";
@@ -60,6 +61,16 @@ const enum SectionType {
     DIVIDER = "DIVIDER",
     CUSTOM = "CUSTOM"
 }
+
+interface SectionTypes {
+    HEADER: string;
+    DIVIDER: string;
+}
+
+const FallbackSectionTypes: SectionTypes = {
+    HEADER: "HEADER",
+    DIVIDER: "DIVIDER"
+};
 
 type SettingsLocation =
     | "top"
@@ -277,7 +288,7 @@ export default definePlugin({
         return layout;
     },
 
-    customSections: [] as ((SectionTypes: Record<string, string>) => { section: string; element: ComponentType; label: string; id?: string; })[],
+    customSections: [] as ((SectionTypes: SectionTypes) => { section: string; element: ComponentType; label: string; id?: string; })[],
     customEntries: [] as EntryOptions[],
     makeSettingsCategories(SectionTypes: SectionTypes) {
         return [
@@ -403,7 +414,7 @@ export default definePlugin({
         return (...args: any[]) => {
             const elements = originalHook(...args);
             if (!this.patchedSettings.has(elements))
-                elements.unshift(...this.makeSettingsCategories(FallbackSectionTypes));
+                elements.unshift(...(this.makeSettingsCategories(FallbackSectionTypes) as any));
 
             return elements;
         };

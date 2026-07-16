@@ -133,7 +133,7 @@ const PlatformIndicator = ({ user, wantMargin = true, wantTopMargin = false, sma
         }, {});
 
         const { clientStatuses } = PresenceStore.getState();
-        clientStatuses[UserStore.getCurrentUser().id] = ownStatus;
+        clientStatuses[UserStore.getCurrentUser().id] = ownStatus as any;
     }
 
     const status = PresenceStore.getState()?.clientStatuses?.[user.id] as Record<Platform, string>;

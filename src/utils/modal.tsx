@@ -16,6 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import type { ComponentType } from "react";
+
 import { filters, findComponentByCodeLazy, mapMangledModuleLazy } from "@webpack";
 import { closeAllModals, closeModal, openMediaModal, openModal, openModalLazy } from "@webpack/common";
 
@@ -30,6 +32,13 @@ export const enum ModalSize {
 }
 
 /** @deprecated Migrate to new Modals */
+export interface ModalProps {
+    onClose(): void;
+    transitionState?: any;
+    [key: string]: any;
+}
+
+/** @deprecated Migrate to new Modals */
 export const Modals = mapMangledModuleLazy(".MODAL_ROOT_LEGACY,", {
     ModalRoot: filters.componentByCode('.MODAL,"aria-labelledby":'),
     ModalHeader: filters.componentByCode(",id:"),
@@ -39,15 +48,15 @@ export const Modals = mapMangledModuleLazy(".MODAL_ROOT_LEGACY,", {
 }) as never;
 
 /** @deprecated Migrate to new Modals */
-export const ModalRoot = LazyComponent(() => (Modals as any).ModalRoot) as never;
+export const ModalRoot = LazyComponent(() => (Modals as any).ModalRoot) as ComponentType<any>;
 /** @deprecated Migrate to new Modals */
-export const ModalHeader = LazyComponent(() => (Modals as any).ModalHeader) as never;
+export const ModalHeader = LazyComponent(() => (Modals as any).ModalHeader) as ComponentType<any>;
 /** @deprecated Migrate to new Modals */
-export const ModalContent = LazyComponent(() => (Modals as any).ModalContent) as never;
+export const ModalContent = LazyComponent(() => (Modals as any).ModalContent) as ComponentType<any>;
 /** @deprecated Migrate to new Modals */
-export const ModalFooter = LazyComponent(() => (Modals as any).ModalFooter) as never;
+export const ModalFooter = LazyComponent(() => (Modals as any).ModalFooter) as ComponentType<any>;
 /** @deprecated Migrate to new Modals */
-export const ModalCloseButton = LazyComponent(() => (Modals as any).ModalCloseButton) as never;
+export const ModalCloseButton = LazyComponent(() => (Modals as any).ModalCloseButton) as ComponentType<any>;
 export const CloseButton = findComponentByCodeLazy("CLOSE_BUTTON_LABEL");
 
 /** @deprecated Migrate to new Modals */
@@ -56,7 +65,7 @@ export const ModalAPI = {
     openModalLazy,
     closeModal,
     closeAllModals
-} as never;
+} as any;
 
 export {
     /** @deprecated Migrate to new Modals */

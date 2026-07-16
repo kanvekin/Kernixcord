@@ -203,8 +203,8 @@ async function init() {
     const startupTimeout = setTimeout(() => {
         console.error("[Kernixcord] CRITICAL: Startup timeout reached, forcing initialization");
         // Force webpack ready state to prevent hanging
-        if (typeof _resolveReady === 'function') {
-            _resolveReady();
+        if (typeof (globalThis as any)._resolveReady === 'function') {
+            (globalThis as any)._resolveReady();
         }
     }, 15000); // 15 second timeout
 
