@@ -11,7 +11,7 @@ import { Heart } from "@components/Heart";
 import { Paragraph } from "@components/Paragraph";
 import { DonateButton, TranslateButton } from "@components/settings";
 import { Margins } from "@utils/margins";
-import { Modal, openModal } from "@webpack/common";
+import { closeModal, Forms, Modal, openModal } from "@webpack/common";
 
 export function VencordDonorModal() {
     openModal(props => (
@@ -118,13 +118,13 @@ export function EquicordDonorModal() {
                             Please consider supporting the development of Kernixcord by becoming a donor. It would mean a lot! :3
                         </Forms.FormText>
                     </div>
-                </ModalContent>
-                <ModalFooter>
+                </div>
+                <div>
                     <Flex style={{ width: "100%", justifyContent: "center" }}>
                         <DonateButton />
                     </Flex>
-                </ModalFooter>
-            </ModalRoot>
+                </div>
+            </Modal>
         </ErrorBoundary>
     ));
 }
@@ -136,23 +136,25 @@ export function KernixcordDonorModal() {
             // Will get my own in the future
             VencordNative.native.openExternal("https://github.com/sponsors/kanvekin");
         }}>
-            <ModalRoot {...props}>
-                <ModalHeader>
-                    <Flex style={{ width: "100%", justifyContent: "center" }}>
-                        <Forms.FormTitle
-                            tag="h2"
-                            style={{
-                                width: "100%",
-                                textAlign: "center",
-                                margin: 0
-                            }}
-                        >
+            <Modal
+                {...props}
+                title={
+                    <Heading
+                        tag="h2"
+                        style={{
+                            width: "100%",
+                            textAlign: "center",
+                            margin: 0
+                        }}
+                    >
+                        <Flex justifyContent="center" alignItems="center" gap="0.5em">
                             <Heart />
                             Kernixcord Donor
-                        </Forms.FormTitle>
-                    </Flex>
-                </ModalHeader>
-                <ModalContent>
+                        </Flex>
+                    </Heading>
+                }
+            >
+                <div>
                     <Flex>
                         <img
                             role="presentation"
@@ -182,7 +184,7 @@ export function KernixcordDonorModal() {
                     </Flex>
                 </div>
             </Modal>
-        </ErrorBoundary >
+        </ErrorBoundary>
     ));
 }
 

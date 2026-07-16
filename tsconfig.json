@@ -56,14 +56,20 @@
             "@webpack/types": [
                 "./src/webpack/types"
             ],
+            "Vencord": [
+                "./src/Vencord.ts"
+            ],
+            "webpack/common/internal": [
+                "./src/webpack/common/internal.tsx"
+            ],
             "@plugins/*": [
-                "./plugins/*"
+                "./src/plugins/*"
             ],
             "@equicordplugins/*": [
-                "./equicordplugins/*"
+                "./src/equicordplugins/*"
             ],
             "@kernixcordplugins/*": [
-                "./kernixcordplugins/*"
+                "./src/kernixcordplugins/*"
             ]
         },
         "plugins": [
