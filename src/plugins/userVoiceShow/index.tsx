@@ -48,6 +48,8 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "UserVoiceShow",
     description: "Shows an indicator when a user is in a Voice Channel",
+    tags: ["Voice", "Appearance", "Friends"],
+    dependencies: ["MemberListDecoratorsAPI", "MessageDecorationsAPI", "NicknameIconsAPI"],
     authors: [Devs.Nuckyz, Devs.LordElias, EquicordDevs.omaw],
     settings,
     renderNicknameIcon({ userId }) {
@@ -70,7 +72,7 @@ export default definePlugin({
         {
             find: "null!=this.peopleListItemRef.current",
             replacement: {
-                match: /\.actions,children:\[(?<=isFocused:(\i).+?)/,
+                match: /\.isProvisional.{0,50}?className:\i\.\i,children:\[(?<=isFocused:(\i).+?)/,
                 replace: "$&$self.VoiceChannelIndicator({userId:this?.props?.user?.id,isActionButton:true,shouldHighlight:$1}),"
             },
             predicate: () => settings.store.showInMemberList

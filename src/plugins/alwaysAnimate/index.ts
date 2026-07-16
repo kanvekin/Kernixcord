@@ -51,6 +51,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "AlwaysAnimate",
     description: "Animates anything that can be animated",
+    tags: ["Appearance", "Fun"],
     authors: [Devs.FieryFlames],
     settings,
     patches: [
@@ -80,11 +81,27 @@ export default definePlugin({
         },
         {
             // Guild Banner
-            find: ".animatedBannerHoverLayer,onMouseEnter:",
+            find: "#{intl::DISCOVERABLE_GUILD_HEADER_PUBLIC_INFO}",
             predicate: () => settings.store.serverBanners,
             replacement: {
-                match: /(\.headerContent.+?guildBanner:\i,animate:)\i/,
+                match: /(guildBanner:\i,animate:)\i(?=}\):null)/,
                 replace: "$1!0"
+            }
+        },
+        {
+            // Gradient roles in chat
+            find: "=!1,contentOnly:",
+            replacement: {
+                match: /animate:\i/,
+                replace: "animate:!0"
+            }
+        },
+        {
+            // Gradient roles in member list
+            find: '="left",className:',
+            replacement: {
+                match: /,animateGradient:/,
+                replace: ",animateGradient:!0,_oldAnimateGradient:"
             }
         },
         {
@@ -92,8 +109,8 @@ export default definePlugin({
             find: ".MINI_PREVIEW,[",
             predicate: () => settings.store.nameplates,
             replacement: {
-                match: /animate:\i,loop:.{0,15}===\i/,
-                replace: "animate:true,loop:true"
+                match: /animate:\i,loop:/,
+                replace: "animate:true,loop:true,_loop:"
             },
         },
         {

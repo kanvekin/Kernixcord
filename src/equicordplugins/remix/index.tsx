@@ -5,21 +5,18 @@
  */
 
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
-import { disableStyle, enableStyle } from "@api/Styles";
 import { PaintbrushIcon } from "@components/Icons";
 import { EquicordDevs } from "@utils/constants";
-import { closeModal, openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
-import { extractAndLoadChunksLazy, findStoreLazy } from "@webpack";
-import { ChannelStore, DraftType, FluxDispatcher, Menu, SelectedChannelStore, UploadHandler } from "@webpack/common";
+import { extractAndLoadChunksLazy } from "@webpack";
+import { ChannelStore, closeModal, DraftType, FluxDispatcher, Menu, openModal, PendingReplyStore, SelectedChannelStore, UploadHandler } from "@webpack/common";
 
 import RemixModal from "./RemixModal";
 import css from "./styles.css?managed";
 
-const requireCreateStickerModal = extractAndLoadChunksLazy(["stickerInspected]:"]);
-const requireSettingsMenu = extractAndLoadChunksLazy(['name:"UserSettings"'], /createPromise:.{0,20}(\i\.\i\("?.+?"?\).*?).then\(\i\.bind\(\i,"?(.+?)"?\)\).{0,50}"UserSettings"/);
+const requireCreateStickerModal = extractAndLoadChunksLazy([".CREATE_STICKER_MODAL,", "isDisplayingIndividualStickers"]);
+const requireSettingsMenu = extractAndLoadChunksLazy(['type:"USER_SETTINGS_MODAL_OPEN"']);
 
-const PendingReplyStore = findStoreLazy("PendingReplyStore");
 const validMediaTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
 
 const UploadContextMenuPatch: NavContextMenuPatchCallback = (children, props) => {
@@ -72,21 +69,16 @@ export function sendRemix(blob: Blob) {
 export default definePlugin({
     name: "RemixRevived",
     description: "Revives Remix and breings it to Desktop",
+    tags: ["Customisation", "Fun"],
     authors: [EquicordDevs.MrDiamond, EquicordDevs.meowabyte],
     contextMenus: {
         "channel-attach": UploadContextMenuPatch,
         "message": MessageContextMenuPatch,
     },
-
+    managedStyle: css,
     async start() {
 
         await requireCreateStickerModal();
         await requireSettingsMenu();
-
-        enableStyle(css);
-    },
-
-    stop() {
-        disableStyle(css);
     },
 });

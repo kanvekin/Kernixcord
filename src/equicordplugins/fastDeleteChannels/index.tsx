@@ -74,6 +74,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "FastDeleteChannels",
     description: "Adds a trash icon to delete channels",
+    tags: ["Servers", "Utility"],
     authors: [Devs.thororen],
     settings,
     patches: [
@@ -88,7 +89,7 @@ export default definePlugin({
         },
         // Threads
         {
-            find: "spineWithGuildIcon]:",
+            find: "18V16H9v2H6Zm3",
             replacement: {
                 match: /mentionsCount:\i.+?null(?<=channel:(\i).+?)/,
                 replace: "$&,$self.TrashIcon($1)"

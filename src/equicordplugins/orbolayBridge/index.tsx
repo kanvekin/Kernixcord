@@ -27,49 +27,16 @@ const settings = definePluginSettings({
         default: 6888,
         restartNeeded: true
     },
-    isKeybindEnabled: {
-        type: OptionType.BOOLEAN,
-        description: "Enable/disable the global keybind (Ctrl + `)",
-        default: true,
-        restartNeeded: true,
-    },
-    messageAlignment: {
-        type: OptionType.SELECT,
-        description: "Alignment of messages in the overlay",
-        options: [
-            { label: "Top left", value: "topleft", default: true },
-            { label: "Top right", value: "topright" },
-            { label: "Bottom left", value: "bottomleft" },
-            { label: "Bottom right", value: "bottomright" },
-        ],
-        default: "topright",
-        restartNeeded: true
-    },
-    userAlignment: {
-        type: OptionType.SELECT,
-        description: "Alignment of users in the overlay",
-        options: [
-            { label: "Top left", value: "topleft", default: true },
-            { label: "Top right", value: "topright" },
-            { label: "Bottom left", value: "bottomleft" },
-            { label: "Bottom right", value: "bottomright" },
-        ],
-        default: "topleft",
-        restartNeeded: true
-    },
-    voiceSemitransparent: {
-        type: OptionType.BOOLEAN,
-        description: "Make voice channel members transparent",
-        default: true,
-        restartNeeded: true
-    },
-    messagesSemitransparent: {
-        type: OptionType.BOOLEAN,
-        description: "Make message notifications transparent",
-        default: false,
-        restartNeeded: true
-    },
 });
+
+const sendConfig = () => {
+    if (ws?.readyState !== WebSocket.OPEN) return;
+
+    const userId = UserStore.getCurrentUser()?.id;
+    if (!userId) return;
+
+    ws.send(JSON.stringify({ cmd: "REGISTER_CONFIG", userId }));
+};
 
 let ws: WebSocket | null = null;
 let currentChannel: string | null = null;
@@ -254,6 +221,7 @@ const createWebsocket = () => {
         }
     }, 1000);
 
+    // Use the configured port locally to open the websocket, but do not include it in REGISTER_CONFIG
     ws = new WebSocket("ws://127.0.0.1:" + settings.store.port);
     ws.onerror = e => {
         ws?.close?.();
@@ -273,17 +241,20 @@ const createWebsocket = () => {
             id: Toasts.genId(),
         });
 
-        const config = {
-            ...settings.store,
-            userId: null,
-        };
+        const userId = await waitForPopulate(() => UserStore.getCurrentUser().id);
+        if (!userId) return;
 
-        config.userId = await waitForPopulate(() => UserStore.getCurrentUser().id);
-        if (!config.userId) return;
+        sendConfig();
 
-        ws?.send(JSON.stringify({ cmd: "REGISTER_CONFIG", ...config }));
+        // Let the client know whether we are in streamer mode
+        ws?.send(
+            JSON.stringify({
+                cmd: "STREAMER_MODE",
+                enabled: StreamerModeStore.enabled,
+            })
+        );
 
-        const userVoiceState = VoiceStateStore.getVoiceStateForUser(config.userId);
+        const userVoiceState = VoiceStateStore.getVoiceStateForUser(userId);
         if (!userVoiceState || !userVoiceState.channelId) return;
 
         const channel = ChannelStore.getChannel(userVoiceState.channelId);
@@ -300,13 +271,6 @@ const createWebsocket = () => {
             })
         );
 
-        ws?.send(
-            JSON.stringify({
-                cmd: "STREAMER_MODE",
-                enabled: StreamerModeStore.enabled,
-            })
-        );
-
         currentChannel = userVoiceState.channelId;
     };
 };
@@ -314,6 +278,7 @@ const createWebsocket = () => {
 export default definePlugin({
     name: "OrbolayBridge",
     description: "Bridge plugin to connect Orbolay to Discord",
+    tags: ["Utility", "Voice"],
     authors: [EquicordDevs.SpikeHD],
     settings,
     flux: {

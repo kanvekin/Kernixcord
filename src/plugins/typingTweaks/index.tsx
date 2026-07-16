@@ -16,10 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { definePluginSettings, Settings } from "@api/Settings";
+import { definePluginSettings, migratePluginToSettings, Settings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { getCustomColorString } from "@equicordplugins/customUserColors";
-import { Devs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
+import { classNameFactory } from "@utils/css";
 import { openUserProfile } from "@utils/discord";
 import { isNonNullish } from "@utils/guards";
 import { Logger } from "@utils/Logger";
@@ -30,6 +31,7 @@ import { PropsWithChildren } from "react";
 
 import managedStyle from "./style.css?managed";
 
+const cl = classNameFactory("vc-typing-tweaks-");
 const settings = definePluginSettings({
     showAvatars: {
         type: OptionType.BOOLEAN,
@@ -45,6 +47,12 @@ const settings = definePluginSettings({
         type: OptionType.BOOLEAN,
         default: true,
         description: "Show a more useful message when several users are typing"
+    },
+    amITyping: {
+        type: OptionType.BOOLEAN,
+        default: false,
+        restartNeeded: true,
+        description: "Shows you if other people can see you typing"
     }
 });
 
@@ -81,7 +89,7 @@ function typingUserColor(guildId: string, userId: string): string | undefined {
 const TypingUser = ErrorBoundary.wrap(function TypingUser({ user, guildId }: TypingUserProps) {
     return (
         <strong
-            className="vc-typing-user"
+            className={cl("user")}
             role="button"
             onClick={() => {
                 openUserProfile(user.id);
@@ -92,6 +100,7 @@ const TypingUser = ErrorBoundary.wrap(function TypingUser({ user, guildId }: Typ
         >
             {settings.store.showAvatars && (
                 <Avatar
+                    className={cl("avatar")}
                     size="SIZE_16"
                     src={user.getAvatarURL(guildId, 128)} />
             )}
@@ -104,26 +113,29 @@ const TypingUser = ErrorBoundary.wrap(function TypingUser({ user, guildId }: Typ
     );
 }, { noop: true });
 
+migratePluginToSettings(true, "TypingTweaks", "AmITyping", "amITyping");
 export default definePlugin({
     name: "TypingTweaks",
     description: "Show avatars and role colours in the typing indicator",
-    authors: [Devs.zt, Devs.sadan],
+    tags: ["Appearance", "Customisation"],
+    authors: [Devs.zt, Devs.sadan, EquicordDevs.MrDiamond],
     settings,
+    isModified: true,
 
     managedStyle,
 
     patches: [
         {
-            find: "#{intl::THREE_USERS_TYPING}",
+            find: "#{intl::SEVERAL_USERS_TYPING_STRONG}",
             group: true,
             replacement: [
                 {
                     // Style the indicator and add function call to modify the children before rendering
-                    match: /(?<="aria-atomic":!0,children:)\i/,
+                    match: /(?<="aria-hidden":!0,children:)\i/,
                     replace: "$self.renderTypingUsers({ users: arguments[0]?.typingUserObjects, guildId: arguments[0]?.channel?.guild_id, children: $& })"
                 },
                 {
-                    match: /(?<=function \i\(\i\)\{)(?=[^}]+?\{channel:\i,isThreadCreation:\i=!1\})/,
+                    match: /(?<=function \i\(\i\)\{)(?=[^}]+?\{channel:\i,isThreadCreation:\i=!1,\.\.\.\i\})/,
                     replace: "let typingUserObjects = $self.useTypingUsers(arguments[0]?.channel);"
                 },
                 {
@@ -140,6 +152,14 @@ export default definePlugin({
                     predicate: () => settings.store.alternativeFormatting
                 }
             ]
+        },
+        {
+            find: "this.handleDismissInviteEducation",
+            predicate: () => settings.store.amITyping,
+            replacement: {
+                match: /\i\.default\.getCurrentUser\(\)/,
+                replace: "\"\""
+            }
         }
     ],
 
@@ -155,7 +175,7 @@ export default definePlugin({
             return Object.keys(typingUsers)
                 .filter(id => {
                     if (!id || RelationshipStore.isBlockedOrIgnored(id)) return false;
-                    if (id === myId) return Settings.plugins.AmITyping?.enabled;
+                    if (id === myId) return settings.store.amITyping;
                     return true;
                 })
                 .map(id => UserStore.getUser(id))
@@ -165,7 +185,6 @@ export default definePlugin({
             return [];
         }
     },
-
 
     buildSeveralUsers,
 
@@ -178,8 +197,7 @@ export default definePlugin({
             let element = 0;
 
             return children.map(c => {
-                if (c.type !== "strong" && !(typeof c !== "string" && !React.isValidElement(c)))
-                    return c;
+                if (c.type !== "strong" && !(typeof c !== "string" && !React.isValidElement(c))) return c;
 
                 const user = users[element++];
                 return <TypingUser key={user.id} guildId={guildId} user={user} />;

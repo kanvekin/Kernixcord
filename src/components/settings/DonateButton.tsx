@@ -52,7 +52,7 @@ export function InviteButton({
             type="button"
             onClick={async e => {
                 e.preventDefault();
-                openInviteModal("champions").catch(() =>
+                openInviteModal("dikkat").catch(() =>
                     showToast("Invalid or expired invite"),
                 );
             }}
@@ -60,6 +60,25 @@ export function InviteButton({
         >
             Invite
             <OpenExternalIcon className="vc-invite-link" />
+        </Button>
+    );
+}
+
+export function TranslateButton({
+    className,
+    ...props
+}: Partial<ButtonProps>) {
+    const link = "https://weblate.equicord.org/projects/equicord/";
+    return (
+        <Button
+            {...props}
+            variant="none"
+            size="medium"
+            type="button"
+            onClick={() => VencordNative.native.openExternal(link)}
+            className={className || "vc-translate-button"}
+        >
+            Translate Here
         </Button>
     );
 }

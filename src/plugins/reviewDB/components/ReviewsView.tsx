@@ -19,7 +19,7 @@
 import { Paragraph } from "@components/Paragraph";
 import { Auth, authorize } from "@plugins/reviewDB/auth";
 import { Review, ReviewType } from "@plugins/reviewDB/entities";
-import { addReview, getReviews, Response, REVIEWS_PER_PAGE } from "@plugins/reviewDB/reviewDbApi";
+import { addReview, getReviews, REVIEWS_PER_PAGE, UserReviewsData } from "@plugins/reviewDB/reviewDbApi";
 import { settings } from "@plugins/reviewDB/settings";
 import { cl, showToast } from "@plugins/reviewDB/utils";
 import { useAwaiter, useForceUpdater } from "@utils/react";
@@ -32,7 +32,7 @@ const Transforms = findByPropsLazy("insertNodes", "textToText");
 const Editor = findByPropsLazy("start", "end", "toSlateRange");
 const ChatInputTypes = findByPropsLazy("FORM", "USER_PROFILE");
 const InputComponent = findComponentByCodeLazy("editorClassName", "CHANNEL_TEXT_AREA");
-const createChannelRecordFromServer = findByCodeLazy(".GUILD_TEXT])", "fromServer)");
+const createChannelRecordFromServer = findByCodeLazy(".GUILD_TEXT]", "fromServer)");
 
 interface UserProps {
     discordId: string;
@@ -40,7 +40,7 @@ interface UserProps {
 }
 
 interface Props extends UserProps {
-    onFetchReviews(data: Response): void;
+    onFetchReviews(data: UserReviewsData): void;
     refetchSignal?: unknown;
     showInput?: boolean;
     page?: number;
@@ -62,13 +62,15 @@ export default function ReviewsView({
 }: Props) {
     const [signal, refetch] = useForceUpdater(true);
 
-    const [reviewData] = useAwaiter(() => getReviews(discordId, (page - 1) * REVIEWS_PER_PAGE), {
+    const [reviewData] = useAwaiter(() => getReviews(discordId, { offset: (page - 1) * REVIEWS_PER_PAGE, fetchVotes: true }), {
         fallbackValue: null,
         deps: [refetchSignal, signal, page],
         onSuccess: data => {
-            if (settings.store.hideBlockedUsers)
-                data!.reviews = data!.reviews?.filter(r => !RelationshipStore.isBlocked(r.sender.discordID));
+            if (settings.store.hideBlockedUsers) data!.reviews = data!.reviews?.filter(r => !RelationshipStore.isBlocked(r.sender.discordID));
+            const systemReviews = data!.reviews.filter(r => r.type === ReviewType.System);
+            const normalReviews = data!.reviews.filter(r => r.type !== ReviewType.System);
 
+            data!.reviews = [...systemReviews, ...normalReviews.reverse()];
             scrollToTop?.();
             onFetchReviews(data!);
         }
@@ -121,7 +123,6 @@ function ReviewList({ refetch, reviews, hideOwnReview, profileId, type }: { refe
         </div>
     );
 }
-
 
 export function ReviewsInputComponent(
     { discordId, isAuthor, refetch, name, modalKey, repliesTo }: { discordId: string, name: string; isAuthor: boolean; refetch(): void; modalKey?: string; repliesTo?: number; }

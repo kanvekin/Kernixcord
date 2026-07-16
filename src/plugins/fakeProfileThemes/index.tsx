@@ -200,6 +200,7 @@ function SettingsAboutComponent() {
 export default definePlugin({
     name: "FakeProfileThemes",
     description: "Allows profile theming by hiding the colors in your bio thanks to invisible 3y3 encoding",
+    tags: ["Appearance", "Customisation"],
     authors: [Devs.Alyxia, Devs.Remty],
     patches: [
         {
@@ -210,11 +211,21 @@ export default definePlugin({
             },
         },
         {
-            find: "#{intl::USER_SETTINGS_RESET_PROFILE_THEME}",
+            find: "#{intl::USER_SETTINGS_RESET_PROFILE_THEME}),onClick:",
             replacement: {
                 match: /#{intl::USER_SETTINGS_RESET_PROFILE_THEME}\).+?}\)(?=\])(?<=color:(\i),.{0,500}?color:(\i),.{0,500}?)/,
                 replace: "$&,$self.addCopy3y3Button({primary:$1,accent:$2})"
             }
+        },
+        // 2026-03-wysiwyg-user-profile-editing
+        {
+            find: '("UserProfileModalV2EditingPanel")',
+            replacement: [
+                {
+                    match: /\(0,\i\.jsxs?\)\(\i,\{heading:.{0,40}#{intl::USER_SETTINGS_PROFILE_EFFECT}/,
+                    replace: "$self.addCopy3y3Button(),$&"
+                }
+            ]
         }
     ],
 
@@ -243,9 +254,8 @@ export default definePlugin({
             }}
             color={Button.Colors.PRIMARY}
             size={Button.Sizes.XLARGE}
-            className={Margins.left16}
-        >Copy 3y3
-        </Button >;
+        >
+            Copy 3y3
+        </Button>;
     }, { noop: true }),
 });
-

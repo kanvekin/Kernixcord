@@ -4,19 +4,58 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { definePluginSettings } from "@api/Settings";
+import { definePluginSettings, Settings } from "@api/Settings";
+import { Button } from "@components/Button";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { OptionType } from "@utils/types";
-import { Alerts, Button } from "@webpack/common";
-import { Settings } from "Vencord";
+import { Alerts, useState } from "@webpack/common";
 
-import { Native } from ".";
+import { clearLogs, Native } from ".";
 import { ImageCacheDir, LogsDir } from "./components/FolderSelectInput";
 import { openLogModal } from "./components/LogsModal";
-import { clearMessagesIDB } from "./db";
 import { blockedExts } from "./list";
 import { DEFAULT_IMAGE_CACHE_DIR } from "./utils/constants";
 import { exportLogs, importLogs } from "./utils/settingsUtils";
+
+function ImportLogsButton() {
+    const [loading, setLoading] = useState(false);
+
+    return (
+        <Button
+            disabled={loading}
+            onClick={async () => {
+                setLoading(true);
+                try {
+                    await importLogs();
+                } finally {
+                    setLoading(false);
+                }
+            }}
+        >
+            {loading ? "Importing..." : "Import Logs"}
+        </Button>
+    );
+}
+
+function ExportLogsButton() {
+    const [loading, setLoading] = useState(false);
+
+    return (
+        <Button
+            disabled={loading}
+            onClick={async () => {
+                setLoading(true);
+                try {
+                    await exportLogs();
+                } finally {
+                    setLoading(false);
+                }
+            }}
+        >
+            {loading ? "Exporting..." : "Export Logs"}
+        </Button>
+    );
+}
 
 export const settings = definePluginSettings({
     saveMessages: {
@@ -98,6 +137,12 @@ export const settings = definePluginSettings({
         description: "Always log current selected channel. Blacklisted channels/users will still be ignored.",
     },
 
+    permanentlyRemoveLogByDefault: {
+        default: false,
+        type: OptionType.BOOLEAN,
+        description: "Vencord's base MessageLogger remove log button wiil delete logs permanently",
+    },
+
     hideMessageFromMessageLoggers: {
         default: false,
         type: OptionType.BOOLEAN,
@@ -144,25 +189,45 @@ export const settings = definePluginSettings({
     attachmentFileExtensions: {
         default: "png,jpg,jpeg,gif,webp,mp4,webm,mp3,ogg,wav",
         type: OptionType.STRING,
-        description: "Comma separated list of file extensions to save. Attachments with file extensions not in this list will not be saved. Leave empty to save all attachments.",
+        description: "Comma separated list of file extensions to save. Attachments with file extensions not in this list will not be saved.",
         onChange: (value: string) => {
-            if (!value) return;
-            const exts = value.split(",").map(ext => ext.trim().toLowerCase());
+            let processedValue = "";
 
-            const invalid = exts.filter(ext => blockedExts.includes(ext));
-            if (invalid.length > 0) {
-                console.warn("Rejected invalid file extensions:", invalid);
-                return exts.filter(ext => !blockedExts.includes(ext)).join(",");
+            if (value) {
+                const exts = value.split(",").map(ext => ext.trim().toLowerCase());
+                const invalid = exts.filter(ext => blockedExts.includes(ext));
+
+                if (invalid.length > 0) {
+                    console.warn("Rejected invalid file extensions:", invalid);
+                    processedValue = exts.filter(ext => !blockedExts.includes(ext)).join(",");
+                } else {
+                    processedValue = exts.join(",");
+                }
             }
 
-            return exts.join(",");
+            Native.updateAllowedExtensions(processedValue).catch((err: any) => {
+                console.error("Failed to sync attachment extensions natively:", err);
+            });
+
+            return processedValue;
         }
     },
-
     cacheLimit: {
         default: 1000,
         type: OptionType.NUMBER,
         description: "Maximum number of messages to store in the cache. Older messages are deleted when the limit is reached. This helps reduce memory usage and improve performance. 0 means there is no limit",
+    },
+
+    timeBasedCleanupMinutes: {
+        default: 0,
+        type: OptionType.NUMBER,
+        description: "Automatically remove messages from servers that are older than this many minutes. Set to 0 to disable time-based cleanup.",
+    },
+
+    preserveCurrentChannel: {
+        default: true,
+        type: OptionType.BOOLEAN,
+        description: "When enabled, messages in your currently selected channel are not affected by time-based cleanup.",
     },
 
     whitelistedIds: {
@@ -192,19 +257,20 @@ export const settings = definePluginSettings({
     importLogs: {
         type: OptionType.COMPONENT,
         description: "Import Logs From File",
-        component: () =>
-            <Button onClick={importLogs}>
-                Import Logs
-            </Button>
+        component: ImportLogsButton
     },
 
     exportLogs: {
         type: OptionType.COMPONENT,
         description: "Export Logs From IndexedDB",
-        component: () =>
-            <Button onClick={exportLogs}>
-                Export Logs
-            </Button>
+        component: ExportLogsButton
+    },
+
+    clearLogsOnRestart: {
+        type: OptionType.BOOLEAN,
+        description: "Clear logs when Discord restarts.",
+        default: false,
+        restartNeeded: true,
     },
 
     openLogs: {
@@ -225,7 +291,7 @@ export const settings = definePluginSettings({
                     || settings.store.imageCacheDir == null
                     || settings.store.imageCacheDir === DEFAULT_IMAGE_CACHE_DIR
                 }
-                onClick={() => Native.showItemInFolder(settings.store.imageCacheDir)}
+                onClick={() => Native.showItemInFolder()}
             >
                 Open Image Cache Folder
             </Button>
@@ -236,15 +302,15 @@ export const settings = definePluginSettings({
         description: "Clear Logs",
         component: () =>
             <Button
-                color={Button.Colors.RED}
+                variant="dangerPrimary"
                 onClick={() => Alerts.show({
                     title: "Clear Logs",
                     body: "Are you sure you want to clear all logs?",
-                    confirmColor: Button.Colors.RED,
+                    confirmVariant: "critical-primary",
                     confirmText: "Clear",
                     cancelText: "Cancel",
-                    onConfirm: () => {
-                        clearMessagesIDB();
+                    onConfirm: async () => {
+                        await clearLogs();
                     },
                 })}
             >

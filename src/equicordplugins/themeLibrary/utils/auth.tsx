@@ -7,8 +7,7 @@
 import * as DataStore from "@api/DataStore";
 import { showNotification } from "@api/Notifications";
 import { logger, themeRequest } from "@equicordplugins/themeLibrary/components/ThemeTab";
-import { openModal } from "@utils/modal";
-import { OAuth2AuthorizeModal, Toasts, UserStore } from "@webpack/common";
+import { OAuth2AuthorizeModal, openModal,Toasts, UserStore } from "@webpack/common";
 
 export async function authorizeUser(triggerModal: boolean = true) {
     const isAuthorized = await getAuthorization();
@@ -19,9 +18,9 @@ export async function authorizeUser(triggerModal: boolean = true) {
             {...props}
             scopes={["identify", "connections"]}
             responseType="code"
-            redirectUri="https://discord-themes.com/api/user/auth"
+            redirectUri="https://themes.equicord.org/api/user/auth"
             permissions={0n}
-            clientId="1257819493422465235"
+            clientId="1464006702125940736"
             cancelCompletesFlow={false}
             callback={async ({ location }: any) => {
                 if (!location) return logger.error("No redirect location returned");

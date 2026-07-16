@@ -45,6 +45,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "InviteDefaults",
     description: "Allows you to edit the default values when creating server invites.",
+    tags: ["Servers"],
     authors: [EquicordDevs.VillainsRule],
     settings,
     patches: [
@@ -52,7 +53,7 @@ export default definePlugin({
             find: ".GUILD_CREATE_INVITE_SUGGESTION,defaultMaxAge",
             replacement: [
                 {
-                    match: /(?<=maxAge:)null!=\(\i=null!=\i\?\i:\i\)\?\i:\i.\i/,
+                    match: /(?<=maxAge:)\i\?\?\i\?\?\i/,
                     replace: "$self.settings.store.inviteDuration"
                 },
                 {
@@ -60,7 +61,7 @@ export default definePlugin({
                     replace: "$self.settings.store.maxUses"
                 },
                 {
-                    match: /(?<=temporary:)null!=\i&&\i/,
+                    match: /(?<=temporary:)\i\?\?!1/,
                     replace: "$self.settings.store.temporaryMembership"
                 }
             ]

@@ -5,15 +5,14 @@
  */
 
 import { showNotice } from "@api/Notices";
-import { isPluginEnabled, pluginRequiresRestart, startDependenciesRecursive, startPlugin, stopPlugin } from "@api/PluginManager";
+import { hasAnyVisibleSettings, isPluginEnabled, pluginRequiresRestart, startDependenciesRecursive, startPlugin, stopPlugin } from "@api/PluginManager";
+import { Settings } from "@api/Settings";
 import { CogWheel, InfoIcon } from "@components/Icons";
 import { AddonCard } from "@components/settings/AddonCard";
 import { classNameFactory } from "@utils/css";
 import { Logger } from "@utils/Logger";
-import { isObjectEmpty } from "@utils/misc";
 import { Plugin } from "@utils/types";
 import { React, showToast, Toasts } from "@webpack/common";
-import { Settings } from "Vencord";
 
 import { PluginMeta } from "~plugins";
 
@@ -100,7 +99,7 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
         },
         {
             condition: isEquicordPlugin,
-            src: "https://equicord.org/assets/icons/equicord/icon.png",
+            src: "https://equicord.org/assets/favicon.png",
             alt: "Equicord",
             title: "Equicord Plugin"
         },
@@ -182,7 +181,7 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
                     onClick={() => openPluginModal(plugin, onRestartNeeded)}
                     className={cl("info-button")}
                 >
-                    {plugin.settings?.def && !isObjectEmpty(plugin.settings.def)
+                    {hasAnyVisibleSettings(plugin)
                         ? <CogWheel className={cl("info-icon")} />
                         : <InfoIcon className={cl("info-icon")} />
                     }

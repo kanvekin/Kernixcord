@@ -14,17 +14,27 @@ export let GlobalBadges = {};
 export const INVITE_LINK = "kwHCJPxp8t";
 export const cl = classNameFactory("vc-global-badges-");
 export const serviceMap: Record<string, string> = {
+    badgevault: "BadgeVault",
     nekocord: "Nekocord",
     reviewdb: "ReviewDB",
     aero: "Aero",
     aliucord: "Aliucord",
-    ra1ncord: "Ra1ncord",
+    raincord: "Raincord",
     velocity: "Velocity",
     enmity: "Enmity",
-    badgevault: "BadgeVault",
+    paicord: "Paicord",
+    bunny: "Bunny",
+    goosemod: "GooseMod",
+    replugged: "Replugged",
+    betterdiscord: "BetterDiscord",
+    vendroidenhanced: "VendroidEnhanced",
+    revenge: "Revenge",
+    record: "ReCord",
     vencord: "Vencord",
-    equicord: "Equicord",
+    equicord: "Equicord"
 };
+
+const blockedMods = ["vencord", "equicord"];
 
 export async function loadBadges() {
     const url = settings.store.apiUrl.endsWith("/") ? settings.store.apiUrl + "users" : settings.store.apiUrl + "/users";
@@ -34,10 +44,7 @@ export async function loadBadges() {
     for (const key in globalBadges.users) {
         filteredUsers[key] = globalBadges.users[key].filter(b => {
             const { mod } = b;
-            if (!mod) return false;
-
-            const blockedMods = ["vencord", "equicord"];
-            if (blockedMods.includes(mod)) return false;
+            if (!mod || blockedMods.includes(mod)) return false;
 
             const conditionalMods = {
                 aero: settings.store.showAero,
@@ -46,8 +53,16 @@ export async function loadBadges() {
                 nekocord: settings.store.showNekocord,
                 reviewdb: settings.store.showReviewDB,
                 aliucord: settings.store.showAliucord,
-                ra1ncord: settings.store.showRa1ncord,
-                enmity: settings.store.showEnmity
+                raincord: settings.store.showRaincord,
+                enmity: settings.store.showEnmity,
+                paicord: settings.store.showPaicord,
+                bunny: settings.store.showBunny,
+                goosemod: settings.store.showGooseMod,
+                replugged: settings.store.showReplugged,
+                betterdiscord: settings.store.showBetterDiscord,
+                vendroidenhanced: settings.store.showVendroidEnhanced,
+                revenge: settings.store.showRevenge,
+                record: settings.store.showReCord
             };
 
             if (mod in conditionalMods && !conditionalMods[mod]) return false;
@@ -55,8 +70,9 @@ export async function loadBadges() {
             return true;
         }).map(b => {
             const modFormatted = serviceMap[b.mod];
-            const prefix = settings.store.showPrefix ? `${modFormatted} - ` : "";
-            const suffix = settings.store.showSuffix ? ` - ${modFormatted}` : "";
+            const prefix = settings.store.showModStyle === "prefix" ? `${modFormatted} - ` : "";
+            const suffix = settings.store.showModStyle === "suffix" ? ` - ${modFormatted}` : "";
+
             const tooltip = prefix + b.tooltip + suffix;
             return {
                 ...b,

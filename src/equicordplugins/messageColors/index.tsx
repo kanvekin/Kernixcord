@@ -27,6 +27,7 @@ export default definePlugin({
     authors: [EquicordDevs.Hen],
     name: "MessageColors",
     description: "Displays color codes like #FF0042 inside of messages",
+    tags: ["Appearance", "Chat"],
     settings,
     patches: [
         // Create a new markdown rule, so it parses just like any other features
@@ -42,12 +43,9 @@ export default definePlugin({
         // Changes text md rule regex, so it stops right before hsl( | rgb(
         // Without it discord will try to pass a string without those to color rule
         {
-            find: ".defaultRules.text)",
-            group: true,
+            find: ".defaultRules.text,match",
             replacement: {
-                // $)/)
                 match: /\$\)\//,
-                // hsl(|rgb(|$&
                 replace: requiredFirstCharacters.join("|") + "|$&"
             }
         },

@@ -4,19 +4,20 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { BaseText } from "@components/BaseText";
 import ErrorBoundary from "@components/ErrorBoundary";
+import { FormSwitch } from "@components/FormSwitch";
+import { TooltipContainer } from "@components/TooltipContainer";
 import { classNameFactory } from "@utils/css";
 import { Margins } from "@utils/margins";
 import { classes } from "@utils/misc";
-import { ModalCloseButton, ModalContent, ModalHeader, ModalProps, ModalRoot, ModalSize, openModal } from "@utils/modal";
-import { findByPropsLazy } from "@webpack";
-import { TabBar, Timestamp, TooltipContainer, useState } from "@webpack/common";
+import { RenderModalProps } from "@vencord/discord-types";
+import { findCssClassesLazy } from "@webpack";
+import { Modal, openModal, TabBar, Timestamp, useState } from "@webpack/common";
 
-import { parseEditContent } from ".";
+import { parseEditContent, settings } from ".";
 
-const CodeContainerClasses = findByPropsLazy("markup", "codeContainer");
-const MiscClasses = findByPropsLazy("messageContent", "markupRtl");
+const CodeContainerClasses = findCssClassesLazy("markup", "codeContainer");
+const MiscClasses = findCssClassesLazy("messageContent", "markupRtl");
 
 const cl = classNameFactory("vc-ml-modal-");
 
@@ -31,63 +32,62 @@ export function openHistoryModal(message: any) {
     );
 }
 
-export function HistoryModal({ modalProps, message }: { modalProps: ModalProps; message: any; }) {
+export function HistoryModal({ modalProps, message }: { modalProps: RenderModalProps; message: any; }) {
     const [currentTab, setCurrentTab] = useState(message.editHistory.length);
+    const [showDiff, setShowDiff] = useState(settings.store.showEditDiffs);
     const timestamps = [message.firstEditTimestamp, ...message.editHistory.map(m => m.timestamp)];
     const contents = [...message.editHistory.map(m => m.content), message.content];
 
     return (
-        <ModalRoot {...modalProps} size={ModalSize.LARGE}>
-            <ModalHeader className={cl("head")}>
-                <BaseText size="lg" weight="semibold" style={{ flexGrow: 1 }}>Message Edit History</BaseText>
-                <ModalCloseButton onClick={modalProps.onClose} />
-            </ModalHeader>
-
-            <ModalContent className={cl("contents")}>
-                <TabBar
-                    type="top"
-                    look="brand"
-                    className={classes("vc-settings-tab-bar", cl("tab-bar"))}
-                    selectedItem={currentTab}
-                    onItemSelect={setCurrentTab}
-                >
-                    {message.firstEditTimestamp.getTime() !== message.timestamp.getTime() && (
-                        <TooltipContainer text="This edit state was not logged so it can't be displayed.">
-                            <TabBar.Item
-                                className="vc-settings-tab-bar-item"
-                                id={-1}
-                                disabled
-                            >
-                                <Timestamp
-                                    className={cl("timestamp")}
-                                    timestamp={message.timestamp}
-                                    isEdited={true}
-                                    isInline={false}
-                                />
-                            </TabBar.Item>
-                        </TooltipContainer>
-                    )}
-
-                    {timestamps.map((timestamp, index) => (
+        <Modal
+            {...modalProps}
+            size="lg"
+            title="Message Edit History"
+        >
+            <FormSwitch title="Show Diff" value={showDiff} onChange={setShowDiff} />
+            <TabBar
+                type="top"
+                look="brand"
+                className={classes("vc-settings-tab-bar", cl("tab-bar"))}
+                selectedItem={currentTab}
+                onItemSelect={setCurrentTab}
+            >
+                {message.firstEditTimestamp.getTime() !== message.timestamp.getTime() && (
+                    <TooltipContainer text="This edit state was not logged so it can't be displayed.">
                         <TabBar.Item
-                            key={index}
                             className="vc-settings-tab-bar-item"
-                            id={index}
+                            id={-1}
+                            disabled
                         >
                             <Timestamp
                                 className={cl("timestamp")}
-                                timestamp={timestamp}
+                                timestamp={message.timestamp}
                                 isEdited={true}
                                 isInline={false}
                             />
                         </TabBar.Item>
-                    ))}
-                </TabBar>
+                    </TooltipContainer>
+                )}
 
-                <div className={classes(CodeContainerClasses.markup, MiscClasses.messageContent, Margins.top20)}>
-                    {parseEditContent(contents[currentTab], message, currentTab === contents.length - 1 ? undefined : contents[contents.length - 1])}
-                </div>
-            </ModalContent>
-        </ModalRoot>
+                {timestamps.map((timestamp, index) => (
+                    <TabBar.Item
+                        key={index}
+                        className="vc-settings-tab-bar-item"
+                        id={index}
+                    >
+                        <Timestamp
+                            className={cl("timestamp")}
+                            timestamp={timestamp}
+                            isEdited={true}
+                            isInline={false}
+                        />
+                    </TabBar.Item>
+                ))}
+            </TabBar>
+
+            <div className={classes(CodeContainerClasses.markup, MiscClasses.messageContent, Margins.top20)}>
+                {parseEditContent(contents[currentTab], message, showDiff ? currentTab === contents.length - 1 ? undefined : contents[contents.length - 1] : undefined)}
+            </div>
+        </Modal>
     );
 }

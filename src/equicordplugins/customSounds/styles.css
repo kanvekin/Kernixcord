@@ -26,7 +26,7 @@
     background: var(--input-background-default, var(--input-background));
     border: none;
     border-radius: 3px;
-    color: var(--text-normal);
+    color: var(--text-default);
 }
 
 .vc-custom-sounds-buttons {
@@ -45,7 +45,7 @@
     background: var(--input-background-default, var(--input-background));
     border: none;
     border-radius: 3px;
-    color: var(--text-normal);
+    color: var(--text-default);
 }
 
 .vc-custom-sounds-sounds-list {
@@ -54,6 +54,12 @@
     gap: 16px;
 }
 
-.vc-custom-sounds-preview-controls {
+.vc-custom-sounds-override-controls {
     display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.vc-custom-sounds-file-input {
+    display: none;
 }

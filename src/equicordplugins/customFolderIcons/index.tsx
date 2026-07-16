@@ -14,11 +14,12 @@ import { folderProp, int2rgba } from "./util";
 export default definePlugin({
     name: "CustomFolderIcons",
     description: "Customize folder icons with any png",
+    tags: ["Appearance", "Customisation", "Organisation"],
     authors: [EquicordDevs.sadan],
     settings,
     patches: [
         {
-            find: ".folderButtonInner",
+            find: "#{intl::GUILD_FOLDER_TOOLTIP_A11Y_LABEL}",
             replacement: {
                 match: /(\(0,\i\.jsx\)\(\i,\{folderNode:(\i),hovered:\i,sorting:\i\}\))/,
                 replace: "($self.shouldReplace({folderNode:$2})?$self.replace({folderNode:$2}):$1)"

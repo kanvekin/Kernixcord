@@ -59,8 +59,9 @@ async function ensureBinary() {
     writeFileSync(ETAG_FILE, res.headers.get("etag"));
 
     if (process.platform === "darwin") {
-        console.log("Unzipping...");
+        console.log("Saving zip...");
         const zip = new Uint8Array(await res.arrayBuffer());
+        writeFileSync(downloadName, zip);
 
         const ff = await import("fflate");
         const unzipped = ff.unzipSync(zip);

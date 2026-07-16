@@ -44,7 +44,6 @@ function PopOverIcon() {
     );
 }
 
-
 function Indicator() {
     return (
         <Tooltip text="This message has a hidden message! (InvisibleChat)">
@@ -150,8 +149,9 @@ export async function buildEmbed(message: any, revealed: string): Promise<void> 
 export default definePlugin({
     name: "InvisibleChat",
     description: "Encrypt your Messages in a non-suspicious way!",
+    tags: ["Chat"],
     authors: [Devs.SammCheese],
-    dependencies: ["MessageUpdaterAPI"],
+    dependencies: ["MessageUpdaterAPI", "ChatInputButtonAPI", "MessagePopoverAPI"],
     reporterTestable: ReporterTestable.Patches,
     settings,
 

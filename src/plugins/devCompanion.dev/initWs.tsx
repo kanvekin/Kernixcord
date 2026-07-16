@@ -5,19 +5,19 @@
  */
 
 import { popNotice, showNotice } from "@api/Notices";
+import { Settings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
+import { loadLazyChunks } from "@debug/loadLazyChunks";
+import { reporterData } from "@debug/reporterData";
 import { getIntlMessageFromHash } from "@utils/discord";
 import { canonicalizeMatch, canonicalizeReplace } from "@utils/patches";
 import { filters, findAll, search, wreq } from "@webpack";
 import { React, Toasts, useState } from "@webpack/common";
-import { loadLazyChunks } from "debug/loadLazyChunks";
-import { reporterData } from "debug/reporterData";
-import { Settings } from "Vencord";
 
 import { CLIENT_VERSION, logger, PORT, settings } from ".";
 import { Recieve } from "./types";
 import { FullOutgoingMessage, OutgoingMessage } from "./types/send";
-import { extractModule, extractOrThrow, findModuleId, getModulePatchedBy, mkRegexFind, parseNode, toggleEnabled, } from "./util";
+import { extractModule, extractOrThrow, findAllModuleIds, findModuleId, getModulePatchedBy, mkRegexFind, parseNode, toggleEnabled, } from "./util";
 
 export function stopWs() {
     socket?.close(1000, "Plugin Stopped");
@@ -256,44 +256,47 @@ export function initWs(isManual = false) {
                             }
 
                             try {
-                                let results: any[];
+                                let moduleIds: string[];
                                 switch (m.findType.replace("find", "").replace("Lazy", "")) {
                                     case "":
                                     case "Component":
-                                        results = findAll(parsedArgs[0]);
+                                        moduleIds = findAllModuleIds(parsedArgs[0]);
+                                        break;
+                                    case "CssClasses":
+                                        moduleIds = findAllModuleIds(filters.byClassNames(...parsedArgs), { topLevelOnly: true });
                                         break;
                                     case "ByProps":
-                                        results = findAll(filters.byProps(...parsedArgs));
+                                        moduleIds = findAllModuleIds(filters.byProps(...parsedArgs));
                                         break;
                                     case "Store":
-                                        results = findAll(filters.byStoreName(parsedArgs[0]));
+                                        moduleIds = findAllModuleIds(filters.byStoreName(parsedArgs[0]));
                                         break;
                                     case "ByCode":
-                                        results = findAll(filters.byCode(...parsedArgs));
+                                        moduleIds = findAllModuleIds(filters.byCode(...parsedArgs));
                                         break;
                                     case "ModuleId":
-                                        results = Object.keys(search(parsedArgs[0]));
+                                        moduleIds = Object.keys(search(parsedArgs[0]));
                                         break;
                                     case "ComponentByCode":
-                                        results = findAll(filters.componentByCode(...parsedArgs));
+                                        moduleIds = findAllModuleIds(filters.componentByCode(...parsedArgs));
                                         break;
                                     default:
                                         return reply("Unknown Find Type " + m.findType);
                                 }
 
-                                const uniqueResultsCount = new Set(results).size;
-                                if (uniqueResultsCount === 0) throw "No results";
-                                if (uniqueResultsCount > 1) throw "Found more than one result! Make this filter more specific";
+                                const uniqueModuleIds = new Set(moduleIds).size;
+                                if (uniqueModuleIds === 0) throw "No results";
+                                if (uniqueModuleIds > 1) throw "Found more than one result! Make this filter more specific";
                                 // best name ever
-                                const foundFind: string = [...results][0].toString();
+                                const [foundId] = moduleIds;
                                 replyData({
                                     type: "extract",
                                     ok: true,
                                     data: {
-                                        module: foundFind,
+                                        module: extractModule(foundId),
                                         find: true,
-                                        moduleNumber: +findModuleId([foundFind]),
-                                        patchedBy: getModulePatchedBy(foundFind)
+                                        moduleNumber: +foundId,
+                                        patchedBy: getModulePatchedBy(foundId)
                                     },
                                 });
                             } catch (err) {
@@ -329,6 +332,8 @@ export function initWs(isManual = false) {
 
                 if (src.startsWith("function(")) {
                     src = "0," + src;
+                } else if (src.charCodeAt(0) >= 49 /* 1*/ && src.charCodeAt(0) <= 57 /* 9*/) {
+                    src = "0,function" + src.substring(src.indexOf("("));
                 }
 
                 let i = 0;
@@ -370,6 +375,9 @@ export function initWs(isManual = false) {
                             break;
                         case "ByProps":
                             results = findAll(filters.byProps(...parsedArgs));
+                            break;
+                        case "CssClasses":
+                            results = findAll(filters.byClassNames(...parsedArgs), { topLevelOnly: true });
                             break;
                         case "Store":
                             results = findAll(filters.byStoreName(parsedArgs[0]));

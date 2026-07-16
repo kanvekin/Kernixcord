@@ -10,24 +10,22 @@ import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { get } from "@api/DataStore";
 import { definePluginSettings, Settings } from "@api/Settings";
 import { EquicordDevs } from "@utils/constants";
-import { openModal } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
 import { Channel, User } from "@vencord/discord-types";
 import { extractAndLoadChunksLazy } from "@webpack";
-import { ChannelStore, Menu, SelectedChannelStore } from "@webpack/common";
+import { ChannelStore, Menu, openModal,SelectedChannelStore } from "@webpack/common";
 
 import { SetColorModal } from "./SetColorModal";
 
 export const DATASTORE_KEY = "equicord-customcolors";
 export let colors: Record<string, string> = {};
 
-
 (async () => {
     colors = await get<Record<string, string>>(DATASTORE_KEY) || {};
 })();
 
 // needed for color picker to be available without opening settings (ty pindms!!)
-const requireSettingsMenu = extractAndLoadChunksLazy(['name:"UserSettings"'], /createPromise:.{0,20}(\i\.\i\("?.+?"?\).*?).then\(\i\.bind\(\i,"?(.+?)"?\)\).{0,50}"UserSettings"/);
+const requireSettingsMenu = extractAndLoadChunksLazy(['type:"USER_SETTINGS_MODAL_OPEN"']);
 const ColorIcon = () => {
     return (
         <svg
@@ -101,6 +99,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "CustomUserColors",
     description: "Lets you add a custom color to any user, anywhere! Highly recommend to use with typingTweaks and roleColorEverywhere",
+    tags: ["Appearance", "Customisation", "Chat"],
     authors: [EquicordDevs.mochienya],
     contextMenus: {
         "user-context": userContextMenuPatch,
@@ -125,7 +124,7 @@ export default definePlugin({
         {
             find: "PrivateChannel.renderAvatar",
             replacement: {
-                match: /(withDisplayNameStyles\]:\i\}\),children:\i\}\),)/,
+                match: /(\i\]:\i\}\),children:\i\}\),)(?=.{0,100}isSystemDM\(\))/,
                 replace: "$1style:{color:`${$self.colorDMList(arguments[0])}`},"
             },
             predicate: () => settings.store.dmList,
@@ -138,7 +137,7 @@ export default definePlugin({
                     replace: ",style$1"
                 },
                 {
-                    match: /(?<=nameAndDecorators,)/,
+                    match: /(?<="div",\{className:\i\.\i,)(?=children:\[)/,
                     replace: "style:style||{},"
                 },
             ],

@@ -20,7 +20,7 @@ import { sendBotMessage } from "@api/Commands";
 import { isPluginEnabled } from "@api/PluginManager";
 import { definePluginSettings } from "@api/Settings";
 import { getUserSettingLazy } from "@api/UserSettings";
-import { BaseText } from "@components/BaseText";
+import { Button } from "@components/Button";
 import { Card } from "@components/Card";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { Flex } from "@components/Flex";
@@ -28,18 +28,21 @@ import { Link } from "@components/Link";
 import { Paragraph } from "@components/Paragraph";
 import { openSettingsTabModal, UpdaterTab } from "@components/settings";
 import { platformName } from "@equicordplugins/equicordHelper/utils";
+import customIdle from "@plugins/customIdle";
 import { gitHash, gitHashShort } from "@shared/vencordUserAgent";
-import { CONTRIB_ROLE_ID, Devs, DONOR_ROLE_ID, EQUIBOP_CONTRIB_ROLE_ID, EQUICORD_TEAM, GUILD_ID, SUPPORT_CHANNEL_ID, SUPPORT_CHANNEL_IDS, VC_CONTRIB_ROLE_ID, VC_DONOR_ROLE_ID, VC_GUILD_ID, VC_REGULAR_ROLE_ID, VENCORD_CONTRIB_ROLE_ID } from "@utils/constants";
+import { CONTRIB_ROLE_ID, Devs, DONOR_ROLE_ID, EQUICORD_TEAM, GUILD_ID, SUPPORT_CHANNEL_ID, SUPPORT_CHANNEL_IDS, VC_CONTRIB_ROLE_ID, VC_DONOR_ROLE_ID, VC_GUILD_ID, VC_REGULAR_ROLE_ID, VENCORD_CONTRIB_ROLE_ID } from "@utils/constants";
 import { sendMessage } from "@utils/discord";
 import { Logger } from "@utils/Logger";
 import { Margins } from "@utils/margins";
-import { isAnyPluginDev, isEquicordGuild, isEquicordSupport, isSupportChannel, tryOrElse } from "@utils/misc";
+import { isAnyPluginDev, isEquicordGuild, isEquicordSupport, isKnownIssuesCategory, isSupportChannel, tryOrElse } from "@utils/misc";
 import { relaunch } from "@utils/native";
 import { onlyOnce } from "@utils/onlyOnce";
 import { makeCodeblock } from "@utils/text";
 import definePlugin from "@utils/types";
 import { checkForUpdates, isOutdated, update } from "@utils/updater";
-import { Alerts, Button, ChannelStore, Forms, GuildMemberStore, Parser, PermissionsBits, PermissionStore, RelationshipStore, SelectedChannelStore, showToast, Toasts, UserStore } from "@webpack/common";
+import { RenderModalProps } from "@vencord/discord-types";
+import { CloudUploadPlatform } from "@vencord/discord-types/enums";
+import { Alerts, ChannelStore, CloudUploader, ConfirmModal, Constants, GuildMemberStore, openModal, Parser, PermissionsBits, PermissionStore, RelationshipStore, RestAPI, SelectedChannelStore, showToast, SnowflakeUtils, Text, Toasts, UserStore } from "@webpack/common";
 import { JSX } from "react";
 
 import plugins, { PluginMeta } from "~plugins";
@@ -55,7 +58,6 @@ const TrustedRolesIds = [
     EQUICORD_TEAM, // Equicord Team
     DONOR_ROLE_ID, // Equicord Donor
     CONTRIB_ROLE_ID, // Equicord Contributor
-    EQUIBOP_CONTRIB_ROLE_ID, // Equibop Contributor
     VENCORD_CONTRIB_ROLE_ID, // Vencord Contributor
 ];
 
@@ -158,10 +160,10 @@ async function generateDebugInfoMessage() {
         "NoRPC", "NoProfileThemes", "NoMosaic", "NoRoleHeaders", "NoSystemBadge",
         "AlwaysAnimate", "ClientTheme", "SoundTroll", "Ingtoninator", "NeverPausePreviews",
         "IdleAutoRestart",
-    ].filter(Vencord.Plugins.isPluginEnabled) ?? []).sort();
+    ].filter(isPluginEnabled) ?? []).sort();
 
-    if (Vencord.Plugins.isPluginEnabled("CustomIdle") && Vencord.Settings.plugins.CustomIdle.idleTimeout === 0) {
-        potentiallyProblematicPlugins.push("CustomIdle");
+    if (isPluginEnabled(customIdle.name) && customIdle.settings.store.idleTimeout === 0) {
+        potentiallyProblematicPlugins.push(customIdle.name);
     }
 
     const potentiallyProblematicPluginsNote = "-# Note: These plugins might not be the cause of your problem. They are simply plugins that cause common issues.";
@@ -183,39 +185,93 @@ async function generateDebugInfoMessage() {
     return content.trim();
 }
 
+async function uploadPluginListFile(channelId: string, fileContent: string, filename: string) {
+    const file = new File([fileContent], filename, { type: "text/plain" });
+    const upload = new CloudUploader({ file, platform: CloudUploadPlatform.WEB }, channelId);
+
+    return new Promise<void>((resolve, reject) => {
+        upload.on("complete", () => {
+            RestAPI.post({
+                url: Constants.Endpoints.MESSAGES(channelId),
+                body: {
+                    flags: 0,
+                    channel_id: channelId,
+                    content: `⚠️ Plugin list attached as file due to high plugin count (${fileContent.split("\n").filter(l => l.startsWith("  -")).length} plugins enabled)`,
+                    nonce: SnowflakeUtils.fromTimestamp(Date.now()),
+                    sticker_ids: [],
+                    type: 0,
+                    attachments: [{
+                        id: "0",
+                        filename: upload.filename,
+                        uploaded_filename: upload.uploadedFilename,
+                    }],
+                }
+            }).then(() => resolve()).catch(reject);
+        });
+
+        upload.on("error", () => reject(new Error("Failed to upload file")));
+
+        upload.upload();
+    });
+}
+
 function generatePluginList() {
     const isApiPlugin = (plugin: string) => plugin.endsWith("API") || plugins[plugin].required;
 
     const enabledPlugins = Object.keys(plugins)
         .filter(p => isPluginEnabled(p) && !isApiPlugin(p));
 
-    const enabledStockPlugins = enabledPlugins.filter(p => !PluginMeta[p].userPlugin);
-    const enabledUserPlugins = enabledPlugins.filter(p => PluginMeta[p].userPlugin);
-
-
-    let content = `**Enabled Plugins (${enabledStockPlugins.length}):**\n${makeCodeblock(enabledStockPlugins.join(", "))}`;
-
-    if (enabledUserPlugins.length) {
-        content += `**Enabled UserPlugins (${enabledUserPlugins.length}):**\n${makeCodeblock(enabledUserPlugins.join(", "))}`;
-    }
+    const enabledStockPlugins = enabledPlugins.filter(p => !PluginMeta[p].userPlugin).sort();
+    const enabledUserPlugins = enabledPlugins.filter(p => PluginMeta[p].userPlugin).sort();
 
     const user = UserStore.getCurrentUser();
 
     if (enabledPlugins.length > 100 && !isAnyPluginDev(user.id)) {
         Alerts.show({
-            title: "You are attempting to get support!",
+            title: "Warning: High Plugin Count",
             body: <div>
                 <div style={{ display: "flex", justifyContent: "center", marginBottom: "1rem" }}>
                     <img src="https://media.tenor.com/QtGqjwBpRzwAAAAi/wumpus-dancing.gif" />
                 </div>
-                <Paragraph>Before you ask for help,</Paragraph>
-                <Paragraph>We do not handle support for users who use 100+ plugins</Paragraph>
-                <Paragraph>issue could be plugin confliction</Paragraph>
-                <Paragraph>try removing some plugins and see if it fixes!</Paragraph>
+                <Paragraph>You have more than 100 plugins enabled.</Paragraph>
+                <Paragraph>Due to the sheer amount of plugins, you may not receive support.</Paragraph>
+                <Paragraph>Your issue is likely caused by plugin conflicts.</Paragraph>
+                <Paragraph>Please consider disabling some plugins to troubleshoot.</Paragraph>
+                <Paragraph className={Margins.top8}>Your plugin list will be sent as a text file.</Paragraph>
             </div>
         });
 
-        return `${user.username} has more than 100 plugins enabled, please reduce the number of enabled plugins to get support.`;
+        const fileContent = [
+            `Enabled Stock Plugins (${enabledStockPlugins.length}):`,
+            ...enabledStockPlugins.map(p => `  - ${p}`),
+            "",
+        ];
+
+        if (enabledUserPlugins.length) {
+            fileContent.push(
+                `Enabled User Plugins (${enabledUserPlugins.length}):`,
+                ...enabledUserPlugins.map(p => `  - ${p}`),
+                ""
+            );
+        }
+
+        fileContent.push(
+            "---",
+            `Total Enabled Plugins: ${enabledPlugins.length}`,
+            "Warning: Due to the high number of enabled plugins, support may be limited."
+        );
+
+        return {
+            uploadFile: true,
+            fileContent: fileContent.join("\n"),
+            filename: `${user.username}-plugins.txt`
+        };
+    }
+
+    let content = `**Enabled Plugins (${enabledStockPlugins.length}):**\n${makeCodeblock(enabledStockPlugins.join(", "))}`;
+
+    if (enabledUserPlugins.length) {
+        content += `**Enabled UserPlugins (${enabledUserPlugins.length}):**\n${makeCodeblock(enabledUserPlugins.join(", "))}`;
     }
 
     return content;
@@ -227,12 +283,41 @@ const settings = definePluginSettings({}).withPrivateSettings<{
     dismissedDevBuildWarning?: boolean;
 }>();
 
+function DevBuildConfirmModal(props: RenderModalProps) {
+    const s = settings.use(["dismissedDevBuildWarning"]);
+
+    return (
+        <ConfirmModal
+            {...props}
+            title="Hold on!"
+            confirmText="Understood"
+            variant="primary"
+            checkboxProps={{
+                checked: s.dismissedDevBuildWarning === true,
+                onChange: checked => s.dismissedDevBuildWarning = checked
+            }}
+        >
+            <div>
+                <Paragraph>You are using a custom build of Equicord, which we do not provide support for!</Paragraph>
+
+                <Paragraph className={Margins.top8}>
+                    We only provide support for <Link href="https://equicord.org/download">official builds</Link>.
+                    Either <Link href="https://equicord.org/download">switch to an official build</Link> or figure your issue out yourself.
+                </Paragraph>
+
+                <Text variant="text-md/bold" className={Margins.top8}>You will be banned from receiving support if you ignore this rule.</Text>
+            </div>
+        </ConfirmModal>
+    );
+}
+
 export default definePlugin({
     name: "SupportHelper",
     required: true,
     description: "Helps us provide support to you",
     authors: [Devs.Ven],
-    dependencies: ["UserSettingsAPI"],
+    dependencies: ["UserSettingsAPI", "CommandsAPI", "MessageAccessoriesAPI"],
+    tags: ["Utility"],
 
     settings,
 
@@ -257,9 +342,22 @@ export default definePlugin({
             description: "Send Equicord plugin list",
             // @ts-ignore
             predicate: ctx => isAnyPluginDev(UserStore.getCurrentUser()?.id) || isEquicordGuild(ctx?.guild?.id, true),
-            execute: () => {
+            execute: async () => {
+                const channelId = SelectedChannelStore.getChannelId();
                 const pluginList = generatePluginList();
-                return { content: typeof pluginList === "string" ? pluginList : "Unable to generate plugin list." };
+
+                if (typeof pluginList === "string") {
+                    return { content: pluginList };
+                } else if (pluginList && typeof pluginList === "object" && pluginList.uploadFile) {
+                    try {
+                        await uploadPluginListFile(channelId, pluginList.fileContent, pluginList.filename);
+                        return { content: "" }; // Empty return since file was already sent
+                    } catch (e) {
+                        new Logger("SupportHelper").error("Failed to upload plugin list:", e);
+                        return { content: "Failed to upload plugin list file. Please try again." };
+                    }
+                }
+                return { content: "Unable to generate plugin list." };
             }
         }
     ],
@@ -303,20 +401,28 @@ export default definePlugin({
                 await checkForUpdatesOnce().catch(() => { });
 
                 if (isOutdated) {
-                    return Alerts.show({
-                        title: "Hold on!",
-                        body: <div>
-                            <Forms.FormText>You are using an outdated version of Kernixcord! Chances are, your issue is already fixed.</Forms.FormText>
-                            <Forms.FormText className={Margins.top8}>
-                                Please first update before asking for support!
-                            </Forms.FormText>
-                        </div>,
-                        onCancel: () => openSettingsTabModal(UpdaterTab!),
-                        cancelText: "View Updates",
-                        confirmText: "Update & Restart Now",
-                        onConfirm: forceUpdate,
-                        secondaryConfirmText: "I know what I'm doing or I can't update"
-                    });
+                    openModal(props => (
+                        <ConfirmModal
+                            {...props}
+                            variant="primary"
+                            title="Hold on!"
+                            confirmText="Update & Restart Now"
+                            cancelText="View Updates"
+                            onConfirm={forceUpdate}
+                            onCancel={() => openSettingsTabModal(UpdaterTab!)}
+                        >
+                            <div>
+                                <Paragraph>You are using an outdated version of Equicord! Chances are, your issue is already fixed.</Paragraph>
+                                <Paragraph className={Margins.top8}>
+                                    Please first update before asking for support!
+                                </Paragraph>
+                                <Paragraph className={Margins.top8}>
+                                    If you know what you're doing or cannot update, you can dismiss this prompt.
+                                </Paragraph>
+                            </div>
+                        </ConfirmModal>
+                    ));
+                    return;
                 }
             }
 
@@ -324,35 +430,28 @@ export default definePlugin({
             if (!roles || TrustedRolesIds.some(id => roles.includes(id))) return;
 
             if (!IS_WEB && IS_UPDATER_DISABLED) {
-                return Alerts.show({
-                    title: "Hold on!",
-                    body: <div>
-                        <Forms.FormText>You are using an externally updated Kernixcord version, the ability to help you here may be limited.</Forms.FormText>
-                        <Forms.FormText className={Margins.top8}>
-                            Please join the <Link href="https://discord.gg/champions">Kernixcord Server</Link> for support,
-                            or if this issue persists on Kernixcord, continue on.
-                        </Forms.FormText>
-                    </div>
-                });
+                openModal(props => (
+                    <ConfirmModal
+                        {...props}
+                        title="Hold on!"
+                        confirmText="OK"
+                        variant="primary"
+                    >
+                        <div>
+                            <Paragraph>You are using an externally updated Kernixcord version, which we do not provide support for!</Paragraph>
+                            <Paragraph className={Margins.top8}>
+                                Please either switch to an <Link href="https://github.com/kanvekin/Kernixcord">officially supported version of Kernixcord</Link>, or
+                                contact your package maintainer for support instead.
+                            </Paragraph>
+                        </div>
+                    </ConfirmModal>
+                ));
+                return;
             }
 
             if (!IS_STANDALONE && !settings.store.dismissedDevBuildWarning) {
-                return Alerts.show({
-                    title: "Hold on!",
-                    body: <div>
-                        <Forms.FormText>You are using a custom build of Kernixcord, which we do not provide support for!</Forms.FormText>
-
-                        <Forms.FormText className={Margins.top8}>
-                            We only provide support for <Link href="https://github.com/kanvekin/Kernixcord">official builds</Link>.
-                            Either <Link href="https://github.com/kanvekin/Kernixcord">switch to an official build</Link> or figure your issue out yourself.
-                        </Forms.FormText>
-
-                        <BaseText size="md" weight="bold" className={Margins.top8}>You will be banned from receiving support if you ignore this rule.</BaseText>
-                    </div>,
-                    confirmText: "Understood",
-                    secondaryConfirmText: "Don't show again",
-                    onConfirmSecondary: () => settings.store.dismissedDevBuildWarning = true
-                });
+                openModal(props => <DevBuildConfirmModal {...props} />);
+                return;
             }
         }
     },
@@ -365,13 +464,13 @@ export default definePlugin({
         const shouldAddUpdateButton =
             !IS_UPDATER_DISABLED
             && ((isSupportChannel(props.channel.id) && equicordSupport))
-            && props.message.content?.includes("update");
+            && props.message.content?.toLowerCase().includes("update");
 
         if (shouldAddUpdateButton) {
             buttons.push(
                 <Button
                     key="vc-update"
-                    color={Button.Colors.GREEN}
+                    variant="positive"
                     onClick={async () => {
                         try {
                             if (await forceUpdate())
@@ -389,23 +488,31 @@ export default definePlugin({
             );
         }
 
-        if (isSupportChannel(props.channel.id) && PermissionStore.can(PermissionsBits.SEND_MESSAGES, props.channel) && equicordSupport) {
+        if (equicordSupport && isSupportChannel(props.channel.id) && PermissionStore.can(PermissionsBits.SEND_MESSAGES, props.channel)) {
             if (props.message.content.includes("/equicord-debug") || props.message.content.includes("/equicord-plugins")) {
                 buttons.push(
                     <Button
                         key="vc-dbg"
-                        color={Button.Colors.PRIMARY}
+                        variant="secondary"
                         onClick={async () => sendMessage(props.channel.id, { content: await generateDebugInfoMessage() })}
                     >
                         Run /equicord-debug
                     </Button>,
                     <Button
                         key="vc-plg-list"
-                        color={Button.Colors.PRIMARY}
+                        variant="secondary"
                         onClick={async () => {
                             const pluginList = generatePluginList();
                             if (typeof pluginList === "string") {
                                 sendMessage(props.channel.id, { content: pluginList });
+                            } else if (pluginList && typeof pluginList === "object" && pluginList.uploadFile) {
+                                try {
+                                    await uploadPluginListFile(props.channel.id, pluginList.fileContent, pluginList.filename);
+                                    showToast("Plugin list uploaded successfully!", Toasts.Type.SUCCESS);
+                                } catch (e) {
+                                    new Logger("SupportHelper").error("Failed to upload plugin list:", e);
+                                    showToast("Failed to upload plugin list", Toasts.Type.FAILURE);
+                                }
                             }
                         }}
                     >
@@ -413,34 +520,34 @@ export default definePlugin({
                     </Button>
                 );
             }
+        }
 
-            if (equicordSupport) {
-                const match = CodeBlockRe.exec(props.message.content || props.message.embeds[0]?.rawDescription || "");
-                if (match) {
-                    buttons.push(
-                        <Button
-                            key="vc-run-snippet"
-                            onClick={async () => {
-                                try {
-                                    const result = await AsyncFunction(match[1])();
-                                    const stringed = String(result);
-                                    if (stringed) {
-                                        await sendBotMessage(SelectedChannelStore.getChannelId(), {
-                                            content: stringed
-                                        });
-                                    }
-
-                                    showToast("Success!", Toasts.Type.SUCCESS);
-                                } catch (e) {
-                                    new Logger(this.name).error("Error while running snippet:", e);
-                                    showToast("Failed to run snippet :(", Toasts.Type.FAILURE);
+        if (equicordSupport || (isSupportChannel(props.channel.id) || isKnownIssuesCategory(props.channel.parent_id))) {
+            const match = CodeBlockRe.exec(props.message.content || props.message.embeds[0]?.rawDescription || "");
+            if (match) {
+                buttons.push(
+                    <Button
+                        key="vc-run-snippet"
+                        onClick={async () => {
+                            try {
+                                const result = await AsyncFunction(match[1])();
+                                const stringed = String(result);
+                                if (stringed) {
+                                    await sendBotMessage(SelectedChannelStore.getChannelId(), {
+                                        content: stringed
+                                    });
                                 }
-                            }}
-                        >
-                            Run Snippet
-                        </Button>
-                    );
-                }
+
+                                showToast("Success!", Toasts.Type.SUCCESS);
+                            } catch (e) {
+                                new Logger(this.name).error("Error while running snippet:", e);
+                                showToast("Failed to run snippet :(", Toasts.Type.FAILURE);
+                            }
+                        }}
+                    >
+                        Run Snippet
+                    </Button>
+                );
             }
         }
 

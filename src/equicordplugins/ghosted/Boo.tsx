@@ -5,19 +5,20 @@
  */
 
 import { Channel, Message } from "@vencord/discord-types";
-import { findByPropsLazy } from "@webpack";
+import { findCssClassesLazy } from "@webpack";
 import { MessageStore, useEffect, UserStore, useState, useStateFromStores } from "@webpack/common";
 
 import { cl, settings } from ".";
 import { IconGhost } from "./IconGhost";
 
-function isChannelExempted(channelId: string): boolean {
+function isChannelExempted(channel: Channel): boolean {
     const exemptList = settings.store.exemptedChannels
         .split(",")
         .map(id => id.trim())
         .filter(id => id.length > 0);
+    const isGroupDmsExempted = settings.store.ignoreGroupDms && channel.isGroupDM();
 
-    return exemptList.includes(channelId);
+    return exemptList.includes(channel.id) || isGroupDmsExempted;
 }
 
 const countedChannels = new Set<string>();
@@ -57,28 +58,30 @@ export function getGhostedChannels(): string[] {
 }
 
 export function clearChannelFromGhost(channelId: string): void {
-    if (countedChannels.has(channelId)) {
-        countedChannels.delete(channelId);
-        setBooCount(getBooCount() - 1);
-
-        // so we can detect new messages from the other person
-        const lastMessage = MessageStore.getMessages(channelId)?.last();
-        if (lastMessage) {
-            clearedChannels.set(channelId, lastMessage.id);
-        }
-
-        // notify all listeners that this channel was cleared
-        for (const listener of clearedChannelListeners) {
-            listener(channelId);
-        }
+    if (!countedChannels.has(channelId)) {
+        return;
     }
+    countedChannels.delete(channelId);
+    setBooCount(getBooCount() - 1);
+
+    // so we can detect new messages from the other person
+    const lastMessage = MessageStore.getMessages(channelId)?.last();
+    if (lastMessage) {
+        clearedChannels.set(channelId, lastMessage.id);
+    }
+
+    // notify all listeners that this channel was cleared
+    for (const listener of clearedChannelListeners) {
+        listener(channelId);
+    }
+
 }
 
 export function isChannelCleared(channelId: string): boolean {
     return clearedChannels.has(channelId);
 }
 
-const ChannelWrapperStyles = findByPropsLazy("muted", "wrapper");
+const ChannelWrapperStyles = findCssClassesLazy("muted", "wrapper");
 
 export function Boo({ channel }: { channel: Channel; }) {
     const { id } = channel;
@@ -94,6 +97,9 @@ export function Boo({ channel }: { channel: Channel; }) {
         isDataProcessed: false,
     });
     const [isCleared, setIsCleared] = useState(false);
+
+    const lastMessageTimestampMs = lastMessage ? new Date(lastMessage.timestamp).getTime() : 0;
+    const isInactive = !!lastMessage && settings.store.maxInactiveTimeMs > 0 && Number.isFinite(lastMessageTimestampMs) && Date.now() - lastMessageTimestampMs > settings.store.maxInactiveTimeMs;
 
     useEffect(() => {
         if (!lastMessage || !currentUserId) return;
@@ -126,7 +132,7 @@ export function Boo({ channel }: { channel: Channel; }) {
     useEffect(() => {
         if (!state.isDataProcessed) return;
 
-        const isExempted = isChannelExempted(id);
+        const isExempted = isChannelExempted(channel);
         let wasManuallyCleared = clearedChannels.has(id);
 
         // if manually cleared, check if there's a NEW message from the other person
@@ -164,7 +170,7 @@ export function Boo({ channel }: { channel: Channel; }) {
         }
 
         // if exempted or bot (if setting enabled), remove from ghost tracking
-        if (isExempted || (settings.store.ignoreBots && lastMessage.author.bot)) {
+        if (isExempted || (settings.store.ignoreBots && lastMessage.author.bot) || isInactive) {
             if (countedChannels.has(id)) {
                 countedChannels.delete(id);
                 setBooCount(getBooCount() - 1);
@@ -184,9 +190,9 @@ export function Boo({ channel }: { channel: Channel; }) {
                 setBooCount(getBooCount() + 1);
             }
         }
-    }, [state.isCurrentUser, state.isDataProcessed, id, lastMessage?.id]);
+    }, [state.isCurrentUser, state.isDataProcessed, id, lastMessage?.id, isInactive]);
 
-    if (!state.isDataProcessed || !currentUserId || !lastMessage || state.isCurrentUser || isChannelExempted(id) || isCleared || (settings.store.ignoreBots && lastMessage.author.bot))
+    if (!state.isDataProcessed || !currentUserId || !lastMessage || state.isCurrentUser || isChannelExempted(channel) || isCleared || (settings.store.ignoreBots && lastMessage.author.bot) || isInactive)
         return null;
 
     if (!settings.store.showDmIcons) return null;

@@ -8,8 +8,7 @@ import * as DataStore from "@api/DataStore";
 import { showNotification } from "@api/Notifications";
 import { Settings } from "@api/Settings";
 import { Logger } from "@utils/Logger";
-import { openModal } from "@utils/modal";
-import { OAuth2AuthorizeModal, UserStore } from "@webpack/common";
+import { OAuth2AuthorizeModal, openModal, UserStore } from "@webpack/common";
 
 export const logger = new Logger("SettingsSync:CloudSetup", "#39b7e0");
 
@@ -96,19 +95,22 @@ export async function authorizeCloud() {
                 const res = await fetch(location, {
                     headers: { Accept: "application/json" }
                 });
-                const { secret } = await res.json();
-                if (secret) {
-                    logger.info("Authorized with secret");
-                    await setAuthorization(secret);
+                const data = await res.json();
+                if (data.secret) {
+                    logger.info("Authorized with cloud");
+                    await setAuthorization(data.secret);
                     showNotification({
                         title: "Cloud Integration",
                         body: "Cloud integrations enabled!"
                     });
                     Settings.cloud.authenticated = true;
                 } else {
+                    logger.error("OAuth callback returned no secret", data);
                     showNotification({
                         title: "Cloud Integration",
-                        body: "Setup failed (no secret returned?)."
+                        body: data.error
+                            ? `Setup failed: ${data.error}`
+                            : "Setup failed (no secret returned)."
                     });
                     Settings.cloud.authenticated = false;
                 }

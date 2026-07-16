@@ -152,13 +152,14 @@ export default definePlugin({
     name: "ContentWarning",
     authors: [EquicordDevs.camila314],
     description: "Allows you to specify certain trigger words that will be blurred by default. Hovering/Clicking on the blurred content will reveal it.",
+    tags: ["Appearance", "Utility"],
     settings,
     patches: [
         {
             find: ".VOICE_HANGOUT_INVITE?",
             replacement: {
-                match: /(compact:\i}=(\i).+?)(\(0,.+\}\)\]\}\))/,
-                replace: "$1 $self.modify(arguments[0].message,$3)"
+                match: /(compact:\i}=\i.+?)(\(0,.+\}\)\]\}\))/,
+                replace: "$1 $self.modify(arguments[0].message,$2)"
             }
         }
     ],

@@ -20,6 +20,8 @@ import "./style.css";
 
 import { definePluginSettings } from "@api/Settings";
 import { Devs } from "@utils/constants";
+import { getIntlMessage } from "@utils/discord";
+import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import { FluxDispatcher } from "@webpack/common";
@@ -142,7 +144,7 @@ export default definePlugin({
     description: "Shows server folders on dedicated sidebar and adds folder related improvements",
     authors: [Devs.juby, Devs.AutumnVN, Devs.Nuckyz],
     isModified: true,
-
+    tags: ["Organisation", "Servers", "Appearance"],
     settings,
 
     patches: [
@@ -153,7 +155,7 @@ export default definePlugin({
                 // Create the isBetterFolders and betterFoldersExpandedIds variables in the GuildsBar component
                 // Needed because we access this from a non-arrow closure so we can't use arguments[0]
                 {
-                    match: /let{disableAppDownload:\i=\i\.isPlatformEmbedded,isOverlay:.+?(?=}=\i,)/,
+                    match: /let{disableAppDownload:\i=\i\.isPlatformEmbedded,isOverlay:.+?(?=}=\i)/,
                     replace: "$&,isBetterFolders,betterFoldersExpandedIds"
                 },
                 // Export the isBetterFolders and betterFoldersExpandedIds variable to the Guild List component
@@ -183,7 +185,7 @@ export default definePlugin({
                 },
                 // If we are rendering the Better Folders sidebar, we filter out everything but the Guild List from the Sidebar children
                 {
-                    match: /unreadMentionsFixedFooter\].+?\}\)\]/,
+                    match: /reverse:!0,.{0,150}?barClassName:.+?\}\)\]/,
                     replace: "$&.filter($self.makeGuildsBarSidebarFilter(!!arguments[0]?.isBetterFolders))"
                 }
             ]
@@ -201,7 +203,7 @@ export default definePlugin({
                 {
                     // Modify the expanded prop to use the boolean if the above patch fails, or check if the folder is expanded from the list if it succeeds
                     // Also export the list of expanded folders to the child folder component if the patch above succeeds, else export undefined
-                    match: /(?<=folderNode:(\i),expanded:)\i(?=,)/,
+                    match: /(?<=\.\.\.\i,folderNode:(\i),expanded:)\i(?=,)/,
                     replace: (isExpandedOrExpandedIds, folderNote) => ""
                         + `typeof ${isExpandedOrExpandedIds}==="boolean"?${isExpandedOrExpandedIds}:${isExpandedOrExpandedIds}.has(${folderNote}.id),`
                         + `betterFoldersExpandedIds:${isExpandedOrExpandedIds} instanceof Set?${isExpandedOrExpandedIds}:void 0`
@@ -217,8 +219,8 @@ export default definePlugin({
                 // If we are rendering the normal GuildsBar sidebar, we make Discord think the folder is always collapsed to show better icons (the mini guild icons) and avoid transitions
                 {
                     predicate: () => settings.store.keepIcons,
-                    match: /(?<=let{folderNode:\i,setNodeRef:\i,.+?expanded:(\i),.+?;)(?=let)/,
-                    replace: (_, isExpanded) => `${isExpanded}=!!arguments[0]?.isBetterFolders&&${isExpanded};`
+                    match: /let ?(?:\i,)*?{folderNode:\i,setNodeRef:\i,.+?expanded:(\i),.+?;(?=let)/,
+                    replace: (m, isExpanded) => `${m}${isExpanded}=!!arguments[0]?.isBetterFolders&&${isExpanded};`
                 },
                 // Disable expanding and collapsing folders transition in the normal GuildsBar sidebar
                 {
@@ -229,20 +231,20 @@ export default definePlugin({
                 // If we are rendering the normal GuildsBar sidebar, we avoid rendering guilds from folders that are expanded
                 {
                     predicate: () => !settings.store.keepIcons,
-                    match: /folderGroupBackground.+?,(?=\i\(\(\i,\i,\i\)=>{let{key:.{0,70}"ul")(?<=selected:\i,expanded:(\i),.+?)/,
+                    match: /"--custom-folder-color".+?(?=\i\(\(\i,\i,\i\)=>{let{key:.{0,70}"ul")(?<=selected:\i,expanded:(\i),.+?)/,
                     replace: (m, isExpanded) => `${m}$self.shouldRenderContents(arguments[0],${isExpanded})?null:`
                 },
                 // Decide if we should render the expanded folder background if we are rendering the Better Folders sidebar
                 {
                     predicate: () => settings.store.showFolderIcon !== FolderIconDisplay.Always,
-                    match: /\.isExpanded\].{0,110}children:\[/,
+                    match: /"--custom-folder-color".{0,110}?children:\[/,
                     replace: "$&$self.shouldShowFolderIconAndBackground(!!arguments[0]?.isBetterFolders,arguments[0]?.betterFoldersExpandedIds)&&"
                 },
                 // Decide if we should render the expanded folder icon if we are rendering the Better Folders sidebar
                 {
                     predicate: () => settings.store.showFolderIcon !== FolderIconDisplay.Always,
-                    match: /(?<=\.folderGroupBackground.*?}\),)(?=\i,)/,
-                    replace: "!$self.shouldShowFolderIconAndBackground(!!arguments[0]?.isBetterFolders,arguments[0]?.betterFoldersExpandedIds)?null:"
+                    match: /"--custom-folder-color".+?className:\i\.\i}\),(?=\i,)/,
+                    replace: "$&!$self.shouldShowFolderIconAndBackground(!!arguments[0]?.isBetterFolders,arguments[0]?.betterFoldersExpandedIds)?null:"
                 }
             ]
         },
@@ -257,12 +259,12 @@ export default definePlugin({
                     // One is for visual refresh, one is not,
                     // and each has a bunch of conditions &&ed in front of it.
                     // Add the betterFolders sidebar to both, keeping the conditions Discord uses.
-                    match: /(?<=[[,])((?:!?\i&&)+)\(.{0,50}({className:\i\.guilds,themeOverride:\i})\)/g,
+                    match: /(?<=[[,])((?:!?\i&&)+)\(.{0,50}({className:\i\.\i,themeOverride:\i})\)/g,
                     replace: (m, conditions, props) => `${m},${conditions}$self.FolderSideBar(${props})`
                 },
                 {
-                    // Add grid styles to fix aligment with other visual refresh elements
-                    match: /(?<=className:)\i\.base(?=,)/,
+                    // Add grid styles to fix alignment with other visual refresh elements
+                    match: /(?<=className:)\i\.\i(?=,"data-fullscreen")/,
                     replace: `"${GRID_STYLE_NAME} "+$&`
                 }
             ]
@@ -325,7 +327,6 @@ export default definePlugin({
     FolderSideBar,
     closeFolders,
 
-
     wrapGuildNodeComponent(node: any, originalComponent: () => ReactNode, isBetterFolders: boolean, expandedFolderIds?: Set<any>) {
         if (
             !isBetterFolders ||
@@ -349,7 +350,13 @@ export default definePlugin({
             }
 
             try {
-                return child?.props?.renderTreeNode !== null;
+                // can cause hang if intl message is not found
+                const serversIntlMsg = getIntlMessage("SERVERS");
+                if (!serversIntlMsg) {
+                    new Logger("BetterFolders").error("Failed to get SERVERS intl message");
+                    return true;
+                }
+                return child?.props?.["aria-label"] === serversIntlMsg;
             } catch (e) {
                 console.error(e);
                 return true;

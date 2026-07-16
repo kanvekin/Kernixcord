@@ -5,10 +5,9 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { findByPropsLazy } from "@webpack";
-import { MessageActions } from "@webpack/common";
+import { MessageActions, PinActions } from "@webpack/common";
 
 const settings = definePluginSettings({
     noShiftDelete: {
@@ -21,14 +20,19 @@ const settings = definePluginSettings({
         description: "Remove requirement to hold shift for pinning a message.",
         default: true,
     },
+    noQuickReacts: {
+        default: true,
+        restartNeeded: true,
+        type: OptionType.BOOLEAN,
+        description: "Hide quick reacts. By default, showing the full menu hides quick react buttons.",
+    },
 });
-
-const PinActions = findByPropsLazy("pinMessage", "unpinMessage");
 
 export default definePlugin({
     name: "ShowAllMessageButtons",
     description: "Always show all message buttons no matter if you are holding the shift key or not.",
-    authors: [Devs.Nuckyz, EquicordDevs.mochienya],
+    tags: ["Chat", "Utility"],
+    authors: [Devs.Nuckyz],
     settings,
 
     patches: [
@@ -48,7 +52,12 @@ export default definePlugin({
                     predicate: () => settings.store.noShiftPin,
                     match: /onClick:.{10,30}(?=\},"pin")/,
                     replace: "onClick:() => $self.toggleMessagePin(arguments[0]),"
-                }
+                },
+                {
+                    predicate: () => !settings.store.noQuickReacts,
+                    match: /\i(\?null:\(0,\i\.jsxs\).{0,100}message:\i\}\)),\(0,\i\.jsxs?\)\(\i\.\i,\{\}\)/,
+                    replace: "false$1"
+                },
             ]
         },
     ],
@@ -57,8 +66,7 @@ export default definePlugin({
         MessageActions.deleteMessage(channel_id, id);
     },
     toggleMessagePin({ channel, message }) {
-        if (message.pinned)
-            return PinActions.unpinMessage(channel, message.id);
+        if (message.pinned) return PinActions.unpinMessage(channel, message.id);
 
         PinActions.pinMessage(channel, message.id);
     },

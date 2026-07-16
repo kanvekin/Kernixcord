@@ -17,11 +17,8 @@
 */
 
 import { definePluginSettings, migratePluginSettings } from "@api/Settings";
-import { disableStyle, enableStyle } from "@api/Styles";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-
-import style from "./style.css?managed";
 
 const settings = definePluginSettings({
     hideArrow: {
@@ -36,30 +33,30 @@ migratePluginSettings("AlwaysExpandRoles", "ShowAllRoles");
 export default definePlugin({
     name: "AlwaysExpandRoles",
     description: "Always expands the role list in profile popouts",
+    tags: ["Appearance", "Roles"],
     authors: [Devs.surgedevs],
     isModified: true,
+    settings,
     patches: [
         {
-            find: 'action:"EXPAND_ROLES"',
+            find: "hasDeveloperContextMenu:",
             replacement: [
                 {
-                    match: /(roles:\i(?=.+?(\i)\(!0\)[,;]\i\({action:"EXPAND_ROLES"}\)).+?\[\i,\2\]=\i\.useState\()!1\)/,
-                    replace: (_, rest, setExpandedRoles) => `${rest}!0)`
+                    match: /(?<=\?\i\.current\[\i\].{0,100}?)useState\(!1\)/,
+                    replace: "useState(!0)"
                 },
                 {
                     // Fix not calculating non-expanded roles because the above patch makes the default "expanded",
                     // which makes the collapse button never show up and calculation never occur
-                    match: /(?<=useLayoutEffect\(\(\)=>{if\()\i/,
-                    replace: isExpanded => "false"
+                    match: /(?<=useLayoutEffect\(\(\)=>\{if\()\i/,
+                    replace: "false"
+                },
+                {
+                    match: /return \i\.length<\i\.length/,
+                    replace: "return false",
+                    predicate: () => settings.store.hideArrow
                 }
             ]
         }
     ],
-    settings,
-    start() {
-        if (settings.store.hideArrow) enableStyle(style);
-    },
-    stop() {
-        if (settings.store.hideArrow) disableStyle(style);
-    }
 });

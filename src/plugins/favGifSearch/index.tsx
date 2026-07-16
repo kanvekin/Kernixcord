@@ -84,6 +84,7 @@ export default definePlugin({
     name: "FavoriteGifSearch",
     authors: [Devs.Aria],
     description: "Adds a search bar to favorite gifs.",
+    tags: ["Media", "Customisation"],
 
     patches: [
         {
@@ -91,9 +92,9 @@ export default definePlugin({
             replacement: [
                 {
                     // https://regex101.com/r/07gpzP/1
-                    // ($1 renderHeaderContent=function { ... switch (x) ... case FAVORITES:return) ($2) ($3 case default:return r.jsx(($<searchComp>), {...props}))
-                    match: /(renderHeaderContent\(\).{1,150}FAVORITES:return)(.{1,150});(case.{1,200}default:return\(0,\i\.jsx\)\((?<searchComp>\i\..{1,10}),)/,
-                    replace: "$1 this.state.resultType === 'Favorites' ? $self.renderSearchBar(this, $<searchComp>) : $2;$3"
+                    // ($1 renderHeaderContent=function { ... switch (x) ... case FAVORITES:return) ($2) ($3 case default: ... return r.jsx(($<searchComp>), {...props}))
+                    match: /(renderHeaderContent\(\).{1,150}FAVORITES:return)(.{1,150});(case.{1,200}default:.{0,50}?return\(0,\i\.jsx\)\((?<searchComp>\i\.\i),)/,
+                    replace: "$1 this?.state?.resultType === 'Favorites' ? $self.renderSearchBar(this, $<searchComp>) : $2;$3"
                 },
                 {
                     // to persist filtered favorites when component re-renders.
@@ -129,7 +130,6 @@ export default definePlugin({
     }
 });
 
-
 function SearchBar({ instance, SearchBarComponent }: { instance: Instance; SearchBarComponent: TSearchBarComponent; }) {
     const [query, setQuery] = useState("");
     const ref = useRef<HTMLElement>(null);
@@ -145,13 +145,11 @@ function SearchBar({ instance, SearchBarComponent }: { instance: Instance; Searc
             return;
         }
 
-
         // scroll back to top
         ref.current
             ?.closest("#gif-picker-tab-panel")
             ?.querySelector('[class*="scrollerBase"]')
             ?.scrollTo(0, 0);
-
 
         const result =
             props.favCopy
@@ -192,8 +190,6 @@ function SearchBar({ instance, SearchBarComponent }: { instance: Instance; Searc
         />
     );
 }
-
-
 
 export function getTargetString(urlStr: string) {
     let url: URL;

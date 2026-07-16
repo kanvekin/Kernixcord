@@ -14,7 +14,7 @@ import { ReadStateStore, useStateFromStores } from "@webpack/common";
 
 const UserGuildSettingsStore = findStoreLazy("UserGuildSettingsStore");
 const JoinedThreadsStore = findStoreLazy("JoinedThreadsStore");
-const NumberBadge = findComponentByCodeLazy("numberBadge", '"renderBadgeCount"');
+const NumberBadge = findComponentByCodeLazy("BADGE_NOTIFICATION_BACKGROUND", "let{count:");
 
 const settings = definePluginSettings({
     showOnMutedChannels: {
@@ -33,6 +33,7 @@ export default definePlugin({
     name: "UnreadCountBadge",
     authors: [Devs.Joona],
     description: "Shows unread message count badges on channels in the channel list",
+    tags: ["Appearance", "Customisation", "Servers"],
     settings,
 
     patches: [
@@ -41,7 +42,7 @@ export default definePlugin({
             find: "UNREAD_IMPORTANT:",
             replacement: [
                 {
-                    match: /\.Children\.count.+?:null(?<=,channel:(\i).+?)/,
+                    match: /\.Children\.count.+?:null(?<=,channel:\i.+?)/,
                     replace: "$&,$self.CountBadge({channel: arguments[0].channel})",
                 },
             ]

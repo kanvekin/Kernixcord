@@ -9,11 +9,11 @@ import { definePluginSettings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
 import alwaysExpandProfiles from "@equicordplugins/alwaysExpandProfiles";
 import { Devs } from "@utils/constants";
-import { fetchUserProfile, getCurrentChannel } from "@utils/discord";
+import { fetchUserProfile, getCurrentChannel, openUserProfile } from "@utils/discord";
 import definePlugin, { OptionType } from "@utils/types";
 import { User } from "@vencord/discord-types";
 import { findComponentByCodeLazy } from "@webpack";
-import { ContextMenuApi, Menu, UserStore } from "@webpack/common";
+import { ContextMenuApi, Menu, useEffect, UserStore } from "@webpack/common";
 
 interface UserProfileProps {
     popoutProps: Record<string, any>;
@@ -21,8 +21,7 @@ interface UserProfileProps {
     originalRenderPopout: () => React.ReactNode;
 }
 
-const UserProfile = findComponentByCodeLazy(".POPOUT,user");
-
+const UserProfile = findComponentByCodeLazy(".isNonUserBot()?", ",onClickContainer:");
 let openAlternatePopout = false;
 let accountPanelRef: React.RefObject<HTMLDivElement | null> = { current: null };
 
@@ -41,9 +40,9 @@ const AccountPanelContextMenu = ErrorBoundary.wrap(() => {
                 action={async e => {
                     if (isPluginEnabled(alwaysExpandProfiles.name)) {
                         const user = await fetchUserProfile(UserStore.getCurrentUser().id, {
-                            guild_id: getCurrentChannel()?.getGuildId()
+                            guild_id: prioritizeServerProfile ? undefined : getCurrentChannel()?.getGuildId()
                         }, false);
-                        return alwaysExpandProfiles.openUserModal(user!.userId);
+                        return openUserProfile(user!.userId);
                     }
                     openAlternatePopout = true;
                     accountPanelRef.current?.click();
@@ -70,16 +69,17 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "AccountPanelServerProfile",
     description: "Right click your account panel in the bottom left to view your profile in the current server",
+    tags: ["Appearance", "Servers"],
     authors: [Devs.Nuckyz, Devs.relitrix],
     settings,
 
     patches: [
         {
-            find: "#{intl::ACCOUNT_SPEAKING_WHILE_MUTED}",
+            find: "handleOpenSettingsContextMenu=",
             group: true,
             replacement: [
                 {
-                    match: /(\.AVATAR,children:.+?renderPopout:\((\i),\i\)=>){(.+?)}(?=,position)(?<=currentUser:(\i).+?)/,
+                    match: /(\.AVATAR,children:.+?renderPopout:\((\i),\i\)=>)\{(.+?)\}(?=,position)(?<=currentUser:(\i).+?)/,
                     replace: (_, rest, popoutProps, originalPopout, currentUser) => `${rest}$self.UserProfile({popoutProps:${popoutProps},currentUser:${currentUser},originalRenderPopout:()=>{${originalPopout}}})`
                 },
                 {
@@ -87,7 +87,7 @@ export default definePlugin({
                     replace: "$&$self.onPopoutClose();"
                 },
                 {
-                    match: /#{intl::SET_STATUS}\)(?<=innerRef:(\i),style:.+?)/,
+                    match: /ref:(\i),style:\i(?=.{0,250}#{intl::USER_PROFILE_ACCOUNT_POPOUT_BUTTON_A11Y_LABEL})/,
                     replace: "$&,onContextMenu:($self.grabRef($1),$self.openAccountPanelContextMenu)"
                 }
             ]
@@ -124,6 +124,10 @@ export default definePlugin({
             return originalRenderPopout();
         }
 
+        if (isPluginEnabled(alwaysExpandProfiles.name)) {
+            return <ServerProfileLauncher popoutProps={popoutProps} userId={currentUser.id} guildId={currentChannel.getGuildId()!} />;
+        }
+
         return (
             <UserProfile
                 {...popoutProps}
@@ -135,3 +139,14 @@ export default definePlugin({
         );
     }, { noop: true })
 });
+
+function ServerProfileLauncher({ popoutProps, userId, guildId }: { popoutProps: Record<string, any>; userId: string; guildId: string; }) {
+    useEffect(() => {
+        popoutProps.closePopout?.();
+        popoutProps.onRequestClose?.();
+        fetchUserProfile(userId, { guild_id: guildId }, false).then(user => {
+            if (user) openUserProfile(user.userId);
+        });
+    }, []);
+    return null;
+}

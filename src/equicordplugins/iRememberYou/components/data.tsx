@@ -25,6 +25,7 @@ export interface GroupData {
     id: string;
     users: { [key: string]: IStorageUser; };
     name: string;
+    inviteLink?: string;
 }
 
 export class Data {
@@ -78,6 +79,8 @@ export class Data {
         array: { user: User; source?: Guild; extra?: IUserExtra; }[]
     ) {
         const target = this.usersCollection;
+        const processedGuilds = new Set<string>();
+
         for (const { user, source, extra } of array) {
             if (user.bot) {
                 continue;
@@ -87,7 +90,8 @@ export class Data {
             const group = (target[groupKey] ||= {
                 name: source?.name || "dm",
                 id: source?.id || user.id,
-                users: {}
+                users: {},
+                inviteLink: undefined
             });
             const usersField = group.users;
             const previouExtra = usersField[user.id]?.extra ?? {};
@@ -100,6 +104,9 @@ export class Data {
                 extra: { ...previouExtra, ...extra },
                 iconURL: user.getAvatarURL(),
             };
+            if (source && !processedGuilds.has(source.id)) {
+                processedGuilds.add(source.id);
+            }
         }
     }
 

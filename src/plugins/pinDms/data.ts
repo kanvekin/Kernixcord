@@ -16,12 +16,9 @@ export interface Category {
     collapsed?: boolean;
 }
 
-const CATEGORY_BASE_KEY = "PinDMsCategories-";
-const CATEGORY_MIGRATED_PINDMS_KEY = "PinDMsMigratedPinDMs";
-const CATEGORY_MIGRATED_KEY = "PinDMsMigratedOldCategories";
-const OLD_CATEGORY_KEY = "BetterPinDMsCategories-";
-
 let forceUpdateDms: (() => void) | undefined = undefined;
+let lastPrivateChannelIds: string[] | null = null;
+const lastSortOrder = new Map<string, number>();
 export let currentUserCategories: Category[] = [];
 
 export async function init() {
@@ -88,20 +85,42 @@ export function categoryLen() {
     return currentUserCategories.length;
 }
 
-export function getAllUncollapsedChannels() {
-    if (settings.store.pinOrder === PinOrder.LastMessage) {
-        const sortedChannels = PrivateChannelSortStore.getPrivateChannelIds();
-        return currentUserCategories.filter(c => !c.collapsed).flatMap(c => sortedChannels.filter(channel => c.channels.includes(channel)));
-    }
-
-    return currentUserCategories.filter(c => !c.collapsed).flatMap(c => c.channels);
-}
-
 export function getSections() {
     return currentUserCategories.reduce((acc, category) => {
         acc.push(category.channels.length === 0 ? 1 : category.channels.length);
         return acc;
     }, [] as number[]);
+}
+
+function getSortOrder(ids: string[]) {
+    if (ids !== lastPrivateChannelIds) {
+        lastPrivateChannelIds = ids;
+        lastSortOrder.clear();
+        for (let i = 0; i < ids.length; i++) {
+            lastSortOrder.set(ids[i], i);
+        }
+    }
+    return lastSortOrder;
+}
+
+export function getCategoryChannels(category: Category): string[] {
+    if (category.channels.length === 0) return [];
+
+    if (settings.store.pinOrder === PinOrder.LastMessage) {
+        const sortedChannels = PrivateChannelSortStore.getPrivateChannelIds();
+        const order = getSortOrder(sortedChannels);
+        return [...category.channels].sort((a, b) => {
+            return (order.get(a) ?? Infinity) - (order.get(b) ?? Infinity);
+        });
+    }
+
+    return category.channels;
+}
+
+export function getAllUncollapsedChannels() {
+    return currentUserCategories
+        .filter(c => !c.collapsed)
+        .flatMap(getCategoryChannels);
 }
 
 // Move categories
@@ -126,7 +145,6 @@ export const canMoveChannelInDirection = (channelId: string, direction: -1 | 1) 
     const channelIndex = category.channels.indexOf(channelId);
     return canMoveArrayInDirection(category.channels, channelIndex, direction);
 };
-
 
 function swapElementsInArray(array: any[], index1: number, index2: number) {
     if (!array[index1] || !array[index2]) return;

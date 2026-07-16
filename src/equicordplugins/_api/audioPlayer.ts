@@ -24,15 +24,15 @@ export default definePlugin({
                     // Uses the audio as-is if external, otherwise checks for an internal Discord sound.
                     // Also force loads the internal sounds module to account for the second patch group below,
                     // as well as accounting for not calling the module in this patch when this.type is not DISCORD.
-                    match: /(let \i=class.{0,900}?new Audio;\i.src=)((\i\(\d+\)).{0,50}concat\()this.name(,".mp3"\)\))/,
+                    match: /(let \i=class.{0,1000}?new Audio;\i.src=)((\i\(\d+\))(?:\(`\.\/\$\{|.{0,50}concat\())this.name(\}\.mp3`\))/,
                     replace: "$3;$1this.type!==$self.AudioType.DISCORD?this.audio:$2this.audio$4"
                 },
                 {
                     // Adds an optional persistent boolean as well as a callback and error handler to the
                     // audio player which is called after the audio finishes playing and when an error occurs.
                     // Also processes the audio before playing to apply override functions set by plugins.
-                    match: /(?<=constructor\((\i,\i,\i,\i)).{0,200}outputChannel=\i/,
-                    replace: ",options){$self.buildPlayer(this,$1,options);"
+                    match: /constructor\(((?:\i,){3}\i)([^)]*)\)\{[^}]+}/,
+                    replace: "constructor(options,$1$2){$self.buildPlayer(this,options,$1);}"
                 },
                 {
                     // Prevents an error from the source being cleared during destroyAudio().
@@ -46,8 +46,8 @@ export default definePlugin({
                 },
                 {
                     // Makes use of the error handler if an error occurs during playback.
-                    match: /(onerror=\()(\)=>)(\i\(Error\("[^"]+"\)\)),/,
-                    replace: "$1error$2{this.onError?.(error);$3;},"
+                    match: /(onerror=\()(\)=>{)(?=let)/,
+                    replace: "$1error$2this.onError?.(error);"
                 },
                 {
                     // Makes use of the onEnded callback and persists flag once the audio ends.
@@ -67,12 +67,20 @@ export default definePlugin({
             ]
         },
         {
+            // Pass undefined for options in default Discord calls to the audio constructor.
+            find: "SoundUtils",
+            replacement: {
+                match: /return new (\i)\((.{0,50}?)(?=}function)/,
+                replace: "return new $1(undefined,$2"
+            }
+        },
+        {
             // Prevents Discord from forcing full volume for the "discodo" effect on client load.
             // The internal sounds module being loaded on startup relies on one of these calls to volume
             // regardless of if the "discodo" effect is enabled or not. This is due to the volume setter
             // internally calling the ensureAudio function which is where the internal sounds module is loaded
             // by default. To account for this, the module is force loaded in the first patch in the above group.
-            find: "UPDATE_OPEN_ON_STARTUP",
+            find: '"UPDATE_OPEN_ON_STARTUP"',
             group: true,
             replacement: [
                 {
@@ -144,11 +152,11 @@ export default definePlugin({
 
     buildPlayer(
         player: AudioPlayerInternal,
+        options: AudioPlayerOptions = {},
         audio: string,
         unused: any,
         internalVolume: number,
-        channel: string,
-        options: AudioPlayerOptions = {}
+        channel: string
     ) {
         player.preprocessDataOriginal = {
             audio: audio,

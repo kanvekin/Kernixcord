@@ -17,10 +17,9 @@
 */
 
 import type * as t from "@vencord/discord-types";
-import { filters, mapMangledModuleLazy, waitFor, wreq } from "@webpack";
+import { filters, mapMangledModuleLazy, waitFor } from "@webpack";
 
 export const Menu = {} as t.Menu;
-
 // Relies on .name properties added by the MenuItemDemanglerAPI
 waitFor(m => m.name === "MenuCheckboxItem", (_, id) => {
     // We have to do this manual require by ID because m in this case is the MenuCheckBoxItem instead of the entire module

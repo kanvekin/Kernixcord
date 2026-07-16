@@ -7,11 +7,11 @@
 import "./VencordTab.css";
 
 import { openNotificationLogModal } from "@api/Notifications/notificationLog";
+import { plugins } from "@api/PluginManager";
 import { useSettings } from "@api/Settings";
 import { classNameFactory } from "@utils/css";
 import { Button } from "@components/Button";
 import { Divider } from "@components/Divider";
-import { Flex } from "@components/Flex";
 import { FormSwitch } from "@components/FormSwitch";
 import { Heading } from "@components/Heading";
 import { FolderIcon, GithubIcon, LogIcon, PaintbrushIcon, RestartIcon } from "@components/Icons";
@@ -20,17 +20,20 @@ import { Paragraph } from "@components/Paragraph";
 import { openContributorModal, openPluginModal, SettingsTab, wrapTab } from "@components/settings";
 import { QuickAction, QuickActionCard } from "@components/settings/QuickAction";
 import { SpecialCard } from "@components/settings/SpecialCard";
+import BadgeAPI from "@plugins/_api/badges";
 import { gitRemote } from "@shared/vencordUserAgent";
 import { DONOR_ROLE_ID, GUILD_ID, KERNIXCORD_DONOR_ROLE_ID, KERNIXCORD_GUILD_ID, VC_DONOR_ROLE_ID, VC_GUILD_ID, IS_MAC, IS_WINDOWS } from "@utils/constants";
+import { classNameFactory } from "@utils/css";
 import { Margins } from "@utils/margins";
-import { identity, isAnyPluginDev } from "@utils/misc";
+import { isAnyPluginDev } from "@utils/misc";
 import { relaunch } from "@utils/native";
-import { GuildMemberStore, React, Select, UserStore } from "@webpack/common";
-import BadgeAPI from "plugins/_api/badges";
+import { Alerts, GuildMemberStore, React, useMemo, UserStore } from "@webpack/common";
 
 import { DonateButton, InviteButton } from "@components/settings/DonateButton";
 import { DonateButtonComponent } from "./DonateButton";
-import { openNotificationSettingsModal } from "./NotificationSettings";
+import { MacOSVibrancySettings } from "./MacVibrancySettings";
+import { NotificationSection } from "./NotificationSettings";
+import { WindowsMaterialSettings } from "./WindowsMaterialSettings";
 
 const DEFAULT_DONATE_IMAGE = "https://cdn.discordapp.com/emojis/1026533090627174460.png";
 const SHIGGY_DONATE_IMAGE = "https://equicord.org/assets/favicon.png";
@@ -48,83 +51,119 @@ type KeysOfType<Object, Type> = {
 }[keyof Object];
 
 function KernixcordSettings() {
-    const settings = useSettings();
+    const settings = useSettings(["useQuickCss", "enableReactDevtools", "mainWindowFrameless", "frameless", "winNativeTitleBar", "transparent", "winCtrlQ", "disableMinSize"]);
 
-    const donateImage = React.useMemo(
-        () => (Math.random() > 0.5 ? DEFAULT_DONATE_IMAGE : SHIGGY_DONATE_IMAGE),
-        [],
-    );
-
-    const needsVibrancySettings = IS_DISCORD_DESKTOP && IS_MAC;
-
-    const user = UserStore?.getCurrentUser();
-
-    const Switches: Array<false | {
+    const Switches = [
+        {
+            key: "useQuickCss",
+            title: "Enable Custom CSS",
+            description: "Load custom CSS from the QuickCSS editor. This allows you to customize Discord's appearance with your own styles.",
+        },
+        !IS_WEB && {
+            key: "enableReactDevtools",
+            title: "Enable React Developer Tools",
+            description: "Enable the React Developer Tools extension for debugging Discord's React components. Useful for plugin development.",
+            restartRequired: true,
+        },
+        (!IS_WEB && !IS_DISCORD_DESKTOP || !IS_WINDOWS) && {
+            key: "mainWindowFrameless",
+            title: "Disable the Main Window Frame",
+            description: "Remove the native window frame for a cleaner look. You can still move the window by dragging the title bar area.",
+            restartRequired: true,
+        },
+        !IS_WEB && (!IS_DISCORD_DESKTOP || !IS_WINDOWS
+            ? {
+                key: "frameless",
+                title: "Disable All Window Frames",
+                description: "Remove the native window frame for a cleaner look. You can still move the window by dragging the title bar area.",
+                restartRequired: true,
+            }
+            : {
+                key: "winNativeTitleBar",
+                title: "Use Windows' native title bar instead of Discord's custom one",
+                description: "Replace Discord's custom title bar with the standard Windows title bar. This may improve compatibility with some window management tools.",
+                restartRequired: true,
+            }
+        ),
+        !IS_WEB && {
+            key: "transparent",
+            title: "Enable Window Transparency",
+            description: "Make the Discord window transparent. A theme that supports transparency is required or this will do nothing.",
+            restartRequired: true,
+            warning: IS_WINDOWS
+                ? "This will stop the window from being resizable and prevents you from snapping the window to screen edges."
+                : "This will stop the window from being resizable.",
+        },
+        IS_DISCORD_DESKTOP && {
+            key: "disableMinSize",
+            title: "Disable Minimum Window Size",
+            description: "Allow the Discord window to be resized smaller than its default minimum size. Useful for tiling window managers or small screens.",
+            restartRequired: true,
+        },
+        !IS_WEB && IS_WINDOWS && {
+            key: "winCtrlQ",
+            title: "Register Ctrl+Q as shortcut to close Discord",
+            description: "Add Ctrl+Q as a keyboard shortcut to close Discord. This provides an alternative to Alt+F4 for quickly closing the application.",
+            restartRequired: true,
+        },
+    ] satisfies Array<false | {
         key: KeysOfType<typeof settings, boolean>;
         title: string;
         description?: string;
         restartRequired?: boolean;
-        warning: { enabled: boolean; message?: string; };
-    }
-    > = [
-            {
-                key: "useQuickCss",
-                title: "Enable Custom CSS",
-                description: "Load custom CSS from the QuickCSS editor. This allows you to customize Discord's appearance with your own styles.",
-                restartRequired: true,
-                warning: { enabled: false },
-            },
-            !IS_WEB && {
-                key: "enableReactDevtools",
-                title: "Enable React Developer Tools",
-                description: "Enable the React Developer Tools extension for debugging Discord's React components. Useful for plugin development.",
-                restartRequired: true,
-                warning: { enabled: false },
-            },
-            !IS_WEB &&
-            (!IS_DISCORD_DESKTOP || !IS_WINDOWS
-                ? {
-                    key: "frameless",
-                    title: "Disable the Window Frame",
-                    description: "Remove the native window frame for a cleaner look. You can still move the window by dragging the title bar area.",
-                    restartRequired: true,
-                    warning: { enabled: false },
+        warning?: string;
+    }>;
+
+    return Switches.map(setting => {
+        if (!setting) {
+            return null;
+        }
+
+        const { key, title, description, restartRequired, warning } = setting;
+
+        return (
+            <FormSwitch
+                key={key}
+                title={title}
+                description={
+                    warning ? (
+                        <>
+                            {description}
+                            <Notice.Warning className={Margins.top8} style={{ width: "100%" }}>
+                                {warning}
+                            </Notice.Warning>
+                        </>
+                    ) : (
+                        description
+                    )
                 }
-                : {
-                    key: "winNativeTitleBar",
-                    title: "Use Windows' native title bar instead of Discord's custom one",
-                    description: "Replace Discord's custom title bar with the standard Windows title bar. This may improve compatibility with some window management tools.",
-                    restartRequired: true,
-                    warning: { enabled: false },
-                }),
-            !IS_WEB && {
-                key: "transparent",
-                title: "Enable Window Transparency",
-                description: "Make the Discord window transparent. A theme that supports transparency is required or this will do nothing.",
-                restartRequired: true,
-                warning: {
-                    enabled: true,
-                    message: IS_WINDOWS
-                        ? "This will stop the window from being resizable and prevents you from snapping the window to screen edges."
-                        : "This will stop the window from being resizable.",
-                },
-            },
-            IS_DISCORD_DESKTOP && {
-                key: "disableMinSize",
-                title: "Disable Minimum Window Size",
-                description: "Allow the Discord window to be resized smaller than its default minimum size. Useful for tiling window managers or small screens.",
-                restartRequired: true,
-                warning: { enabled: false },
-            },
-            !IS_WEB &&
-            IS_WINDOWS && {
-                key: "winCtrlQ",
-                title: "Register Ctrl+Q as shortcut to close Discord",
-                description: "Add Ctrl+Q as a keyboard shortcut to close Discord. This provides an alternative to Alt+F4 for quickly closing the application.",
-                restartRequired: true,
-                warning: { enabled: false },
-            },
-        ];
+                value={settings[key]}
+                onChange={v => {
+                    settings[key] = v;
+
+                    if (restartRequired) {
+                        Alerts.show({
+                            title: "Restart Required",
+                            body: "A restart is required to apply this change",
+                            confirmText: "Restart now",
+                            cancelText: "Later!",
+                            onConfirm: relaunch
+                        });
+                    }
+                }}
+                hideBorder
+            />
+        );
+    });
+}
+
+function EquicordSettings() {
+    const donateImage = useMemo(() =>
+        Math.random() > 0.5 ? DEFAULT_DONATE_IMAGE : SHIGGY_DONATE_IMAGE,
+        []
+    );
+
+    const user = UserStore?.getCurrentUser();
 
     return (
         <SettingsTab>
@@ -229,41 +268,17 @@ function KernixcordSettings() {
                 You can customize where this settings section appears in Discord's settings menu by configuring the{" "}
                 <a
                     role="button"
-                    onClick={() => openPluginModal(Vencord.Plugins.plugins.Settings)}
+                    onClick={() => openPluginModal(plugins.Settings)}
                     style={{ cursor: "pointer", color: "var(--text-link)" }}
                 >
                     Settings Plugin
                 </a>.
             </Notice.Info>
 
-            {Switches.filter((s): s is Exclude<typeof s, false> => !!s).map(
-                s => (
-                    <FormSwitch
-                        key={s.key}
-                        value={settings[s.key]}
-                        onChange={v => (settings[s.key] = v)}
-                        title={s.title}
-                        description={
-                            s.warning.enabled ? (
-                                <>
-                                    {s.description}
-                                    <Notice.Warning className={Margins.top8} style={{ width: "100%" }}>
-                                        {s.warning.message}
-                                    </Notice.Warning>
-                                </>
-                            ) : (
-                                s.description
-                            )
-                        }
-                        hideBorder
-                    />
-                ),
-            )}
+            <Switches />
 
-            {needsVibrancySettings && (
-                <>
-                    <Divider className={Margins.top20} />
-
+            <MacOSVibrancySettings />
+            <WindowsMaterialSettings />
                     <Heading className={Margins.top20}>Window Vibrancy</Heading>
                     <Paragraph className={Margins.bottom16}>
                         Customize the macOS window vibrancy effect. This controls the blur and transparency style of the Discord window. Changes require a restart to take effect.

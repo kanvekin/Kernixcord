@@ -6,27 +6,34 @@
 
 import { BaseText } from "@components/BaseText";
 import { Card } from "@components/Card";
-import { findComponentByCodeLazy } from "@webpack";
+import { HeadphonesIcon } from "@components/Icons";
 import { Button, useEffect, useState } from "@webpack/common";
 
 import pl, { Native, settings, SongLinkResult } from ".";
-import Providers from "./Providers";
+import { Providers } from "./Providers";
 
-const HeadphonesIcon = findComponentByCodeLazy("4.1-2.13h1.86A9");
+interface SongLinkerProps {
+    url: string;
+    onResolved?: (url: string, result: SongLinkResult) => void;
+}
 
-export default function SongLinker({ url }: { url: string; }) {
+export default function SongLinker({ url, onResolved }: SongLinkerProps) {
     const [songData, setSongData] = useState<SongLinkResult>();
 
     useEffect(() => {
         async function doStuff() {
-            if (pl.cache[url]) return void setSongData(pl.cache[url]);
-
-            const sd = await Native.getTrackData(url);
+            let sd: SongLinkResult;
+            if (pl.cache[url]) {
+                sd = pl.cache[url];
+            } else {
+                sd = await Native.getTrackData(url);
+                pl.addToCache(url, sd);
+            }
             setSongData(sd);
-            pl.addToCache(url, sd);
+            onResolved?.(url, sd);
         }
         doStuff();
-    });
+    }, [url]);
 
     return <BaseText>
         {

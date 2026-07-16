@@ -15,7 +15,7 @@ import { canonicalizeMatch } from "@utils/patches";
 import definePlugin, { OptionType } from "@utils/types";
 import { Message } from "@vencord/discord-types";
 import { findComponentLazy } from "@webpack";
-import { ChannelStore, GuildMemberStore, TooltipContainer } from "@webpack/common";
+import { ChannelStore, GuildMemberStore, Tooltip } from "@webpack/common";
 import { ReactNode } from "react";
 
 const countDownFilter = canonicalizeMatch(/#{intl::MAX_AGE_NEVER}/);
@@ -68,6 +68,7 @@ function renderTimeout(message: Message, inline: boolean) {
 export default definePlugin({
     name: "ShowTimeoutDuration",
     description: "Shows how much longer a user's timeout will last, either in the timeout icon tooltip or next to it",
+    tags: ["Servers", "Utility"],
     authors: [Devs.Ven, Devs.Sqaaakoi],
 
     settings,
@@ -86,15 +87,23 @@ export default definePlugin({
 
     TooltipWrapper: ErrorBoundary.wrap(({ message, children, text }: { message: Message; children: ReactNode; text: ReactNode; }) => {
         if (settings.store.displayStyle === DisplayStyle.Tooltip)
-            return <TooltipContainer text={renderTimeout(message, false)}>{children}</TooltipContainer>;
+            return (
+                <Tooltip text={renderTimeout(message, false)}>
+                    {tooltipProps => <span {...tooltipProps}>{children}</span>}
+                </Tooltip>
+            );
 
         return (
-            <div className="vc-std-wrapper">
-                <TooltipContainer text={text}>{children}</TooltipContainer>
-                <BaseText size="md" color="text-danger">
-                    {renderTimeout(message, true)} timeout remaining
-                </BaseText>
-            </div>
+            <Tooltip text={renderTimeout(message, false)}>
+                {tooltipProps => (
+                    <div {...tooltipProps} className="vc-std-wrapper">
+                        {children}
+                        <BaseText tag="span" size="md" color="text-danger">
+                            {renderTimeout(message, true)} timeout remaining
+                        </BaseText>
+                    </div>
+                )}
+            </Tooltip>
         );
     }, { noop: true })
 });

@@ -100,6 +100,8 @@ const ChatBarContextCheckbox: NavContextMenuPatchCallback = children => {
 export default definePlugin({
     name: "Signature",
     description: "Automated fingerprint/end text",
+    dependencies: ["CommandsAPI", "ChatInputButtonAPI", "MessagePopoverAPI"],
+    tags: ["Appearance", "Chat"],
     authors: [Devs.Ven, Devs.Rini, Devs.ImBanana, EquicordDevs.KrystalSkull],
     onBeforeMessageSend(channelId, msg) {
         if (!settings.store.isEnabled) {
@@ -126,31 +128,30 @@ export default definePlugin({
         "textarea-context": ChatBarContextCheckbox
     },
 
-    commands: [{
-        name: "Signature",
-        description: "Toggle your signature",
-        inputType: ApplicationCommandInputType.BUILT_IN,
-        options: [
-            {
-                name: "value",
-                description: "Toggle your signature (default is toggle)",
-                required: false,
-                type: ApplicationCommandOptionType.BOOLEAN,
+    commands: [
+        {
+            name: "signature",
+            description: "Toggle your signature",
+            inputType: ApplicationCommandInputType.BUILT_IN,
+            options: [
+                {
+                    name: "value",
+                    description: "Toggle your signature (default is toggle)",
+                    required: false,
+                    type: ApplicationCommandOptionType.BOOLEAN,
+                },
+            ],
+            execute: async (args, ctx) => {
+                settings.store.isEnabled = !!findOption(args, "value", !settings.store.isEnabled);
+                sendBotMessage(ctx.channel.id, {
+                    content: settings.store.isEnabled ? "Signature enabled!" : "Signature disabled!",
+                });
             },
-        ],
-        execute: async (args, ctx) => {
-            settings.store.isEnabled = !!findOption(args, "value", !settings.store.isEnabled);
-            sendBotMessage(ctx.channel.id, {
-                content: settings.store.isEnabled ? "Signature enabled!" : "Signature disabled!",
-            });
-        },
-    }],
+        }
+    ],
 });
-
 
 // text processing injection processor
 function textProcessing(input: string) {
     return `${input}\n${settings.store.textHeader ? settings.store.textHeader + " " : ""}${settings.store.name}`;
 }
-
-

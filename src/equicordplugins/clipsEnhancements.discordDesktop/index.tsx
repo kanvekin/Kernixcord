@@ -4,12 +4,16 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { definePluginSettings } from "@api/Settings";
+import { definePluginSettings, migratePluginSettings } from "@api/Settings";
 import { Button } from "@components/Button";
-import { Devs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
+import { getIntlMessage } from "@utils/discord";
 import definePlugin, { OptionType } from "@utils/types";
-import { Activity, SelectOption } from "@vencord/discord-types";
-import { openUserSettingsPanel, PresenceStore, UserStore } from "@webpack/common";
+import { Activity } from "@vencord/discord-types";
+import { PresenceStore, SettingsRouter, UserStore } from "@webpack/common";
+
+const extraTimeslots = [3, 4, 5, 6, 7, 10, 15, 20, 25, 30];
+const extraFramerates = [45, 90, 120, 144, 165, 240];
 
 const settings = definePluginSettings({
     richPresenceTagging: {
@@ -29,7 +33,7 @@ const settings = definePluginSettings({
                 <>
                     <Button
                         onClick={() => {
-                            openUserSettingsPanel("clips");
+                            SettingsRouter.openUserSettings("clips_panel");
                         }}
                     >
                         Change FPS and duration options in Clips settings!
@@ -40,66 +44,84 @@ const settings = definePluginSettings({
     },
 });
 
+migratePluginSettings("ClipsEnhancements", "TimelessClips");
 export default definePlugin({
     name: "ClipsEnhancements",
-    description: "Add more Clip FPS and duration options, plus RPC tagging!",
-    authors: [Devs.niko],
+    description: "Add more Clip FPS and duration options, custom clip length, RPC tagging and more",
+    tags: ["Activity", "Media", "Utility"],
+    authors: [Devs.niko, Devs.Joona, EquicordDevs.keircn],
     settings,
     patches: [
-        {
-            find: "clips_recording_settings",
-            replacement: [
-                {
-                    match: /\[\{.{0,25}\i.\i.FPS_15.{0,500}\}\]/,
-                    replace: "$self.patchFramerates($&)"
-                },
-                {
-                    match: /\[\{.{0,25}\i.\i.SECONDS_30.{0,500}\}\]/,
-                    replace: "$self.patchTimeslots($&)"
-                },
-            ]
-        },
         {
             find: "#{intl::CLIPS_UNKNOWN_SOURCE}",
             replacement: {
                 match: /(applicationName:)(.{0,50})(,applicationId:)(\i)/,
                 replace: "$1$2$3$self.getApplicationId($2)??$4"
             }
-        }
+        },
+        {
+            find: ".CLIPS_FRAME_RATE,{",
+            replacement: {
+                match: /\[\{.{0,25}\i.\i.FPS_15.{0,500}\}\]/,
+                replace: " $self.patchFramerates($&)"
+            }
+        },
+        {
+            find: ".CLIPS_LENGTH,{",
+            replacement: {
+                match: /\[\{.{0,25}\i.\i.SECONDS_30.{0,500}\}\]/,
+                replace: " $self.patchTimeslots($&)"
+            }
+        },
     ],
 
-    patchTimeslots(timeslots: SelectOption[]) {
+    patchTimeslots(timeslots: { id: string; value: number; label: string; }[]) {
         const newTimeslots = [...timeslots];
-        const extraTimeslots = [3, 5, 7, 10, 15, 20, 25, 30];
 
-        extraTimeslots.forEach(timeslot => newTimeslots.push({ value: timeslot * 60000, label: `${timeslot} Minutes` }));
+        extraTimeslots.forEach(timeslot => newTimeslots.push({
+            id: `${timeslot}min`,
+            value: timeslot * 60000,
+            label: getIntlMessage("CLIPS_LENGTH_MINUTES", {
+                count: timeslot
+            })
+        }));
 
-        return newTimeslots;
+        return newTimeslots.sort((a, b) => a.value - b.value);
     },
 
-    patchFramerates(framerates: SelectOption[]) {
+    patchFramerates(framerates: { id: string; value: number; label: string; }[]) {
         const newFramerates = [...framerates];
-        const extraFramerates = [45, 90, 120, 144, 165, 240];
 
         // Lower framerates than 15FPS have adverse affects on compression, 3 minute clips at 10FPS skyrocket the filesize to 200mb!!
-        extraFramerates.forEach(framerate => newFramerates.push({ value: framerate, label: `${framerate}FPS` }));
+        extraFramerates.forEach(framerate => newFramerates.push({
+            id: `${framerate}fps`,
+            value: framerate,
+            label: getIntlMessage("SCREENSHARE_FPS_ABBREVIATED", {
+                fps: framerate
+            })
+        }));
 
-        return newFramerates.toSorted();
+        return newFramerates.sort((a, b) => a.value - b.value);
     },
 
     getApplicationId(activityName: string) {
-        if (settings.store.richPresenceTagging === "never") {
-            return null;
-        }
+        if (settings.store.richPresenceTagging === "never") return null;
 
         const activities: Activity[] = PresenceStore.getActivities(UserStore.getCurrentUser().id);
         const validActivities = activities.filter(activity => activity.type === 0 && activity.application_id !== null);
-
         const splitName = activityName.split(" ");
 
         // Try to match activity by it's start and end
         const matchedActivities = validActivities.filter(activity => activity.name.endsWith(splitName.at(-1)!) || activity.name.startsWith(splitName.at(0)!));
 
-        return (matchedActivities ?? (settings.store.richPresenceTagging === "whenMatched" ? null : validActivities))[0]?.application_id;
-    }
+        if (matchedActivities.length > 0) {
+            return matchedActivities[0].application_id;
+        }
+
+        if (settings.store.richPresenceTagging !== "whenMatched") {
+            return validActivities[0]?.application_id ?? null;
+        }
+
+        return null;
+    },
 });

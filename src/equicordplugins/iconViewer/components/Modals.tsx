@@ -5,31 +5,25 @@
  */
 
 import { BaseText } from "@components/BaseText";
-import { Button } from "@components/Button";
+import { CodeBlock } from "@components/CodeBlock";
 import { Flex } from "@components/Flex";
 import { HeadingSecondary } from "@components/Heading";
 import { Paragraph } from "@components/Paragraph";
+import { TooltipContainer } from "@components/TooltipContainer";
 import { copyWithToast, getIntlMessage } from "@utils/discord";
 import { Logger } from "@utils/Logger";
-import {
-    ModalContent,
-    ModalFooter,
-    ModalHeader,
-    ModalProps,
-    ModalRoot,
-    ModalSize,
-    openModal
-} from "@utils/modal";
 import { saveFile } from "@utils/web";
-import { Icon } from "@vencord/discord-types";
+import { Icon, RenderModalProps } from "@vencord/discord-types";
 import { findComponentByCodeLazy } from "@webpack";
 import {
+    Clickable,
     ContextMenuApi,
     createRoot,
     FluxDispatcher,
     Menu,
+    Modal,
+    openModal,
     ReactDOM,
-    TooltipContainer,
     useCallback,
     useEffect,
     useMemo,
@@ -39,7 +33,6 @@ import {
 import { cssColors, getCssColorKeys, iconSizes, iconSizesInPx } from "../utils";
 
 const logger = new Logger("IconViewer");
-const CloseButton = findComponentByCodeLazy("CLOSE_BUTTON_LABEL");
 const BugIcon = findComponentByCodeLazy("1.1.27.1.37 0a6.66 6.6");
 
 const FORMAT_EXTENSIONS: Record<string, string> = {
@@ -164,7 +157,7 @@ function saveIcon(iconName: string, icon: Element | string, color: number, size:
     img.src = `data:image/svg+xml;base64,${btoa(icon.outerHTML)}`;
 }
 
-function OtherContextMenu({ iconName, Icon, color, findCode }: { iconName: string; Icon: Icon; color: number; findCode: string | null; }) {
+function OtherContextMenu({ iconName, Icon, color }: { iconName: string; Icon: Icon; color: number; }) {
     const colorData = cssColors[color];
 
     const handleSave = (type: string) => {
@@ -224,15 +217,13 @@ function OtherContextMenu({ iconName, Icon, color, findCode }: { iconName: strin
     );
 }
 
-function IconModal({ iconName, Icon, findPattern, onClose, transitionState }: { iconName: string; Icon: Icon; findPattern?: string; } & ModalProps) {
+function IconModal({ iconName, Icon, onClose, transitionState }: { iconName: string; Icon: Icon; } & RenderModalProps) {
     const [color, setColor] = useColorNavigation(209);
     const colorData = cssColors[color];
     const colorKeys = useMemo(() => getCssColorKeys(), []);
 
-    const fill = iconName === "CircleShield" ? "var(--background-base-low)" : colorData?.css;
-    const findCode = findPattern
-        ? `const ${iconName}Icon = findComponentByCode(${JSON.stringify(findPattern)})`
-        : null;
+    const fill = iconName === "CircleShieldIcon" ? "var(--background-base-low)" : colorData?.css;
+    const findCode = `const ${iconName} = findExportedComponentLazy("${iconName}")`;
 
     const openColorMenu = (e: React.MouseEvent) => {
         ContextMenuApi.openContextMenu(e, () => <ColorContextMenu colorKeys={colorKeys} />);
@@ -247,62 +238,64 @@ function IconModal({ iconName, Icon, findPattern, onClose, transitionState }: { 
         });
     }, [colorKeys.length, setColor]);
 
-    const openOtherMenu = (e: React.MouseEvent) => {
-        ContextMenuApi.openContextMenu(e, () => (
-            <OtherContextMenu iconName={iconName} Icon={Icon} color={color} findCode={findCode} />
+    const openOtherMenu = (e?: React.MouseEvent) => {
+        if (e) ContextMenuApi.openContextMenu(e, () => (
+            <OtherContextMenu iconName={iconName} Icon={Icon} color={color} />
         ));
     };
 
     return (
-        <ModalRoot transitionState={transitionState} size={ModalSize.MEDIUM}>
-            <ModalHeader separator={false} className="vc-ic-modal-header">
-                <div className="vc-ic-modal-header-content">
-                    <BaseText size="lg" weight="semibold" className="vc-ic-modal-title">{iconName}</BaseText>
+        <Modal
+            transitionState={transitionState}
+            onClose={onClose}
+            size="md"
+            title={iconName}
+            actions={[
+                {
+                    text: "Actions",
+                    variant: "primary",
+                    onClick: openOtherMenu
+                }
+            ]}
+        >
+            <Flex className="vc-ic-modal-main">
+                <div
+                    className="vc-ic-icon-preview"
+                    aria-label={colorData?.name}
+                    onContextMenu={openColorMenu}
+                    onWheel={onWheel}
+                >
+                    <Icon className="vc-ic-icon-large" color={colorData?.css} fill={fill} />
                 </div>
-                <div className="vc-ic-modal-header-trailing">
-                    <CloseButton onClick={onClose} />
-                </div>
-            </ModalHeader>
-            <ModalContent className="vc-ic-modal-content">
-                <Flex className="vc-ic-modal-main">
-                    <div
-                        className="vc-ic-icon-preview"
-                        aria-label={colorData?.name}
-                        onContextMenu={openColorMenu}
-                        onWheel={onWheel}
-                    >
-                        <Icon className="vc-ic-icon-large" color={colorData?.css} fill={fill} />
-                    </div>
-                    <Flex flexDirection="column" className="vc-ic-icon-info">
-                        <Flex className="vc-ic-icon-sizes">
-                            {iconSizes.map(size => (
-                                <TooltipContainer text={size} key={size}>
-                                    <Icon size={size} color={colorData?.css} fill={fill} />
-                                </TooltipContainer>
-                            ))}
-                        </Flex>
-                        <TooltipContainer text="Right-click icon to change">
-                            <BaseText size="sm" color="text-muted" className="vc-ic-color-label">
-                                {colorData?.name}
-                            </BaseText>
-                        </TooltipContainer>
+                <Flex flexDirection="column" className="vc-ic-icon-info">
+                    <Flex className="vc-ic-icon-sizes">
+                        {iconSizes.map(size => (
+                            <TooltipContainer text={size} key={size}>
+                                <Icon size={size} color={colorData?.css} fill={fill} />
+                            </TooltipContainer>
+                        ))}
                     </Flex>
+                    <TooltipContainer text="Right-click icon to change">
+                        <BaseText size="sm" color="text-muted" className="vc-ic-color-label">
+                            {colorData?.name}
+                        </BaseText>
+                    </TooltipContainer>
                 </Flex>
-            </ModalContent>
-            <ModalFooter className="vc-ic-modal-footer">
-                <Button variant="primary" onClick={() => copyWithToast(findCode ?? String(Icon), findCode ? "Find code copied!" : "Raw function copied!")}>
-                    {findCode ? "Copy" : "Copy Raw"}
-                </Button>
-                <Button variant="secondary" onClick={openOtherMenu}>
-                    Actions
-                </Button>
-            </ModalFooter>
-        </ModalRoot>
+            </Flex>
+            <div className="vc-ic-use-as">
+                <BaseText size="md" weight="semibold">Usage</BaseText>
+                <BaseText size="sm" color="text-muted">Click to copy</BaseText>
+            </div>
+            {/* for some reason i cant make this shit codeblock full width, FF 15 */}
+            <Clickable className="vc-ic-codeblock-wrapper" onClick={() => copyWithToast(findCode, "Copied!")}>
+                <CodeBlock content={findCode} lang="ts" />
+            </Clickable>
+        </Modal>
     );
 }
 
-export function openIconModal(iconName: string, Icon: Icon, findPattern?: string) {
-    openModal(props => <IconModal iconName={iconName} Icon={Icon} findPattern={findPattern} {...props} />);
+export function openIconModal(iconName: string, Icon: Icon) {
+    openModal(props => <IconModal iconName={iconName} Icon={Icon} {...props} />);
 }
 
 export function SettingsAbout() {

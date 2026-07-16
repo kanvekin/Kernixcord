@@ -8,9 +8,9 @@ import { AudioPlayerInterface, createAudioPlayer } from "@api/AudioPlayer";
 import { HeaderBarButton } from "@api/HeaderBar";
 import { definePluginSettings } from "@api/Settings";
 import { EquicordDevs } from "@utils/constants";
-import { ModalProps, ModalRoot, openModal } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
-import { React } from "@webpack/common";
+import { RenderModalProps } from "@vencord/discord-types";
+import { Modal,openModal, React } from "@webpack/common";
 let boopSound: AudioPlayerInterface;
 let song: AudioPlayerInterface;
 
@@ -26,7 +26,7 @@ function assignBoop(url: string, volume: number) {
     boopSound.load();
 }
 
-function SoggyModal(props: ModalProps) {
+function SoggyModal(props: RenderModalProps) {
     if (settings.store.songVolume !== 0) {
         React.useEffect(() => {
             song?.loop();
@@ -54,14 +54,13 @@ function SoggyModal(props: ModalProps) {
     };
 
     return (
-        <ModalRoot {...props}>
+        <Modal {...props} size="dynamic" title="Soggy Cat">
             <img
                 src={settings.store.imageLink}
                 onClick={boop}
                 style={{ display: "block" }}
-
             />
-        </ModalRoot >
+        </Modal>
     );
 }
 
@@ -114,7 +113,7 @@ const settings = definePluginSettings({
     imageLink: {
         description: "URL for the image (button and modal)",
         type: OptionType.STRING,
-        default: "https://images.equicord.org/api/files/raw/0199e730-70d5-7000-a44f-d1acb42064cc",
+        default: "https://equicord.org/assets/plugins/soggy/cat.png",
     },
     songLink: {
         description: "URL for the song to play",
@@ -137,9 +136,10 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "Soggy",
     description: "Adds a soggy button to the toolbox",
+    tags: ["Fun"],
     authors: [EquicordDevs.sliwka],
     settings,
-    dependencies: ["AudioPlayerAPI"],
+    dependencies: ["AudioPlayerAPI", "HeaderBarAPI"],
 
     headerBarButton: {
         icon: () => (

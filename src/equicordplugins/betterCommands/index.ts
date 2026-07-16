@@ -12,12 +12,12 @@ import { FluxDispatcher, UserStore } from "@webpack/common";
 
 const settings = definePluginSettings({
     autoFillArguments: {
-        description: "Automatically fill command with all arguements instead of just required ones",
+        description: "Automatically fill command with all arguments instead of just required ones.",
         type: OptionType.BOOLEAN,
         default: true,
     },
     allowNewlinesInCommands: {
-        description: "Allow newlines in command inputs (Shift + Enter)",
+        description: "Allow newlines in command inputs (CTRL + Shift + Enter)",
         type: OptionType.BOOLEAN,
         default: true,
     }
@@ -33,6 +33,8 @@ function fetchIndex(target: object) {
 export default definePlugin({
     name: "BetterCommands",
     description: "Enhances the command system with miscellaneous improvements.",
+    dependencies: ["CommandsAPI"],
+    tags: ["Appearance", "Commands", "Shortcuts"],
     authors: [Devs.thororen],
     settings,
     patches: [
@@ -54,7 +56,7 @@ export default definePlugin({
                     match: /case (\i\.\i)\.TAB:if\(null!=(\i).selection&&\i\((\i)(?=.{0,300}(\i\.\i\.insertText))/,
                     replace: (orig, keys, editor, event, insertText) => {
                         return `case ${keys}.ENTER:
-                                    if(${event}.shiftKey){
+                                    if(${event}.shiftKey && ${event}.ctrlKey){
                                         ${event}.preventDefault();
                                         ${event}.stopPropagation();
                                         ${insertText}(${editor},'\\n');
@@ -70,7 +72,7 @@ export default definePlugin({
     commands: [
         {
             name: "refresh",
-            description: "Refreshes Discord application commands locally",
+            description: "Refreshes the specified applications commands locally",
             options: [
                 {
                     name: "user",

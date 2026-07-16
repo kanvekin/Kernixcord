@@ -24,17 +24,26 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "PictureInPicture",
     description: "Adds picture in picture to videos (next to the Download button)",
+    tags: ["Media", "Utility"],
     authors: [Devs.Lumap],
     settings,
     patches: [
         {
-            find: ".removeMosaicItemHoverButton),",
+            find: '["VIDEO","CLIP","AUDIO"]',
             replacement: {
-                match: /(\.nonMediaMosaicItem\]:.{0,40}children:)(\i.slice\(\i\))(?<=showDownload:(\i).+?isVisualMediaType:(\i).+?)/,
-                replace: (_, rest, origChildren, showDownload, isVisualMediaType) => `${rest}[${showDownload}&&${isVisualMediaType}&&$self.PictureInPictureButton(),...${origChildren}]`
+                match: /(\[\i>0&&\i\.length>0.{0,150}?children:)(\i.slice\(\i\))(?<=mimeType:(\i),downloadURL:(\i).+?showDownload:(\i).+?isVisualMediaType:(\i).+?)/,
+                replace: (_, rest, origChildren, mimeType, downloadURL, showDownload, isVisualMediaType) =>
+                    `${rest}[${showDownload}&&${isVisualMediaType}&&$self.shouldShowButton(${mimeType},${downloadURL})&&$self.PictureInPictureButton(),...${origChildren}]`
             }
         }
     ],
+
+    shouldShowButton(mimeType: string[] = [], downloadURL?: string) {
+        const normalizedMimeType = mimeType.join("/");
+        if (normalizedMimeType.startsWith("video/")) return true;
+        if (!downloadURL) return false;
+        return /\.(mp4|webm|mov|m4v|ogv|avi)(?:$|[?#])/i.test(downloadURL);
+    },
 
     PictureInPictureButton: ErrorBoundary.wrap(() => {
         return (

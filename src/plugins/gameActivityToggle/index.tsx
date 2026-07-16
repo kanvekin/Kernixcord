@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import "./style.css";
-
 import { isPluginEnabled } from "@api/PluginManager";
 import { definePluginSettings } from "@api/Settings";
 import { UserAreaButton, UserAreaRenderProps } from "@api/UserArea";
@@ -100,8 +98,9 @@ function GameActivityToggleButton({ iconForeground, hideTooltips, nameplate }: U
 export default definePlugin({
     name: "GameActivityToggle",
     description: "Adds a button next to the mic and deafen button to toggle game activity.",
+    tags: ["Activity", "Shortcuts"],
     authors: [Devs.Nuckyz, Devs.RuukuLada],
-    dependencies: ["UserSettingsAPI"],
+    dependencies: ["UserSettingsAPI", "UserAreaAPI"],
     settings,
 
     userAreaButton: {

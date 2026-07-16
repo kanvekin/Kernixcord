@@ -144,7 +144,7 @@ export const Packs = () => {
                             flexGrow: 1
                         }}>
                             <CheckedTextInput
-                                value={addStickerUrl}
+                                initialValue={addStickerUrl}
                                 onChange={setAddStickerUrl}
                                 validate={(v: string) => {
                                     try {
@@ -444,7 +444,6 @@ export const Packs = () => {
         </div>
     );
 };
-
 
 export function Header(props: { children: JSX.Element | JSX.Element[]; }) {
     return (

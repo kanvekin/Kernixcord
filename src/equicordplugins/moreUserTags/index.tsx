@@ -6,6 +6,7 @@
 
 import "./styles.css";
 
+import { migratePluginToSettings } from "@api/Settings";
 import { Devs, EquicordDevs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { getCurrentChannel, getIntlMessage } from "@utils/discord";
@@ -31,10 +32,14 @@ const genTagTypes = () => {
     return obj;
 };
 
+migratePluginToSettings(true, "MoreUserTags", "NoAppsAllowed", "noAppsAllowed");
+
 export default definePlugin({
     name: "MoreUserTags",
     description: "Adds tags for webhooks and moderative roles (owner, admin, etc.)",
-    authors: [Devs.Cyn, Devs.TheSun, Devs.RyanCaoDev, Devs.LordElias, Devs.AutumnVN, EquicordDevs.Hen],
+    dependencies: ["MemberListDecoratorsAPI", "MessageDecorationsAPI", "NicknameIconsAPI"],
+    tags: ["Appearance", "Chat"],
+    authors: [Devs.Cyn, Devs.TheSun, Devs.RyanCaoDev, Devs.LordElias, Devs.AutumnVN, EquicordDevs.Hen, EquicordDevs.meowabyte],
     settings,
     patches: [
         // Make discord actually use our tags
@@ -46,11 +51,23 @@ export default definePlugin({
                     replace: "default:$2=$self.getTagText($self.localTags[$1]);",
                 },
                 {
-                    match: /(?<=type:(\i).*?)\.BOT:(?=default:)/,
+                    match: /(?<=type:\i.*?)\.BOT:(?=default:)/,
                     replace: "$&return null;",
                     predicate: () => settings.store.dontShowBotTag
                 },
             ],
+        },
+        {
+            find: '"#{intl::APP_TAG::hash}":',
+            // This matches the intl bundle, english is always loaded as a fallback bundle
+            // if the users language is not english, we need to apply to both because the load order is random
+            all: true,
+            predicate: () => settings.store.noAppsAllowed,
+            replacement: {
+                match: /(#{intl::APP_TAG::hash}":\[").*?("\])/,
+                replace: "$1BOT$2",
+                noWarn: true,
+            }
         }
     ],
     start() {

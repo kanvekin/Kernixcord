@@ -12,18 +12,18 @@ permissions:
 
 jobs:
     Build:
-        name: Build Equicord
+        name: Build Kernixcord
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
 
-            - uses: pnpm/action-setup@v3
+            - uses: pnpm/action-setup@v6
 
-            - name: Use Node.js 20
-              uses: actions/setup-node@v4
+            - name: Use Node.js 24
+              uses: actions/setup-node@v6
               with:
-                  node-version: 20
+                  node-version: 24
                   cache: "pnpm"
 
             - name: Install dependencies
@@ -55,12 +55,14 @@ jobs:
 
                   # Copy plugin data JSONs, extension zips and desktop/vesktop ASARs if present
                   compgen -G "*.{json,zip,asar}" > /dev/null && cp *.{json,zip,asar} release || true
+                  # copy the plugin data jsons, the extension zips and the desktop/privbop asars
+                  cp *.{json,zip,asar} release
 
-                  # Legacy un-asared files
-                  { [ -d desktop ] && compgen -G "desktop/*" > /dev/null && cp desktop/* release; } || true
-                  { [ -d equibop ] && compgen -G "equibop/*" > /dev/null && for file in equibop/*; do
+                  # legacy un-asared files
+                  cp desktop/* release
+                  for file in privbop/*; do
                     filename=$(basename "$file")
-                    cp "$file" "release/equibop${filename^}"
+                    cp "$file" "release/privbop${filename^}"
                   done; } || true
 
                   find release -size 0 -delete
@@ -72,6 +74,7 @@ jobs:
               run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
 
             - name: Upload Equicord Stable
+              if: ${{ vars.ACT == 'false' }}
               run: |
                   gh release create ${{ steps.date.outputs.date }} --latest=false
                   gh release upload ${{ steps.date.outputs.date }} --clobber dist/release/*

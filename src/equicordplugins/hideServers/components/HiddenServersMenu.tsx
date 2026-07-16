@@ -10,40 +10,21 @@ import { HiddenServersStore } from "@equicordplugins/hideServers/HiddenServersSt
 import { classNameFactory } from "@utils/css";
 import { getGuildAcronym } from "@utils/discord";
 import { classes } from "@utils/misc";
-import {
-    closeModal,
-    ModalCloseButton,
-    ModalContent,
-    ModalHeader,
-    ModalProps,
-    ModalRoot,
-    ModalSize,
-    openModal,
-} from "@utils/modal";
-import { Guild } from "@vencord/discord-types";
-import { findByPropsLazy } from "@webpack";
-import { Button, IconUtils, useStateFromStores } from "@webpack/common";
+import { Guild, RenderModalProps } from "@vencord/discord-types";
+import { findCssClassesLazy } from "@webpack";
+import { Button, closeModal, IconUtils, Modal,openModal, useStateFromStores } from "@webpack/common";
 
 import { SortedGuildStore } from "..";
 
 const cl = classNameFactory("vc-hideservers-");
-const IconClasses = findByPropsLazy("icon", "acronym", "childWrapper");
+const IconClasses = findCssClassesLazy("icon", "acronym", "childWrapper");
 
-function HiddenServersModal({ modalProps, close }: { modalProps: ModalProps; close(): void; }) {
+function HiddenServersModal({ modalProps, close }: { modalProps: RenderModalProps; close(): void; }) {
     const guilds = useStateFromStores([HiddenServersStore], () => HiddenServersStore.hiddenGuildsDetail());
     return (
-        <ModalRoot {...modalProps} size={ModalSize.LARGE}>
-            <ModalHeader>
-                <BaseText size="lg" weight="semibold" style={{ flexGrow: 1 }}>
-                    Hidden Servers
-                </BaseText>
-                <ModalCloseButton onClick={close} />
-            </ModalHeader>
-
-            <ModalContent>
-                <HiddenServersMenu guilds={guilds} />
-            </ModalContent>
-        </ModalRoot>
+        <Modal {...modalProps} size="lg" title="Hidden Servers">
+            <HiddenServersMenu guilds={guilds} />
+        </Modal>
     );
 }
 
@@ -67,7 +48,6 @@ function restoreGuild(guild: Guild, SortedGuildStore: any) {
 
     HiddenServersStore.removeHiddenGuild("folder-" + folder.folderId);
 }
-
 
 function GuildRow({ guild }) {
     return (

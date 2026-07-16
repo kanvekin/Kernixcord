@@ -8,13 +8,13 @@ import { Flex } from "@components/Flex";
 import { Heading } from "@components/Heading";
 import { Paragraph } from "@components/Paragraph";
 import { BasicChannelTabsProps, ChannelTabsProps, clearStaleNavigationContext, closeTab, createTab, handleChannelSwitch, isNavigationFromSource, isTabSelected, moveToTab, openedTabs, openStartupTabs, saveTabs, settings, setUpdaterFunction, useGhostTabs } from "@equicordplugins/channelTabs/util";
-import { IS_MAC } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { classes } from "@utils/misc";
 import { useForceUpdater } from "@utils/react";
 import { findComponentByCodeLazy, findStoreLazy } from "@webpack";
 import { Button, ContextMenuApi, FluxDispatcher, useCallback, useEffect, useRef, UserStore, useState, useStateFromStores } from "@webpack/common";
 
+import channelTabs from "..";
 import BookmarkContainer, { HorizontalScroller } from "./BookmarkContainer";
 import ChannelTab, { PreviewTab } from "./ChannelTab";
 import { BasicContextMenu } from "./ContextMenus";
@@ -33,6 +33,7 @@ export default function ChannelsTabsContainer(props: BasicChannelTabsProps) {
         showBookmarkBar,
         widerTabsAndBookmarks,
         tabWidthScale,
+        tabHeightScale,
         enableNumberKeySwitching,
         numberKeySwitchCount,
         enableCloseTabShortcut,
@@ -65,6 +66,7 @@ export default function ChannelsTabsContainer(props: BasicChannelTabsProps) {
         "showBookmarkBar",
         "widerTabsAndBookmarks",
         "tabWidthScale",
+        "tabHeightScale",
         "enableNumberKeySwitching",
         "numberKeySwitchCount",
         "enableCloseTabShortcut",
@@ -125,7 +127,7 @@ export default function ChannelsTabsContainer(props: BasicChannelTabsProps) {
     useEffect(() => {
         if (ref.current) {
             try {
-                (Vencord.Plugins.plugins.ChannelTabs as any).containerHeight = ref.current.clientHeight;
+                channelTabs.containerHeight = ref.current.clientHeight;
             } catch { }
         }
     }, [userId, showBookmarkBar, tabBarPosition]);
@@ -288,12 +290,21 @@ export default function ChannelsTabsContainer(props: BasicChannelTabsProps) {
 
     if (isFullscreen) return null;
 
+    const shouldFollowNewTabButton = newTabButtonBehavior && !tabsOverflow;
+    const newTabButton = (
+        <button
+            onClick={() => createTab(props, true)}
+            className={cl("button", "new-button", "hoverable")}
+        >
+            <PlusSmallIcon />
+        </button>
+    );
+
     return (
         <div
             className={classes(
                 cl("container"),
                 tabBarPosition === "top" && cl("container-top"),
-                IS_MAC && tabBarPosition === "top" && cl("container-top-macos"),
                 !animationHover && cl("no-hover-animation"),
                 !animationSelection && cl("no-selection-animation"),
                 !animationDragDrop && cl("no-drag-animation"),
@@ -313,7 +324,7 @@ export default function ChannelsTabsContainer(props: BasicChannelTabsProps) {
                 !compactAutoExpandOnHover && cl("no-compact-hover-expand")
             )}
             ref={ref}
-            style={{ "--tab-width-scale": tabWidthScale / 100 } as React.CSSProperties}
+            style={{ "--tab-width-scale": tabWidthScale / 100, "--tab-height-scale": tabHeightScale / 100 } as React.CSSProperties}
             onContextMenu={e => ContextMenuApi.openContextMenu(e, () => <BasicContextMenu />)}
         >
             {showBookmarkBar && <>
@@ -323,21 +334,16 @@ export default function ChannelsTabsContainer(props: BasicChannelTabsProps) {
             <div className={cl("tab-container")}>
                 <HorizontalScroller
                     customRef={node => { scrollerRef.current = node; }}
-                    className={cl("tab-scroller", newTabButtonBehavior && !tabsOverflow && "tab-scroller-following")}
+                    className={cl("tab-scroller", shouldFollowNewTabButton && "tab-scroller-following")}
                 >
                     {openedTabs.filter(tab => tab != null).map((tab, i) =>
                         <ChannelTab {...tab} index={i} key={tab.id} />
                     )}
+                    {GhostTabs}
+                    {shouldFollowNewTabButton && newTabButton}
                 </HorizontalScroller>
 
-                <button
-                    onClick={() => createTab(props, true)}
-                    className={cl("button", "new-button", "hoverable")}
-                >
-                    <PlusSmallIcon />
-                </button>
-
-                {GhostTabs}
+                {!shouldFollowNewTabButton && newTabButton}
             </div >
 
         </div>

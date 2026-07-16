@@ -22,13 +22,15 @@ import "./settings";
 
 import { debounce } from "@shared/debounce";
 import { IpcEvents } from "@shared/IpcEvents";
-import { BrowserWindow, ipcMain, nativeTheme, shell, systemPreferences } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, nativeTheme, shell, systemPreferences } from "electron";
 import monacoHtml from "file://monacoWin.html?minify&base64";
 import { FSWatcher, mkdirSync, readFileSync, watch, writeFileSync } from "fs";
 import { open, readdir, readFile, unlink } from "fs/promises";
+import { release } from "os";
 import { join, normalize } from "path";
 
 import { registerCspIpcHandlers } from "./csp/manager";
+import { getThemeInfo, stripBOM, UserThemeHeader } from "./themes";
 import { ALLOWED_PROTOCOLS, QUICK_CSS_PATH, SETTINGS_DIR, THEMES_DIR } from "./utils/constants";
 import { makeLinksOpenExternally } from "./utils/externalLinks";
 
@@ -49,13 +51,21 @@ function readCss() {
     return readFile(QUICK_CSS_PATH, "utf-8").catch(() => "");
 }
 
-async function listThemes(): Promise<{ fileName: string; content: string; }[]> {
-    try {
-        const files = await readdir(THEMES_DIR);
-        return await Promise.all(files.map(async fileName => ({ fileName, content: await getThemeData(fileName) })));
-    } catch {
-        return [];
+async function listThemes(): Promise<UserThemeHeader[]> {
+    const files = await readdir(THEMES_DIR).catch(() => []);
+
+    const themeInfo: UserThemeHeader[] = [];
+
+    for (const fileName of files) {
+        if (!fileName.endsWith(".css")) continue;
+
+        const data = await getThemeData(fileName).then(stripBOM).catch(() => null);
+        if (data == null) continue;
+
+        themeInfo.push(getThemeInfo(data, fileName));
     }
+
+    return themeInfo;
 }
 
 function getThemeData(fileName: string) {
@@ -84,7 +94,6 @@ ipcMain.handle(IpcEvents.SET_QUICK_CSS, (_, css) =>
     writeFileSync(QUICK_CSS_PATH, css)
 );
 
-ipcMain.handle(IpcEvents.GET_THEMES_DIR, () => THEMES_DIR);
 ipcMain.handle(IpcEvents.GET_THEMES_LIST, () => listThemes());
 ipcMain.handle(IpcEvents.GET_THEME_DATA, (_, fileName) => getThemeData(fileName));
 ipcMain.handle(IpcEvents.DELETE_THEME, (_, fileName) => {
@@ -139,18 +148,20 @@ ipcMain.on(IpcEvents.GET_MONACO_THEME, e => {
     e.returnValue = nativeTheme.shouldUseDarkColors ? "vs-dark" : "vs-light";
 });
 
+let monacoWin: BrowserWindow | null = null;
+
 ipcMain.handle(IpcEvents.OPEN_MONACO_EDITOR, async () => {
-    const title = "Equicord QuickCSS Editor";
-    const existingWindow = BrowserWindow.getAllWindows().find(w => w.title === title);
-    if (existingWindow && !existingWindow.isDestroyed()) {
-        existingWindow.focus();
+    if (monacoWin && !monacoWin.isDestroyed()) {
+        monacoWin.show();
+        monacoWin.focus();
         return;
     }
 
-    const win = new BrowserWindow({
-        title,
+    monacoWin = new BrowserWindow({
+        title: "Equicord QuickCSS Editor",
         autoHideMenuBar: true,
         darkTheme: true,
+        backgroundColor: nativeTheme.shouldUseDarkColors ? "#1e1e1e" : "white",
         webPreferences: {
             preload: join(__dirname, "preload.js"),
             contextIsolation: true,
@@ -159,9 +170,28 @@ ipcMain.handle(IpcEvents.OPEN_MONACO_EDITOR, async () => {
         }
     });
 
-    makeLinksOpenExternally(win);
+    monacoWin.once("closed", () => { monacoWin = null; });
 
-    await win.loadURL(`data:text/html;base64,${monacoHtml}`);
+    makeLinksOpenExternally(monacoWin);
+
+    await monacoWin.loadURL(`data:text/html;base64,${monacoHtml}`);
+});
+
+app.on("before-quit", async event => {
+    if (monacoWin && !monacoWin.isDestroyed() && !monacoWin.isVisible()) {
+        const result = await dialog.showMessageBox({
+            type: "question",
+            buttons: ["Cancel", "Close Anyway"],
+            defaultId: 0,
+            title: "QuickCSS Editor Open",
+            message: "QuickCSS editor is still open in the background.",
+            detail: "Do you want to close Discord anyway? This will also close the QuickCSS editor."
+        });
+
+        if (result.response === 1) {
+            app.exit();
+        }
+    }
 });
 
 ipcMain.handle(IpcEvents.OPEN_MESSAGE_SCRAPPER_WINDOW, async () => {
@@ -177,7 +207,6 @@ ipcMain.handle(IpcEvents.OPEN_MESSAGE_SCRAPPER_WINDOW, async () => {
         const url = w.webContents.getURL();
         return url && (url.includes("discord.com") || url.includes("discordapp.com"));
     });
-
     if (!mainWindow || mainWindow.isDestroyed()) {
         throw new Error("Main Discord window not found");
     }

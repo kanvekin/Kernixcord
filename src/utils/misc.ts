@@ -16,9 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { ChannelStore, GuildMemberStore } from "@webpack/common";
-import { copyToClipboard } from "./clipboard";
-import { EQUICORD_HELPERS, EquicordDevsById, GUILD_ID, KernixcordDevsById, SUPPORT_CHANNEL_ID, VencordDevsById } from "./constants";
+import { User } from "@vencord/discord-types";
+import { ChannelStore, GuildMemberStore, IconUtils } from "@webpack/common";
+
+import { EQUICORD_HELPERS, EquicordDevsById, GUILD_ID, KernixcordDevsById, KNOWN_ISSUES_CHANNEL_ID, SUPPORT_CHANNEL_ID, VencordDevsById } from "./constants";
 
 /**
  * Calls .join(" ") on the arguments
@@ -113,6 +114,7 @@ export function isEquicordGuild(id: string | null | undefined, isGuildId: boolea
     if (!id) return false;
     if (isGuildId) return id === GUILD_ID;
     const channel = ChannelStore.getChannel(id);
+    if (!channel) return false;
     return channel.guild_id === GUILD_ID;
 }
 
@@ -121,9 +123,35 @@ export function isSupportChannel(channelId: string | null | undefined): boolean 
     return channelId === SUPPORT_CHANNEL_ID;
 }
 
+export function isKnownIssuesCategory(channelId: string | null | undefined): boolean {
+    if (!channelId) return false;
+    return channelId === KNOWN_ISSUES_CHANNEL_ID;
+}
+
 export function isEquicordSupport(userId: string | null | undefined): boolean {
     if (!userId) return false;
 
     const member = GuildMemberStore.getMember(GUILD_ID, userId);
-    return member?.roles?.includes(EQUICORD_HELPERS) || false;
+    if (!member) return false;
+    return member.roles.includes(EQUICORD_HELPERS) || false;
+}
+
+export function removeFromArray<T>(arr: T[], predicate: (e: T) => boolean) {
+    const idx = arr.findIndex(predicate);
+    if (idx !== -1) arr.splice(idx, 1);
+}
+
+export function getUserAvatarUrl(user: User, guildId?: string, canAnimate?: boolean, size?: number): string {
+    const memberAvatar = guildId ? GuildMemberStore.getMember(guildId, user.id)?.avatar || null : null;
+    if (memberAvatar) {
+        return IconUtils.getGuildMemberAvatarURLSimple({
+            guildId: guildId!,
+            userId: user.id,
+            avatar: memberAvatar,
+            canAnimate,
+            size
+        });
+    }
+
+    return IconUtils.getUserAvatarURL(user, canAnimate, size) ?? IconUtils.getDefaultAvatarURL(user.id, user?.discriminator);
 }

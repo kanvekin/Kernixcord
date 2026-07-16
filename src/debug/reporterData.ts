@@ -26,6 +26,7 @@ export interface ReporterData {
     };
     failedWebpack: Record<TypeWebpackSearchHistory, string[][]>;
 }
+
 export const reporterData: ReporterData = {
     failedPatches: {
         foundNoModule: [],
@@ -38,6 +39,7 @@ export const reporterData: ReporterData = {
         findByProps: [],
         findByCode: [],
         findStore: [],
+        findCssClasses: [],
         findComponent: [],
         findComponentByCode: [],
         findExportedComponent: [],

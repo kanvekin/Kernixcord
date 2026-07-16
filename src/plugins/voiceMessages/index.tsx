@@ -21,25 +21,23 @@ import "./styles.css";
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
 import { Card } from "@components/Card";
-import { Heading } from "@components/Heading";
 import { Microphone } from "@components/Icons";
 import { Link } from "@components/Link";
 import { Paragraph } from "@components/Paragraph";
 import { lastState as silentMessageEnabled } from "@plugins/silentMessageToggle";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { Margins } from "@utils/margins";
-import { ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, openModal } from "@utils/modal";
 import { useAwaiter } from "@utils/react";
 import definePlugin, { OptionType } from "@utils/types";
 import { chooseFile } from "@utils/web";
-import { CloudUpload } from "@vencord/discord-types";
+import { RenderModalProps } from "@vencord/discord-types";
 import { CloudUploadPlatform } from "@vencord/discord-types/enums";
-import { findByPropsLazy, findLazy, findStoreLazy } from "@webpack";
-import { Button, Constants, FluxDispatcher, Forms, lodash, Menu, MessageActions, PermissionsBits, PermissionStore, RestAPI, SelectedChannelStore, showToast, SnowflakeUtils, Toasts, useEffect, useState } from "@webpack/common";
+import { Button, CloudUploader, Constants, FluxDispatcher, Forms, lodash, Menu, MessageActions, Modal, openModal, PendingReplyStore, PermissionsBits, PermissionStore, RestAPI, SelectedChannelStore, showToast, SnowflakeUtils, Toasts, useEffect, useState } from "@webpack/common";
+import { ComponentType } from "react";
 
 import { VoiceRecorderDesktop } from "./components/DesktopRecorder";
-import { VoicePreview } from "./components/VoicePreview";
+import { VoiceMessageProps, VoicePreview } from "./components/VoicePreview";
 import { VoiceRecorderWeb } from "./components/WebRecorder";
 
 const VOICE_MESSAGE_FLAG = 1 << 13;
@@ -56,16 +54,72 @@ const EMPTY_META: AudioMetadata = {
     duration: DEFAULT_DURATION,
 };
 
-const CloudUploadConstructor = findLazy(m => m.prototype?.trackUploadFinished) as typeof CloudUpload;
-const PendingReplyStore = findStoreLazy("PendingReplyStore");
-const OptionClasses = findByPropsLazy("optionName", "optionIcon", "optionLabel");
-
 export const cl = classNameFactory("vc-vmsg-");
 
 export type VoiceRecorder = React.ComponentType<{
     setAudioBlob(blob: Blob): void;
     onRecordingChange?(recording: boolean): void;
 }>;
+
+export let VoiceMessage: ComponentType<VoiceMessageProps> = () => null;
+
+const VoiceRecorder = IS_DISCORD_DESKTOP ? VoiceRecorderDesktop : VoiceRecorderWeb;
+
+export const settings = definePluginSettings({
+    noiseSuppression: {
+        type: OptionType.BOOLEAN,
+        description: "Noise Suppression",
+        default: true,
+    },
+    echoCancellation: {
+        type: OptionType.BOOLEAN,
+        description: "Echo Cancellation",
+        default: true,
+    },
+});
+
+const ctxMenuPatch: NavContextMenuPatchCallback = (children, props) => {
+    if (props.channel.guild_id && !(PermissionStore.can(PermissionsBits.SEND_VOICE_MESSAGES, props.channel) && PermissionStore.can(PermissionsBits.SEND_MESSAGES, props.channel))) return;
+
+    children.push(
+        <Menu.MenuItem
+            id="vc-send-vmsg"
+            iconLeft={Microphone}
+            leadingAccessory={{
+                type: "icon",
+                icon: Microphone
+            }}
+            label="Send Voice Message"
+            action={() => openModal(modalProps => <VoiceMessageModal modalProps={modalProps} />)}
+        />
+    );
+};
+
+export default definePlugin({
+    name: "VoiceMessages",
+    description: "Allows you to send voice messages like on mobile. To do so, right click the upload button and click Send Voice Message",
+    tags: ["Voice"],
+    authors: [Devs.Ven, Devs.Vap, Devs.Nickyux],
+    settings,
+
+    patches: [
+        {
+            find: "#{intl::PAUSE_VOICE_MESSAGE_A11Y_LABEL}",
+            replacement: {
+                match: /(?<=\i=)(?=\i\.memo\(.{0,50}?=1,onVolumeChange:[^}]+?waveform:[^}]+?playbackCacheKey:)/,
+                replace: "$self.VoiceMessage=",
+            }
+        }
+    ],
+
+    set VoiceMessage(value) {
+        VoiceMessage = value;
+    },
+
+    contextMenus: {
+        "channel-attach": ctxMenuPatch
+    }
+});
 
 type AudioMetadata = {
     waveform: string,
@@ -109,7 +163,7 @@ function sendAudio(blob: Blob, meta: AudioMetadata) {
     const reply = PendingReplyStore.getPendingReply(channelId);
     if (reply) FluxDispatcher.dispatch({ type: "DELETE_PENDING_REPLY", channelId });
 
-    const upload = new CloudUploadConstructor({
+    const upload = new CloudUploader({
         file: new File([blob], "voice-message.ogg", { type: "audio/ogg; codecs=opus" }),
         isThumbnail: false,
         platform: CloudUploadPlatform.WEB,
@@ -151,29 +205,7 @@ function useObjectUrl() {
     return [url, setWithFree] as const;
 }
 
-const ctxMenuPatch: NavContextMenuPatchCallback = (children, props) => {
-    const hasPermission = !props.channel.guild_id
-        || (PermissionStore.can(PermissionsBits.SEND_VOICE_MESSAGES, props.channel) && PermissionStore.can(PermissionsBits.SEND_MESSAGES, props.channel));
-
-    children.push(
-        <Menu.MenuItem
-            id="vc-send-vmsg"
-            label={
-                <div className={OptionClasses.optionLabel}>
-                    <Microphone className={OptionClasses.optionIcon} height={24} width={24} />
-                    <div className={OptionClasses.optionName}>
-                        Send Voice Message
-                        {!hasPermission && <span style={{ fontSize: "smaller", opacity: 0.6 }}> (Missing Permissions)</span>}
-                    </div>
-                </div>
-            }
-            action={() => openModal(modalProps => <Modal modalProps={modalProps} />)}
-            disabled={!hasPermission}
-        />
-    );
-};
-
-function Modal({ modalProps }: { modalProps: ModalProps; }) {
+function VoiceMessageModal({ modalProps }: { modalProps: RenderModalProps; }) {
     const [isRecording, setRecording] = useState(false);
     const [blob, setBlob] = useState<Blob>();
     const [blobUrl, setBlobUrl] = useObjectUrl();
@@ -203,90 +235,62 @@ function Modal({ modalProps }: { modalProps: ModalProps; }) {
     const isUnsupportedFormat = blob && (!blob.type.startsWith("audio/ogg") || blob.type.includes("codecs") && !blob.type.includes("opus"));
 
     return (
-        <ModalRoot {...modalProps}>
-            <ModalHeader>
-                <Heading>Record Voice Message</Heading>
-            </ModalHeader>
+        <Modal
+            {...modalProps}
+            title="Record Voice Message"
+            actions={[{
+                text: "Send",
+                variant: "primary",
+                onClick: () => {
+                    sendAudio(blob!, meta ?? EMPTY_META);
+                    modalProps.onClose();
+                    showToast("Now sending voice message... Please be patient", Toasts.Type.MESSAGE);
+                },
+                disabled: !blob
+            }]}
+        >
+            <div className={cl("buttons")}>
+                <VoiceRecorder
+                    setAudioBlob={blob => {
+                        setBlob(blob);
+                        setBlobUrl(blob);
+                    }}
+                    onRecordingChange={setRecording}
+                />
 
-            <ModalContent className={cl("modal")}>
-                <div className={cl("buttons")}>
-                    <VoiceRecorder
-                        setAudioBlob={blob => {
-                            setBlob(blob);
-                            setBlobUrl(blob);
-                        }}
-                        onRecordingChange={setRecording}
-                    />
-
-                    <Button onClick={async () => {
+                <Button
+                    onClick={async () => {
                         const file = await chooseFile("audio/*");
                         if (file) {
                             setBlob(file);
                             setBlobUrl(file);
                         }
-                    }}>
-                        Upload File
-                    </Button>
-                </div>
+                    }}
+                >
+                    Upload File
+                </Button>
+            </div>
 
-                <Heading>Preview</Heading>
-                {metaError
-                    ? <Paragraph className={cl("error")}>Failed to parse selected audio file: {metaError.message}</Paragraph>
-                    : (
-                        <VoicePreview
-                            src={blobUrl}
-                            waveform={meta.waveform}
-                            recording={isRecording}
-                        />
-                    )}
-
-                {isUnsupportedFormat && (
-                    <Card variant="warning" className={Margins.top16} defaultPadding>
-                        <Forms.FormText>Voice Messages have to be OggOpus to be playable on iOS. This file is <code>{blob.type}</code> so it will not be playable on iOS.</Forms.FormText>
-
-                        <Paragraph className={Margins.top8}>
-                            To fix it, first convert it to OggOpus, for example using the <Link href="https://convertio.co/mp3-opus/">convertio web converter</Link>
-                        </Paragraph>
-                    </Card>
+            <Forms.FormTitle>Preview</Forms.FormTitle>
+            {metaError
+                ? <Paragraph className={cl("error")}>Failed to parse selected audio file: {metaError.message}</Paragraph>
+                : (
+                    <VoicePreview
+                        src={blobUrl}
+                        waveform={meta.waveform}
+                        recording={isRecording}
+                    />
                 )}
 
-            </ModalContent>
+            {isUnsupportedFormat && (
+                <Card variant="warning" className={Margins.top16} defaultPadding>
+                    <Forms.FormText>Voice Messages have to be OggOpus to be playable on iOS. This file is <code>{blob.type}</code> so it will not be playable on iOS.</Forms.FormText>
 
-            <ModalFooter>
-                <Button
-                    disabled={!blob}
-                    onClick={() => {
-                        sendAudio(blob!, meta ?? EMPTY_META);
-                        modalProps.onClose();
-                        showToast("Now sending voice message... Please be patient", Toasts.Type.MESSAGE);
-                    }}>
-                    Send
-                </Button>
-            </ModalFooter>
-        </ModalRoot>
+                    <Forms.FormText className={Margins.top8}>
+                        To fix it, first convert it to OggOpus, for example using the <Link href="https://convertio.co/mp3-opus/">convertio web converter</Link>
+                    </Forms.FormText>
+                </Card>
+            )}
+        </Modal>
     );
 }
-
-export const settings = definePluginSettings({
-    noiseSuppression: {
-        type: OptionType.BOOLEAN,
-        description: "Noise Suppression",
-        default: true,
-    },
-    echoCancellation: {
-        type: OptionType.BOOLEAN,
-        description: "Echo Cancellation",
-        default: true,
-    },
-});
-
-export default definePlugin({
-    name: "VoiceMessages",
-    description: "Allows you to send voice messages like on mobile. To do so, right click the upload button and click Send Voice Message.",
-    authors: [Devs.Ven, Devs.Vap, Devs.Nickyux, EquicordDevs.Z1xus, EquicordDevs.Prism],
-    settings,
-
-    contextMenus: {
-        "channel-attach": ctxMenuPatch
-    }
-});

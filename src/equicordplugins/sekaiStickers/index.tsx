@@ -7,8 +7,8 @@
 import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
 import { definePluginSettings } from "@api/Settings";
 import { Devs } from "@utils/constants";
-import { openModal } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
+import { openModal } from "@webpack/common";
 
 import SekaiStickersModal from "./Components/SekaiStickersModal";
 import { kanadeSvg } from "./kanade.svg";
@@ -33,6 +33,8 @@ let IS_FONTS_LOADED = false;
 export default definePlugin({
     name: "SekaiStickers",
     description: "Sekai Stickers built in discord originally from github.com/TheOriginalAyaka",
+    dependencies: ["ChatInputButtonAPI"],
+    tags: ["Chat", "Emotes"],
     authors: [Devs.MaiKokain],
     settings,
     chatBarButton: {

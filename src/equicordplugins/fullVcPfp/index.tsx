@@ -4,17 +4,19 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { disableStyle, enableStyle } from "@api/Styles";
 import { EquicordDevs } from "@utils/constants";
+import { getUserAvatarUrl } from "@utils/misc";
 import definePlugin from "@utils/types";
-import { IconUtils, UserStore } from "@webpack/common";
+import { ChannelRTCStore, ChannelStore, UserStore, VoiceStateStore } from "@webpack/common";
 
 import style from "./style.css?managed";
 
 export default definePlugin({
     name: "FullVCPFP",
     description: "Makes avatars take up the entire vc tile",
+    tags: ["Appearance", "Voice"],
     authors: [EquicordDevs.mochienya],
+    managedStyle: style,
     patches: [
         {
             find: "\"data-selenium-video-tile\":",
@@ -25,21 +27,21 @@ export default definePlugin({
         },
     ],
 
-    getVoiceBackgroundStyles({ className, participantUserId }: any) {
-        if (!className.includes("tile") || !participantUserId) return;
+    getVoiceBackgroundStyles({ className, participantUserId }: { className?: string; participantUserId?: string; }) {
+        if (!className?.includes("tile") || !participantUserId) return;
 
         const user = UserStore.getUser(participantUserId);
-        const avatarUrl = IconUtils.getUserAvatarURL(user, false, 1024);
+        if (!user) return;
+
+        const channelId = VoiceStateStore.getVoiceStateForUser(participantUserId)?.channelId;
+        if (!channelId) return;
+
+        const guildId = ChannelStore.getChannel(channelId)?.guild_id;
+        const isSpeaking = ChannelRTCStore.getSpeakingParticipants(channelId).some(p => p.user.id === participantUserId && p.speaking);
+        const avatarUrl = getUserAvatarUrl(user, guildId, isSpeaking, 1024);
 
         return {
             "--full-res-avatar": `url(${avatarUrl})`
         };
-    },
-
-    start() {
-        enableStyle(style);
-    },
-    stop() {
-        disableStyle(style);
     },
 });

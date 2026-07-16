@@ -4,46 +4,41 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Gif } from "@equicordplugins/gifCollections/types";
 import { RestAPI } from "@webpack/common";
 
-async function fetchMessageFromAPI(channelId: string, messageId: string): Promise<any> {
-    try {
-        const response = await RestAPI.get({
-            url: `/channels/${channelId}/messages`,
-            query: {
-                limit: 1,
-                around: messageId
-            }
-        });
+import { logger } from "./misc";
 
-        if (response.ok && response.body.length > 0) {
-            return response.body.find((m: any) => m.id === messageId);
-        }
-    } catch (error) {
-        console.error("Failed to fetch message for GIF refresh:", error);
+export function isCdnUrlExpired(url: string): boolean {
+    if (
+        !url?.startsWith("https://cdn.discordapp.com")
+        && !url?.startsWith("https://media.discordapp.net")
+        && !url?.startsWith("https://images-ext-1.discordapp.net")
+        && !url?.startsWith("https://images-ext-2.discordapp.net")
+    ) return false;
+    try {
+        const ex = new URL(url).searchParams.get("ex");
+        if (!ex) return false;
+        return parseInt(ex, 16) * 1000 < Date.now();
+    } catch (e) {
+        logger.warn("Failed to parse CDN URL expiry", e);
+        return false;
     }
-    return null;
 }
 
-export async function refreshGifUrl(gif: Gif): Promise<Gif | null> {
-    if (!gif.channelId || !gif.messageId || !gif.attachmentId) {
-        return null;
+export async function batchRefreshAttachmentUrls(urls: string[]): Promise<Record<string, string>> {
+    try {
+        const response = await RestAPI.post({
+            url: "/attachments/refresh-urls",
+            body: { attachment_urls: urls }
+        });
+        if (!response.ok) return {};
+        const map: Record<string, string> = {};
+        for (const { original, refreshed } of response.body.refreshed_urls) {
+            map[original] = refreshed;
+        }
+        return map;
+    } catch (e) {
+        logger.warn("Failed to refresh attachment URLs", e);
+        return {};
     }
-
-    const message = await fetchMessageFromAPI(gif.channelId, gif.messageId);
-    if (!message) {
-        return null;
-    }
-
-    const attachment = message.attachments?.find((a: any) => a.id === gif.attachmentId);
-    if (!attachment) {
-        return null;
-    }
-
-    return {
-        ...gif,
-        src: attachment.proxy_url,
-        url: attachment.url
-    };
 }

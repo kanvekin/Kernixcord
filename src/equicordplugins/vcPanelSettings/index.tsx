@@ -238,15 +238,16 @@ function VoiceSettings() {
 export default definePlugin({
     name: "VCPanelSettings",
     description: "Control voice settings right from the voice panel",
+    tags: ["Utility", "Voice"],
     authors: [Devs.nin0dev],
     settings,
     renderVoiceSettings() { return <VoiceSettings />; },
     patches: [
         {
-            find: "this.renderChannelButtons()",
+            find: "}getAccessibilityLabel(){",
             replacement: {
-                match: /this.renderChannelButtons\(\)/,
-                replace: "this.renderChannelButtons(), $self.renderVoiceSettings()"
+                match: /this.renderVoiceStates\(\),\i/,
+                replace: "$&,$self.renderVoiceSettings()"
             }
         }
     ]

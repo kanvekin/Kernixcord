@@ -12,6 +12,7 @@ export default definePlugin({
     name: "BetterPlusReacts",
     authors: [Devs.Joona],
     description: "The amount of plus before :emoji: is the message to add it to",
+    tags: ["Chat", "Emotes"],
     patches: [
         {
             find: ".SLASH_COMMAND_USED,",
@@ -25,7 +26,7 @@ export default definePlugin({
                     replace: "$&.replace(/^\\++/, '+')"
                 },
                 {
-                    match: /=(\i\.\i\.getMessages\(\i\.id\))\.last\(\)(?=.{78,85}.getByName\((\i)\.)/,
+                    match: /=\i\.\i\.getMessages\(\i\.id\)\.last\(\)(?=.{78,85}.getByName\(\i\.)/,
                     replace: "=$self.getMsgReference()"
                 }
             ]

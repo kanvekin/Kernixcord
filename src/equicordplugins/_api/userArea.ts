@@ -4,33 +4,49 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { EquicordDevs } from "@utils/constants";
+import { isPluginEnabled } from "@api/PluginManager";
+import declutter from "@equicordplugins/declutter";
+import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
+import { findCssClassesLazy } from "@webpack";
+
+const accountClasses = findCssClassesLazy("iconForeground", "accountPopoutButtonWrapper");
 
 export default definePlugin({
     name: "UserAreaAPI",
     description: "API to add buttons to the user area panel.",
-    authors: [EquicordDevs.Prism],
+    authors: [Devs.prism],
 
     patches: [
         {
-            find: "#{intl::ACCOUNT_SPEAKING_WHILE_MUTED}",
-            replacement: {
-                match: /(className:(\i)\.buttons,.{0,50}?children:\[)/,
-                replace: "$1...$self.renderButtons(arguments[0],$2),"
-            }
+            find: "#{intl::USER_PROFILE_ACCOUNT_POPOUT_BUTTON_A11Y_LABEL}",
+            replacement: [
+                {
+                    match: /children:\[(?=.{0,50}accountContainerRef:\i)/,
+                    replace: "children:[...$self.renderButtons(arguments[0]),"
+                },
+                // fix discord weird shrink with extra buttons
+                {
+                    match: /(?<=\{ref:\i,)style:(\i)/,
+                    replace: "style:{...$1,minWidth:0}"
+                }
+            ]
         }
     ],
 
-    renderButtons(props: { nameplate?: any; }, styles: { iconForeground?: string; }) {
+    renderButtons(props: { nameplate?: any; }) {
         return Vencord.Api.UserArea._renderButtons({
-            nameplate: props.nameplate,
-            iconForeground: props.nameplate != null ? styles.iconForeground : void 0,
+            nameplate: !this.shouldHideNameplate() ? props.nameplate : null,
+            iconForeground: accountClasses.iconForeground,
             hideTooltips: this.shouldHideTooltips()
         });
     },
 
     shouldHideTooltips() {
-        return Vencord.Plugins.isPluginEnabled("BetterUserArea") && Vencord.Plugins.plugins.BetterUserArea.settings?.store?.removeButtonTooltips;
+        return isPluginEnabled(declutter.name) && declutter.settings.store.removeButtonTooltips;
+    },
+
+    shouldHideNameplate() {
+        return isPluginEnabled(declutter.name) && declutter.settings.store.removeNameplate;
     }
 });

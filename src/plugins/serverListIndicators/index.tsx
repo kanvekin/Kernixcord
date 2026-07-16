@@ -34,7 +34,6 @@ const enum IndicatorType {
     BOTH = SERVER | FRIEND,
 }
 
-
 let onlineFriendsCount = 0;
 let guildCount = 0;
 
@@ -142,6 +141,7 @@ export const settings = definePluginSettings({
 export default definePlugin({
     name: "ServerListIndicators",
     description: "Add online friend count or server count in the server list",
+    tags: ["Servers", "Appearance"],
     authors: [Devs.dzshn, EquicordDevs.Panniku],
     dependencies: ["ServerListAPI"],
     settings,
@@ -162,14 +162,14 @@ export default definePlugin({
                 break;
         }
 
-        const cl = useCompact ? classNameFactory("vc-indicators-compact") : classNameFactory("vc-indicators");
+        const cl = useCompact ? classNameFactory("vc-indicators-compact-") : classNameFactory("vc-indicators-");
 
         return <ErrorBoundary noop>
-            <div id={cl("-container")}>
+            <div id={cl("container")}>
                 <Tooltip text={text} position="right">
                     {({ onMouseEnter, onMouseLeave }) => (
                         <div
-                            id={cl("-indicator-items")}
+                            id={cl("indicator-items")}
                             onMouseEnter={onMouseEnter}
                             onMouseLeave={onMouseLeave}>
                             {!!(mode & IndicatorType.FRIEND) && <FriendsIndicator />}

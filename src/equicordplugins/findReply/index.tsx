@@ -28,7 +28,6 @@ import { Root } from "react-dom/client";
 import ReplyNavigator from "./ReplyNavigator";
 import styles from "./styles.css?managed";
 
-
 export const jumper: any = findByPropsLazy("jumpToMessage");
 const FindReplyIcon = () => {
     return <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" width="18" height="18">
@@ -87,10 +86,11 @@ const settings = definePluginSettings({
     }
 });
 
-
 export default definePlugin({
     name: "FindReply",
     description: "Jumps to the earliest reply to a message in a channel (lets you follow past conversations more easily).",
+    dependencies: ["MessagePopoverAPI"],
+    tags: ["Chat", "Shortcuts"],
     authors: [Devs.newwares],
     settings,
     messagePopoverButton: {

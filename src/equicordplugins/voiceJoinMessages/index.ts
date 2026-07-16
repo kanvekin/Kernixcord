@@ -10,7 +10,7 @@ import { humanFriendlyJoin } from "@utils/text";
 import definePlugin, { OptionType } from "@utils/types";
 import { Message, User } from "@vencord/discord-types";
 import { findByCodeLazy } from "@webpack";
-import { ChannelStore, FluxDispatcher, MessageActions, MessageStore, RelationshipStore, SelectedChannelStore, UserStore } from "@webpack/common";
+import { ChannelStore, FluxDispatcher, MessageActions, MessageStore, PermissionsBits, PermissionStore, RelationshipStore, SelectedChannelStore, UserStore } from "@webpack/common";
 
 const createBotMessage = findByCodeLazy('username:"Clyde"');
 
@@ -43,6 +43,11 @@ const settings = definePluginSettings({
     allowedFriends: {
         type: OptionType.STRING,
         description: "Comma or space separated list of friends' user IDs you want to recieve join messages from",
+        default: ""
+    },
+    ignoredFriends: {
+        type: OptionType.STRING,
+        description: "Comma or space separated list of friends' user IDs you do NOT want to recieve join messages from",
         default: ""
     },
     ignoreBlockedUsers: {
@@ -89,9 +94,11 @@ function sendVoiceStatusMessage(channelId: string, content: string, userId: stri
 
 function isFriendAllowlisted(friendId: string) {
     if (!RelationshipStore.isFriend(friendId)) return false;
-    const list = settings.store.allowedFriends.split(",").join(" ").split(" ").filter(i => i.length > 0);
-    if (list.join(" ").length < 1) return true;
-    return list.includes(friendId);
+    const ignoreList = settings.store.ignoredFriends.split(",").join(" ").split(" ").filter(i => i.length > 0);
+    if (ignoreList.includes(friendId)) return false;
+    const allowList = settings.store.allowedFriends.split(",").join(" ").split(" ").filter(i => i.length > 0);
+    if (allowList.join(" ").length < 1) return true;
+    return allowList.includes(friendId);
 }
 
 // Blatantly stolen from VcNarrator plugin
@@ -104,6 +111,7 @@ let clientOldChannelId: string | undefined;
 export default definePlugin({
     name: "VoiceJoinMessages",
     description: "Recieve client-side ephemeral messages when your friends join voice channels",
+    tags: ["Servers", "Utility", "Voice"],
     authors: [Devs.Sqaaakoi, Devs.thororen],
     settings,
     flux: {
@@ -117,12 +125,15 @@ export default definePlugin({
                     oldChannelId = clientOldChannelId;
                     clientOldChannelId = channelId;
                 }
-                if (settings.store.ignoreBlockedUsers && RelationshipStore.isBlocked(userId)) return;
+                if (settings.store.ignoreBlockedUsers && RelationshipStore.isBlocked(userId)) continue;
                 // Ignore events from same channel
-                if (oldChannelId === channelId) return;
+                if (oldChannelId === channelId) continue;
 
                 // Friend joined a voice channel
                 if (settings.store.friendDirectMessages && (!oldChannelId && channelId) && userId !== clientUserId && isFriendAllowlisted(userId)) {
+                    const channel = ChannelStore.getChannel(channelId);
+                    if (!channel || !PermissionStore.can(PermissionsBits.VIEW_CHANNEL, channel)) continue;
+
                     const selfInChannel = SelectedChannelStore.getVoiceChannelId() === channelId;
                     let memberListContent = "";
                     if (settings.store.friendDirectMessagesShowMembers || settings.store.friendDirectMessagesShowMemberCount) {

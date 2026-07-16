@@ -20,14 +20,14 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v7
 
-            - uses: pnpm/action-setup@v3
+            - uses: pnpm/action-setup@v6
 
-            - name: Use Node.js 20
-              uses: actions/setup-node@v4
+            - name: Use Node.js 24
+              uses: actions/setup-node@v6
               with:
-                  node-version: 20
+                  node-version: 24
                   cache: "pnpm"
 
             - name: Install dependencies
@@ -56,7 +56,6 @@ jobs:
                   # Copy userscript and its legal notice if present
                   [ -f Vencord.user.js ] && cp Vencord.user.js release || true
                   [ -f Vencord.user.js.LEGAL.txt ] && cp Vencord.user.js.LEGAL.txt release || true
-
                   # Copy plugin data JSONs, extension zips and desktop/vesktop ASARs if present
                   cp *.{json,zip,asar} release
 
@@ -73,18 +72,19 @@ jobs:
                   rm -f release/*.map
 
             - name: Upload Kernixcord Stable
+              if: ${{ vars.ACT == 'false' }}
               run: |
                   gh release upload latest --clobber dist/release/*
 
-            - name: Upload Plugin JSONs to Privbored repo
+            - name: Upload Plugin JSONs to Equibored repo
+              if: github.repository == 'kanvekin/Kernixcord' && vars.ACT == 'false'
               run: |
                   git config --global user.name "GitHub-Actions"
                   git config --global user.email actions@github.com
                   git clone https://$USERNAME:$GITHUB_TOKEN@github.com/$REPO.git plugins
                   cd plugins
-
-
-                  cp ../dist/*plugins.json .
+                  cp ../dist/release/*plugins.json .
+                  cp ../dist/release/devs.json .
                   git add -A
 
                   git commit -m "Plugins for https://github.com/$GITHUB_REPOSITORY/commit/$GITHUB_SHA"

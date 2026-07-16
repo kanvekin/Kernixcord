@@ -21,6 +21,7 @@ const DefaultEngines = {
     GitHub: "https://github.com/search?q=",
     Reddit: "https://www.reddit.com/search?q=",
     Wikipedia: "https://wikipedia.org/w/index.php?search=",
+    Startpage: "https://www.startpage.com/sp/search?query="
 } as const;
 
 const enum ReplacementEngineValue {
@@ -35,6 +36,7 @@ const settings = definePluginSettings({
         placeholder: "Google"
     },
     customEngineURL: {
+        displayName: "Custom Engine URL",
         description: "The URL of your Engine",
         type: OptionType.STRING,
         placeholder: "https://google.com/search?q="
@@ -130,6 +132,7 @@ migratePluginSettings("ReplaceGoogleSearch", "Search");
 export default definePlugin({
     name: "ReplaceGoogleSearch",
     description: "Replaces the Google search with different Engine(s)",
+    tags: ["Utility", "Customisation"],
     authors: [Devs.Moxxie, Devs.Ethan],
 
     settings,

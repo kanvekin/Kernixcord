@@ -6,18 +6,14 @@
 
 import * as DataStore from "@api/DataStore";
 import { Logger } from "@utils/Logger";
-import { CloudUpload, Message } from "@vencord/discord-types";
+import { Message } from "@vencord/discord-types";
 import { CloudUploadPlatform } from "@vencord/discord-types/enums";
-import { findLazy } from "@webpack";
-import { ChannelStore, Constants, FluxDispatcher, GuildStore, IconUtils, MessageActions, MessageStore, RestAPI, showToast, SnowflakeUtils, Toasts, UserStore } from "@webpack/common";
+import { ChannelStore, CloudUploader, Constants, FluxDispatcher, GuildStore, IconUtils, MessageActions, MessageStore, RestAPI, showToast, SnowflakeUtils, Toasts, UserStore } from "@webpack/common";
 
 import { settings } from ".";
 import { PhantomMessageData, ScheduledAttachment, ScheduledMessage, ScheduledReaction } from "./types";
 
 const logger = new Logger("ScheduledMessages");
-
-const CloudUploader = findLazy(m => m.prototype?.trackUploadFinished) as typeof CloudUpload;
-
 const STORAGE_KEY = "ScheduledMessages_queue";
 
 let scheduledMessages: ScheduledMessage[] = [];
@@ -46,6 +42,12 @@ export function getScheduledMessages(): ScheduledMessage[] {
     return [...scheduledMessages];
 }
 
+export function getScheduledMessagesForChannel(channelId?: string): ScheduledMessage[] {
+    const messages = getScheduledMessages();
+    if (!channelId) return messages;
+    return messages.filter(message => message.channelId === channelId);
+}
+
 export function getChannelDisplayInfo(channelId: string): { name: string; avatar: string; } {
     const channel = ChannelStore.getChannel(channelId);
     if (!channel) return { name: "Unknown", avatar: "" };
@@ -67,7 +69,6 @@ export function getChannelDisplayInfo(channelId: string): { name: string; avatar
         avatar: guild ? IconUtils.getGuildIconURL({ id: guild.id, icon: guild.icon, canAnimate: true, size: 512 }) ?? "" : ""
     };
 }
-
 
 function getImageDimensions(dataUrl: string): Promise<{ width: number; height: number; }> {
     return new Promise(resolve => {
@@ -292,14 +293,13 @@ function doRecreatePhantomMessage(messageId: string, channelId: string, reaction
     }, 50);
 }
 
-
 async function uploadAttachment(channelId: string, att: ScheduledAttachment): Promise<{ id: string; filename: string; uploaded_filename: string; } | null> {
     return new Promise(resolve => {
         const bytes = Uint8Array.from(atob(att.data), c => c.charCodeAt(0));
         const file = new File([bytes], att.filename, { type: att.type });
         const upload = new CloudUploader({ file, platform: CloudUploadPlatform.WEB }, channelId);
 
-        upload.on("complete", () => resolve({ id: "", filename: upload.filename, uploaded_filename: upload.uploadedFilename }));
+        upload.on("complete", () => resolve({ id: "0", filename: upload.filename, uploaded_filename: upload.uploadedFilename }));
         upload.on("error", () => resolve(null));
         upload.upload();
     });
@@ -411,6 +411,51 @@ export async function addScheduledMessage(
     scheduledMessages.sort((a, b) => a.scheduledTime - b.scheduledTime);
     await saveScheduledMessages();
     createPhantomMessage(newMessage);
+
+    return { success: true };
+}
+
+export async function updateScheduledMessageTime(id: string, scheduledTime: number): Promise<{ success: boolean; error?: string; }> {
+    const message = scheduledMessages.find(entry => entry.id === id);
+    if (!message) {
+        return { success: false, error: "Scheduled message not found" };
+    }
+
+    if (scheduledTime <= Date.now()) {
+        return { success: false, error: "Please select a future date and time" };
+    }
+
+    const minuteStart = Math.floor(scheduledTime / 60000) * 60000;
+    const count = scheduledMessages.filter(entry =>
+        entry.id !== id
+        && entry.channelId === message.channelId
+        && entry.scheduledTime >= minuteStart
+        && entry.scheduledTime < minuteStart + 60000
+    ).length;
+
+    if (count >= settings.store.maxMessagesPerMinute) {
+        return { success: false, error: `Maximum of ${settings.store.maxMessagesPerMinute} messages per channel per minute reached` };
+    }
+
+    removePhantomMessage(message);
+    message.scheduledTime = scheduledTime;
+    scheduledMessages.sort((left, right) => left.scheduledTime - right.scheduledTime);
+    await saveScheduledMessages();
+    await createPhantomMessage(message);
+    return { success: true };
+}
+
+export async function sendScheduledMessageNow(id: string): Promise<{ success: boolean; error?: string; }> {
+    const message = scheduledMessages.find(entry => entry.id === id);
+    if (!message) {
+        return { success: false, error: "Scheduled message not found" };
+    }
+
+    await removeScheduledMessage(id);
+    const sent = await sendScheduledMessage(message);
+    if (!sent) {
+        return { success: false, error: "Failed to send scheduled message" };
+    }
 
     return { success: true };
 }

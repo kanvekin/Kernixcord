@@ -8,21 +8,15 @@ import { BaseText } from "@components/BaseText";
 import { Button, TextButton } from "@components/Button";
 import { images } from "@equicordplugins/loginWithQR/images";
 import { getIntlMessage } from "@utils/discord";
-import {
-    ModalContent,
-    ModalFooter,
-    ModalProps,
-    ModalRoot,
-    ModalSize,
-    openModal,
-} from "@utils/modal";
+import { RenderModalProps } from "@vencord/discord-types";
 import { findByPropsLazy } from "@webpack";
 import {
+    Modal,
+    openModal,
     RestAPI,
     useEffect,
     useRef,
-    useState,
-} from "@webpack/common";
+    useState } from "@webpack/common";
 
 import { cl } from "..";
 
@@ -37,13 +31,11 @@ enum VerifyState {
 function VerifyModal({
     token,
     onAbort,
-    closeMain,
     ...props
 }: {
     token: string | null;
     onAbort: () => void;
-    closeMain: () => void;
-} & ModalProps) {
+} & RenderModalProps) {
     const [state, setState] = useState(
         !token ? VerifyState.NotFound : VerifyState.Verifying
     );
@@ -77,7 +69,6 @@ function VerifyModal({
                 },
             })
                 .then(() => {
-                    closeMain();
                     setState(VerifyState.LoggedIn);
                 })
                 .catch(() => setState(VerifyState.NotFound))
@@ -115,8 +106,8 @@ function VerifyModal({
     }, [state]);
 
     return (
-        <ModalRoot size={ModalSize.DYNAMIC} {...props}>
-            <ModalContent scrollbarType="none" className={cl("device-content")}>
+        <Modal size="sm" {...props} title="Verify Login">
+            <div className={cl("device-content")}>
                 {state === VerifyState.LoggedIn ? (
                     <>
                         <img
@@ -194,7 +185,7 @@ function VerifyModal({
                             variant="dangerPrimary"
                             className={cl("device-confirm")}
                             style={{
-                                ["--duration" as any]: `${holdDuration}ms`,
+                                ["--progress" as any]: `${holdDuration}ms`,
                             }}
                             onPointerDown={startInput}
                             onPointerUp={endInput}
@@ -205,8 +196,8 @@ function VerifyModal({
                         </Button>
                     </>
                 )}
-            </ModalContent>
-            <ModalFooter className={cl("device-footer")}>
+            </div>
+            <div className={cl("device-footer")} style={{ marginTop: "20px", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
                 {state === VerifyState.LoggedIn ? (
                     <Button onClick={props.onClose}>
                         {getIntlMessage("QR_CODE_LOGIN_FINISH_BUTTON")}
@@ -221,22 +212,20 @@ function VerifyModal({
                             : getIntlMessage("CANCEL")}
                     </TextButton>
                 )}
-            </ModalFooter>
-        </ModalRoot>
+            </div>
+        </Modal>
     );
 }
 
 export default function openVerifyModal(
     token: string | null,
     onAbort: () => void,
-    closeMain: () => void
 ) {
     return openModal(props => (
         <VerifyModal
             {...props}
             token={token}
             onAbort={onAbort}
-            closeMain={closeMain}
         />
     ));
 }

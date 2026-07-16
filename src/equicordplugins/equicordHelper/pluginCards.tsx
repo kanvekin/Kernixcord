@@ -13,14 +13,14 @@ import { WarningIcon } from "@components/Icons";
 import { AddonCard } from "@components/settings";
 import { ExcludedReasons, PluginDependencyList } from "@components/settings/tabs/plugins";
 import { PluginCard } from "@components/settings/tabs/plugins/PluginCard";
+import { TooltipContainer } from "@components/TooltipContainer";
 import { EQUIBOT_USER_ID } from "@utils/constants";
 import { isEquicordGuild, isEquicordSupport } from "@utils/misc";
 import { Message } from "@vencord/discord-types";
-import { showToast, Tooltip, TooltipContainer, useMemo } from "@webpack/common";
+import { showToast, Tooltip, useMemo } from "@webpack/common";
 import { JSX } from "react";
 
 import plugins, { ExcludedPlugins } from "~plugins";
-
 
 export function ChatPluginCard({ url, description }: { url: string, description: string; }) {
     const pluginNameFromUrl = new URL(url).pathname.split("/")[2];
@@ -127,8 +127,6 @@ export const PluginCards = ErrorBoundary.wrap(function PluginCards({ message }: 
 
         if (!pluginName || seenPlugins.has(pluginName)) return;
         seenPlugins.add(pluginName);
-
-        if (embed.rawDescription.startsWith("A fork that has")) embed.rawDescription = "";
 
         pluginCards.push(
             <ChatPluginCard

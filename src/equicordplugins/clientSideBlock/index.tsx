@@ -142,7 +142,8 @@ function activeNowView(cards) {
 export default definePlugin({
     name: "ClientSideBlock",
     description: "Allows you to locally hide almost all content from any user",
-    tags: ["blocked", "block", "hide", "hidden", "noblockedmessages"],
+    tags: ["Utility"],
+    searchTerms: ["blocked", "block", "hide", "hidden", "noblockedmessages"],
     authors: [Devs.Samwich, EquicordDevs.KamiRu],
     settings,
     activeNowView,
@@ -152,10 +153,10 @@ export default definePlugin({
     patches: [
         // message
         {
-            find: ".messageListItem",
+            find: ".NITRO_NOTIFICATION,[",
             replacement: {
-                match: /renderContentOnly:\i}=\i;/,
-                replace: "$&if($self.shouldHideUser(arguments[0].message.author.id, arguments[0].message.channel_id)) return null; "
+                match: /\i\(\)\(\i\.type.{0,40}Message must not be a thread starter message/,
+                replace: "if($self.shouldHideUser(arguments[0].message.author.id, arguments[0].message.channel_id)) return null;$&"
             }
         },
         // friends list (should work with all tabs)
@@ -168,20 +169,19 @@ export default definePlugin({
         },
         // member list
         {
-            find: "._areActivitiesExperimentallyHidden=(",
-            replacement: {
-                match: /(?<=user:(\i),guildId:\i,channel:(\i).*?)BOOST_GEM_ICON.{0,10}\);/,
-                replace: "$&if($self.shouldHideUser($1.id, $2.id)) return null; "
-            }
-        },
-        // stop the role header from displaying if all users with that role are hidden (wip sorta)
-        {
-            find: "._areActivitiesExperimentallyHidden=(",
-            replacement: {
-                match: /\i.memo\(function\(\i\){/,
-                replace: "$&if($self.isRoleAllBlockedMembers(arguments[0].id, arguments[0].guildId)) return null;"
-            },
-            predicate: () => settings.store.hideEmptyRoles
+            find: "this.updateMaxContentFeedRowSeen()",
+            replacement: [
+                {
+                    match: /(?<=user:(\i),guildId:\i,channel:(\i).*?)BOOST_GEM_ICON.{0,10}\);/,
+                    replace: "$&if($self.shouldHideUser($1.id, $2.id)) return null; "
+                },
+                // stop the role header from displaying if all users with that role are hidden (wip sorta)
+                {
+                    match: /\i.memo\(function\(\i\){/,
+                    replace: "$&if($self.isRoleAllBlockedMembers(arguments[0].id, arguments[0].guildId)) return null;",
+                    predicate: () => settings.store.hideEmptyRoles
+                },
+            ]
         },
         // "1 blocked message"
         {
@@ -217,7 +217,7 @@ export default definePlugin({
         {
             find: "getFriendIDs(){",
             replacement: {
-                match: /return \i\.friends/,
+                match: /\?\?\[\]\)\),\i\.friends/,
                 replace: "$&.filter(id => !$self.shouldHideUser(id))"
             }
         },
@@ -225,8 +225,8 @@ export default definePlugin({
         {
             find: "ACTIVE_NOW_COLUMN)",
             replacement: {
-                match: /(\i\.\i),\{(?=\}\)\])/,
-                replace: '"div",{children:$self.activeNowView($1())'
+                match: /(__invalid_consentCard.{0,40}\()(\i),\{/,
+                replace: '$1"div",{children:$self.activeNowView($2())'
             }
         },
         // mutual friends list in user profile

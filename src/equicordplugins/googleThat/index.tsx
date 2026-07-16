@@ -18,8 +18,14 @@ function getMessage(opts) {
         queryURL = "" + [settings.store.customEngineURL] + encodeURIComponent(inputOption);
     }
 
-    if (settings.store.hyperlink) {
+    if (settings.store.hyperlink && !settings.store.embed) {
+        return `[${inputOption}](<${queryURL}>)`;
+    }
+    else if (settings.store.hyperlink) {
         return `[${inputOption}](${queryURL})`;
+    }
+    else if (!settings.store.embed) {
+        return `<${queryURL}>`;
     }
     else {
         return queryURL;
@@ -45,6 +51,11 @@ const settings = definePluginSettings({
         description: "If the sent link should hyperlink with the query as the label",
         default: false
     },
+    embed: {
+        type: OptionType.BOOLEAN,
+        description: "If the sent link should render an embed",
+        default: true
+    },
     defaultEngine: {
         type: OptionType.SELECT,
         description: "The search engine to use",
@@ -64,8 +75,10 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "GoogleThat",
     description: "Adds a command to send a internet search link",
+    dependencies: ["CommandsAPI"],
+    tags: ["Commands", "Utility"],
     authors: [Devs.Samwich, EquicordDevs.KrystalSkull],
-    tags: ["search", "google", "query", "duckduckgo", "command"],
+    searchTerms: ["search", "google", "query", "duckduckgo", "command"],
     settings,
     commands: [
         {

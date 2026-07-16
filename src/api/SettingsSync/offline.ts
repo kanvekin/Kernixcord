@@ -28,6 +28,22 @@ const toastFailure = (err: any) =>
 
 const logger = new Logger("SettingsSync:Offline", "#39b7e0");
 
+function deepMerge<T extends object>(target: T, source: T): T {
+    for (const key in source) {
+        const sourceVal = source[key];
+
+        if (sourceVal !== null && typeof sourceVal === "object" && !Array.isArray(sourceVal)) {
+            if (target[key] === null || target[key] === undefined || typeof target[key] !== "object" || Array.isArray(target[key])) {
+                target[key] = {} as any;
+            }
+            deepMerge(target[key] as object, sourceVal as object);
+        } else {
+            target[key] = sourceVal;
+        }
+    }
+    return target;
+}
+
 function isSafeObject(obj: any) {
     if (obj == null || typeof obj !== "object") return true;
 
@@ -60,8 +76,8 @@ export async function importSettings(data: string, type: BackupType = "all", clo
                 throw new Error("Invalid Settings. Plugin settings is required for this import try a different one.");
 
             if (parsed.settings) {
-                Object.assign(PlainSettings, parsed.settings);
-                await VencordNative.settings.set(parsed.settings);
+                deepMerge(PlainSettings, parsed.settings);
+                await VencordNative.settings.set(PlainSettings);
             }
             if (parsed.quickCss) await VencordNative.quickCss.set(parsed.quickCss);
             if (parsed.dataStore) await DataStore.setMany(parsed.dataStore);
@@ -70,8 +86,8 @@ export async function importSettings(data: string, type: BackupType = "all", clo
         case "plugins": {
             if (!parsed.settings) throw new Error("Plugin settings missing");
 
-            Object.assign(PlainSettings, parsed.settings);
-            await VencordNative.settings.set(parsed.settings);
+            deepMerge(PlainSettings, parsed.settings);
+            await VencordNative.settings.set(PlainSettings);
             break;
         }
         case "css": {
@@ -92,11 +108,27 @@ export async function importSettings(data: string, type: BackupType = "all", clo
 export async function exportSettings({ syncDataStore = true, type = "all", minify }: { syncDataStore?: boolean; type?: BackupType; minify?: boolean; }) {
     const settings = VencordNative.settings.get();
     const quickCss = await VencordNative.quickCss.get();
-    const dataStore = syncDataStore ? await DataStore.entries() : undefined;
+    let dataStore: any;
+
+    if (syncDataStore) {
+        try {
+            dataStore = await DataStore.entries();
+        } catch (err) {
+            logger.error("Failed to read DataStore entries:", err);
+
+            if (type === "all") {
+                logger.warn("Skipping DataStore in backup due to size. Export DataStore separately if needed.");
+                toast(Toasts.Type.MESSAGE, "DataStore too large - exported without it. Use 'Export DataStore' separately if needed.");
+                dataStore = undefined;
+            } else if (type === "datastore") {
+                throw new Error("DataStore is too large to export. Please clear some plugin data and try again.");
+            }
+        }
+    }
 
     switch (type) {
         case "all": {
-            return JSON.stringify({ settings, quickCss, ...(syncDataStore && { dataStore }) }, null, minify ? undefined : 4);
+            return JSON.stringify({ settings, quickCss, ...(dataStore && { dataStore }) }, null, minify ? undefined : 4);
         }
         case "plugins": {
             return JSON.stringify({ settings }, null, minify ? undefined : 4);
@@ -114,14 +146,21 @@ export async function exportSettings({ syncDataStore = true, type = "all", minif
 }
 
 export async function downloadSettingsBackup(type: BackupType = "all", { minify }: { minify?: boolean; } = {}) {
-    const backup = await exportSettings({ minify, type });
-    const filename = `kernixcord-${type}-backup-${moment().format("YYYY-MM-DD")}.json`;
-    const data = new TextEncoder().encode(backup);
+    try {
+        const syncDataStore = type === "all" || type === "datastore";
+        const backup = await exportSettings({ minify, type, syncDataStore });
+        const filename = `kernixcord-${type}-backup-${moment().format("YYYY-MM-DD")}.json`;
+        const data = new TextEncoder().encode(backup);
 
-    if (IS_DISCORD_DESKTOP) {
-        DiscordNative.fileManager.saveWithDialog(data, filename);
-    } else {
-        saveFile(new File([data], filename, { type: "application/json" }));
+        if (IS_DISCORD_DESKTOP) {
+            DiscordNative.fileManager.saveWithDialog(data, filename);
+        } else {
+            saveFile(new File([data], filename, { type: "application/json" }));
+        }
+    } catch (err) {
+        logger.error("Failed to export settings:", err);
+        toast(Toasts.Type.FAILURE, "Failed to export settings, check console");
+        throw err;
     }
 }
 

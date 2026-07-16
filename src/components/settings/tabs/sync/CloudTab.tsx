@@ -25,7 +25,7 @@ import { Divider } from "@components/Divider";
 import { Flex } from "@components/Flex";
 import { FormSwitch } from "@components/FormSwitch";
 import { Heading } from "@components/Heading";
-import { CloudDownloadIcon, CloudUploadIcon } from "@components/Icons";
+import { CloudDownloadIcon, CloudUploadIcon, SkullIcon } from "@components/Icons";
 import { Link } from "@components/Link";
 import { Notice } from "@components/Notice";
 import { Paragraph } from "@components/Paragraph";
@@ -39,7 +39,7 @@ import { Alerts, SearchableSelect, Select, useState } from "@webpack/common";
 const ICON_STYLE: React.CSSProperties = { width: 20, height: 20, borderRadius: 4, verticalAlign: "middle" };
 
 function EquicordIcon() {
-    return <img src="https://equicord.org/assets/icons/equicord/icon.png" alt="Equicord" style={ICON_STYLE} />;
+    return <img src="https://equicord.org/assets/favicon.png" alt="Equicord" style={ICON_STYLE} />;
 }
 
 function VencordIcon() {
@@ -48,7 +48,6 @@ function VencordIcon() {
 
 const RefreshIcon = findComponentByCodeLazy("M4 12a8 8 0 0 1 14.93-4H15");
 const TrashIcon = findComponentByCodeLazy("2.81h8.36a3");
-const SkullIcon = findComponentByCodeLazy("m13.47 1 .07.04c.45.06");
 
 function validateUrl(url: string) {
     try {
@@ -123,20 +122,21 @@ function CloudTab() {
                 Choose which cloud backend to use for storing your settings. You can switch between Equicord's and Vencord's cloud services, or use a self-hosted instance.
             </Paragraph>
 
-            <SearchableSelect
-                options={cloudBackendOptions}
-                value={cloudBackendOptions.find(o => o.value === cloud.url)}
-                onChange={v => changeUrl(v)}
-                className={Margins.bottom16}
-                closeOnSelect={true}
-                renderOptionPrefix={o => o?.value?.includes("equicord") ? <EquicordIcon /> : <VencordIcon />}
-            />
+            <div className={Margins.bottom8}>
+                <SearchableSelect
+                    options={cloudBackendOptions}
+                    value={cloudBackendOptions.find(o => o.value === cloud.url)?.value}
+                    onChange={v => changeUrl(v)}
+                    closeOnSelect={true}
+                    renderOptionPrefix={o => o?.value?.includes("equicord") ? <EquicordIcon /> : <VencordIcon />}
+                />
+            </div>
 
             <Flex gap="8px" alignItems="center">
                 <div style={{ flex: 1 }}>
                     <CheckedTextInput
                         key={`backendUrl-${inputKey}`}
-                        value={cloud.url}
+                        initialValue={cloud.url}
                         onChange={async v => {
                             cloud.url = v;
                             cloud.authenticated = false;
@@ -256,7 +256,7 @@ function CloudTab() {
                     })}
                 >
                     <Flex gap="8px" alignItems="center">
-                        <SkullIcon color="currentColor" />
+                        <SkullIcon />
                         Delete Cloud Account
                     </Flex>
                 </Button>

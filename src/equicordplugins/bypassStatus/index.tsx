@@ -22,6 +22,8 @@ interface IMessageCreate {
     message: Message;
 }
 
+const SILENT_PING_FLAG = 1 << 12;
+
 function Icon(enabled?: boolean): JSX.Element {
     return <svg
         width="18"
@@ -122,6 +124,11 @@ const settings = definePluginSettings({
         description: "Whether the notification sound should be played",
         default: true,
     },
+    respectSilentPings: {
+        type: OptionType.BOOLEAN,
+        description: "Respect silent pings (@silent / suppress notifications)",
+        default: true
+    },
     statusToUse: {
         type: OptionType.SELECT,
         description: "Status to use for whitelist",
@@ -150,6 +157,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "BypassStatus",
     description: "Still get notifications from specific sources when in do not disturb mode. Right-click on users/channels/guilds to set them to bypass do not disturb mode.",
+    tags: ["Activity", "Customisation", "Notifications", "Servers"],
     authors: [Devs.Inbestigator],
     dependencies: ["AudioPlayerAPI"],
     flux: {
@@ -161,6 +169,7 @@ export default definePlugin({
                 if (message.state === "SENDING" || message.content === "" || message.author.id === currentUser.id || (channelId === currentChannelId && WindowStore.isFocused()) || userStatus !== settings.store.statusToUse) {
                     return;
                 }
+                if (settings.store.respectSilentPings && (message.flags & SILENT_PING_FLAG)) { return; }
                 const mentioned = MessageStore.getMessage(channelId, message.id)?.mentioned;
                 if ((settings.store.guilds.split(", ").includes(guildId) || settings.store.channels.split(", ").includes(channelId)) && mentioned) {
                     await showNotification(message, guildId);

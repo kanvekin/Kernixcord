@@ -35,8 +35,9 @@ import { isTruthy } from "@utils/guards";
 import { Logger } from "@utils/Logger";
 import { Margins } from "@utils/margins";
 import { classes } from "@utils/misc";
-import { useAwaiter, useIntersection } from "@utils/react";
-import { Alerts, lodash, Parser, React, Select, TextInput, Toasts, Tooltip, useCallback, useMemo, useState } from "@webpack/common";
+import { useAwaiter, useCleanupEffect, useIntersection } from "@utils/react";
+import { PluginTag, PluginTags } from "@utils/types";
+import { Alerts, ConfirmModal, lodash, openModal, Parser, React, SearchableSelect, Select, TextInput, Toasts, Tooltip, useCallback, useMemo, useRef, useState } from "@webpack/common";
 import { JSX } from "react";
 
 import Plugins, { ExcludedPlugins, PluginMeta } from "~plugins";
@@ -145,34 +146,42 @@ function ExcludedPluginsList({ search }: { search: string; }) {
 
 export default function PluginSettings() {
     const settings = useSettings();
-    const changes = React.useMemo(() => new ChangeList<string>(), []);
+    const changeRef = useRef<ChangeList<string>>(null);
+    const changes = changeRef.current ??= new ChangeList<string>();
 
-    React.useEffect(() => {
+    useCleanupEffect(() => {
         return () => {
             if (!changes.hasChanges) return;
 
             const allChanges = [...changes.getChanges()];
+            const pluginNames = [...new Set(allChanges.map(s => s.split(":")[0]))];
             const maxDisplay = 15;
-            const displayed = allChanges.slice(0, maxDisplay);
-            const remainingCount = allChanges.length - displayed.length;
+            const displayed = pluginNames.slice(0, maxDisplay);
+            const remainingCount = pluginNames.length - displayed.length;
 
-            Alerts.show({
-                title: "Restart required",
-                body: (
-                    <div>
-                        {displayed.map((s, i) => (
-                            <span key={i}>
-                                {i > 0 && ", "}
-                                {Parser.parse("`" + s + "`")}
-                            </span>
-                        ))}
-                        {remainingCount > 0 && <span> and {remainingCount} more</span>}
-                    </div>
-                ),
-                confirmText: "Restart now",
-                cancelText: "Later!",
-                onConfirm: () => location.reload()
-            });
+            openModal(props => (
+                <ConfirmModal
+                    {...props}
+                    title="Restart required"
+                    confirmText="Restart now"
+                    cancelText="Later!"
+                    variant="primary"
+                    onConfirm={() => location.reload()}
+                >
+                    <>
+                        <p>The following plugins require a restart:</p>
+                        <div>
+                            {displayed.map((s, i) => (
+                                <span key={i}>
+                                    {i > 0 && ", "}
+                                    {Parser.parse("`" + s + "`")}
+                                </span>
+                            ))}
+                            {remainingCount > 0 && <span> and {remainingCount} more</span>}
+                        </div>
+                    </>
+                </ConfirmModal>
+            ));
         };
     }, []);
 
@@ -195,44 +204,50 @@ export default function PluginSettings() {
 
     const hasUserPlugins = useMemo(() => !IS_STANDALONE && Object.values(PluginMeta).some(m => m.userPlugin), []);
 
-    const [searchValue, setSearchValue] = useState({ value: "", status: SearchStatus.ALL });
-    const [searchInput, setSearchInput] = useState("");
-
-    const debouncedSetSearch = useMemo(
-        () => debounce((query: string) => setSearchValue(prev => ({ ...prev, value: query })), 150),
-        []
-    );
+    const [searchValue, setSearchValue] = useState({ value: "", tags: [] as PluginTag[], status: SearchStatus.ALL });
 
     const search = searchValue.value.toLowerCase();
-    const onSearch = useCallback((query: string) => {
-        setSearchInput(query);
-        debouncedSetSearch(query);
-    }, [debouncedSetSearch]);
-    const onStatusChange = useCallback((status: SearchStatus) => {
-        setSearchValue(prev => ({ ...prev, status }));
-    }, []);
+    const onSearch = (query: string) => setSearchValue(prev => ({ ...prev, value: query }));
 
     const pluginFilter = useCallback((plugin: typeof Plugins[keyof typeof Plugins], newPluginsSet: Set<string> | null) => {
-        const { status } = searchValue;
-        const enabled = Vencord.Plugins.isPluginEnabled(plugin.name);
-        const pluginMeta = PluginMeta[plugin.name];
-        const isEquicordPlugin = pluginMeta.folderName.startsWith("src/equicordplugins/") ?? false;
-        const isKernixcordPlugin = pluginMeta.folderName.startsWith("src/kernixcordplugins/") ?? false;
-        const isUserplugin = pluginMeta.userPlugin ?? false;
+        const { status, tags } = searchValue;
 
-        if (enabled && status === SearchStatus.DISABLED) return false;
-        if (!enabled && status === SearchStatus.ENABLED) return false;
-        if (status === SearchStatus.NEW && !newPluginsSet?.has(plugin.name)) return false;
-        if (status === SearchStatus.EQUICORD && !isEquicordPlugin) return false;
-        if (status === SearchStatus.VENCORD && (isEquicordPlugin || isKernixcordPlugin)) return false;
-        if (status === SearchStatus.KERNIXCORD && !isKernixcordPlugin) return false;
-        if (status === SearchStatus.CUSTOM && !isUserplugin) return false;
+        switch (status) {
+            case SearchStatus.DISABLED:
+                if (isPluginEnabled(plugin.name)) return false;
+                break;
+            case SearchStatus.ENABLED:
+                if (!isPluginEnabled(plugin.name)) return false;
+                break;
+            case SearchStatus.EQUICORD:
+                if (!PluginMeta[plugin.name].folderName.startsWith("src/equicordplugins/")) return false;
+                break;
+            case SearchStatus.VENCORD:
+                if (!PluginMeta[plugin.name].folderName.startsWith("src/plugins/")) return false;
+                break;
+            case SearchStatus.KERNIXCORD:
+                if (!PluginMeta[plugin.name].folderName.startsWith("src/kernixcordplugins/")) return false;
+                break;
+            case SearchStatus.NEW:
+                if (!newPluginsSet?.has(plugin.name)) return false;
+                break;
+            case SearchStatus.USER_PLUGINS:
+                if (!PluginMeta[plugin.name]?.userPlugin) return false;
+                break;
+            case SearchStatus.API_PLUGINS:
+                if (!plugin.name.endsWith("API")) return false;
+                break;
+        }
+
+        if (tags.length && tags.some(t => !plugin.tags?.includes(t))) return false;
+
         if (!search.length) return true;
 
         return (
             plugin.name.toLowerCase().includes(search.replace(/\s+/g, "")) ||
+            plugin.name.match(/[A-Z]/g)?.join("").toLowerCase().includes(search) || // acronyms like BF for BetterFolders
             plugin.description.toLowerCase().includes(search) ||
-            plugin.tags?.some(t => t.toLowerCase().includes(search))
+            plugin.searchTerms?.some(t => t.toLowerCase().includes(search))
         );
     }, [searchValue, search]);
 
@@ -253,7 +268,7 @@ export default function PluginSettings() {
         return lodash.isEqual(newPlugins, sortedPluginNames) ? null : new Set(newPlugins);
     }));
 
-    const handleRestartNeeded = useCallback((name: string) => changes.handleChange(name), [changes]);
+    const handleRestartNeeded = useCallback((name: string, key: string) => changes.handleChange(`${name}:${key}`), [changes]);
 
     const { plugins, requiredPlugins } = useMemo(() => {
         const plugins = [] as JSX.Element[];
@@ -341,13 +356,12 @@ export default function PluginSettings() {
         }
     }
 
-
     // Code directly taken from supportHelper.tsx
     const { totalStockPlugins, totalUserPlugins, enabledStockPlugins, enabledUserPlugins, enabledPlugins } = useMemo(() => {
         const isApiPlugin = (plugin: string) => plugin.endsWith("API") || Plugins[plugin].required;
 
         const totalPlugins = Object.keys(Plugins).filter(p => !isApiPlugin(p));
-        const enabledPlugins = Object.keys(Plugins).filter(p => Vencord.Plugins.isPluginEnabled(p) && !isApiPlugin(p));
+        const enabledPlugins = Object.keys(Plugins).filter(p => isPluginEnabled(p) && !isApiPlugin(p));
 
         const totalStockPlugins = totalPlugins.filter(p => !PluginMeta[p].userPlugin && !Plugins[p].hidden).length;
         const totalUserPlugins = totalPlugins.filter(p => PluginMeta[p].userPlugin).length;
@@ -395,11 +409,18 @@ export default function PluginSettings() {
                 Filters
             </HeadingTertiary>
 
-            <div className={classes(Margins.bottom20, cl("filter-controls"))}>
-                <ErrorBoundary noop>
-                    <TextInput autoFocus value={searchInput} placeholder="Search for a plugin..." onChange={onSearch} />
-                </ErrorBoundary>
-                <div className={cl("select-input-wrapper")}>
+            <ErrorBoundary noop>
+                <TextInput
+                    inputClassName={cl("filter-control")}
+                    placeholder="Search for a plugin..."
+                    value={searchValue.value}
+                    onChange={onSearch}
+                    autoFocus
+                />
+            </ErrorBoundary>
+
+            <ErrorBoundary noop>
+                <div className={classes(Margins.bottom20, Margins.top8, cl("filter-controls"))}>
                     <Select
                         options={[
                             { label: "Show All", value: SearchStatus.ALL, default: true },
@@ -417,7 +438,7 @@ export default function PluginSettings() {
                         closeOnSelect={true}
                     />
                 </div>
-            </div>
+            </ErrorBoundary>
 
             <HeadingTertiary className={Margins.top20}>Plugins</HeadingTertiary>
 
@@ -438,12 +459,12 @@ export default function PluginSettings() {
                 : <ExcludedPluginsList search={search} />
             }
 
-
             <Divider className={Margins.top20} />
 
             <HeadingTertiary className={classes(Margins.top20, Margins.bottom8)}>
                 Required Plugins
             </HeadingTertiary>
+
             <div className={cl("grid")}>
                 {requiredPlugins.length
                     ? requiredPlugins

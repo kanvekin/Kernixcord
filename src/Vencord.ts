@@ -18,6 +18,7 @@
 
 // DO NOT REMOVE UNLESS YOU WISH TO FACE THE WRATH OF THE CIRCULAR DEPENDENCY DEMON!!!!!!!
 import "~plugins";
+import "./fixWeirdAppRegionBug.css";
 
 export * as Api from "./api";
 export * as Plugins from "./api/PluginManager";
@@ -34,17 +35,17 @@ import { debounce } from "@shared/debounce";
 import { IS_WINDOWS } from "@utils/constants";
 import { createAndAppendStyle } from "@utils/css";
 import { StartAt } from "@utils/types";
+import { SettingsRouter } from "@webpack/common";
 
 import { get as dsGet } from "./api/DataStore";
+import { popNotice, showNotice } from "./api/Notices";
 import { NotificationData, showNotification } from "./api/Notifications";
 import { initPluginManager, PMLogger, startAllPlugins } from "./api/PluginManager";
 import { PlainSettings, Settings, SettingsStore } from "./api/Settings";
-import { getCloudSettings, putCloudSettings, shouldCloudSync } from "./api/SettingsSync/cloudSync";
-import { localStorage } from "./utils/localStorage";
+import { areLocalSettingsDirty, getCloudSettings, getCloudSyncDirection, markLocalSettingsDirty, putCloudSettings, shouldCloudSync } from "./api/SettingsSync/cloudSync";
 import { relaunch } from "./utils/native";
-import { checkForUpdates, update, UpdateLogger } from "./utils/updater";
-import { onceReady, _resolveReady } from "./webpack";
-import { openUserSettingsPanel } from "./webpack/common";
+import { checkForUpdates, isOutdated as getIsOutdated, update, UpdateLogger } from "./utils/updater";
+import { onceReady } from "./webpack";
 import { patches } from "./webpack/patchWebpack";
 
 if (IS_REPORTER) {
@@ -52,11 +53,6 @@ if (IS_REPORTER) {
 }
 
 async function syncSettings() {
-    // Check if cloud auth exists for current user before attempting sync
-    if (localStorage.Vencord_cloudSyncDirection === undefined) {
-        // by default, sync bi-directionally
-        localStorage.Vencord_cloudSyncDirection = "both";
-    }
     const hasCloudAuth = await dsGet("Vencord_cloudSecret");
     if (!hasCloudAuth) {
         if (Settings.cloud.authenticated) {
@@ -65,7 +61,7 @@ async function syncSettings() {
                 title: "Cloud Settings",
                 body: "Cloud sync was disabled because this account isn't connected to the cloud App. You can enable it again by connecting this account in Cloud Settings. (note: it will store your preferences separately)",
                 color: "var(--yellow-360)",
-                onClick: () => openUserSettingsPanel("equicord_cloud")
+                onClick: () => SettingsRouter.openUserSettings("equicord_cloud_panel")
             });
             // Disable cloud sync globally
             Settings.cloud.authenticated = false;
@@ -84,7 +80,7 @@ async function syncSettings() {
             body: "We've noticed you have cloud integrations enabled in another client! Due to limitations, you will " +
                 "need to re-authenticate to continue using them. Click here to go to the settings page to do so!",
             color: "var(--yellow-360)",
-            onClick: () => openUserSettingsPanel("equicord_cloud")
+            onClick: () => SettingsRouter.openUserSettings("equicord_cloud_panel")
         });
         return;
     }
@@ -92,9 +88,9 @@ async function syncSettings() {
     if (
         Settings.cloud.settingsSync && // if it's enabled
         Settings.cloud.authenticated && // if cloud integrations are enabled
-        localStorage.Vencord_cloudSyncDirection !== "manual" // if we're not in manual mode
+        getCloudSyncDirection() !== "manual" // if we're not in manual mode
     ) {
-        if (localStorage.Vencord_settingsDirty && shouldCloudSync("push")) {
+        if (areLocalSettingsDirty() && shouldCloudSync("push")) {
             await putCloudSettings();
         } else if (shouldCloudSync("pull") && await getCloudSettings(false)) { // if we synchronized something (false means no sync)
             // we show a notification here instead of allowing getCloudSettings() to show one to declutter the amount of
@@ -117,7 +113,7 @@ async function syncSettings() {
     }, 60_000);
 
     SettingsStore.addGlobalChangeListener(() => {
-        localStorage.Vencord_settingsDirty = true;
+        markLocalSettingsDirty();
         saveSettingsOnFrequentAction();
     });
 }
@@ -140,37 +136,66 @@ async function runUpdateCheck() {
 
     try {
         const isOutdated = await checkForUpdates();
+        if (IS_DISCORD_DESKTOP) VencordNative.tray.setUpdateState(isOutdated);
         if (!isOutdated) return;
 
         if (Settings.autoUpdate) {
             await update();
             if (Settings.autoUpdateNotification) {
-                notify({
-                    title: "Kernixcord has been updated!",
-                    body: "Click here to restart",
-                    onClick: relaunch
-                });
+                if (notifiedForUpdatesThisSession) return;
+                notifiedForUpdatesThisSession = true;
+
+                showNotice(
+                    "Kernixcord has been updated!",
+                    "Restart",
+                    relaunch
+                );
             }
             return;
         }
 
-        notify({
-            title: "A Kernixcord update is available!",
-            body: "Click here to view the update",
-            onClick: () => {
-                // Fallback if UpdaterTab is not available
-                try {
-                    openSettingsTabModal(UpdaterTab!);
-                } catch (error) {
-                    console.error("[Kernixcord] Failed to open updater tab:", error);
-                    // Try alternative method
-                    openUserSettingsPanel("Kernixcord");
-                }
-            }
-        });
+        if (notifiedForUpdatesThisSession) return;
+        notifiedForUpdatesThisSession = true;
+
+        showNotice(
+            "A new version of Kernixcord is available!",
+            "View Update",
+            () => openSettingsTabModal(UpdaterTab!)
+        );
     } catch (err) {
         UpdateLogger.error("Failed to check for updates", err);
     }
+}
+
+function initTrayIpc() {
+    if (IS_WEB || IS_UPDATER_DISABLED) return;
+
+    VencordNative.tray.onCheckUpdates(async () => {
+        try {
+            const isOutdated = await checkForUpdates();
+            VencordNative.tray.setUpdateState(isOutdated);
+
+            if (isOutdated) {
+                showNotice("An Kernixcord update is available!", "View Update", () => openSettingsTabModal(UpdaterTab!));
+            } else {
+                showNotice("No updates available, you're on the latest version!", "OK", popNotice);
+            }
+        } catch (err) {
+            UpdateLogger.error("Failed to check for updates from tray", err);
+            showNotice("Failed to check for updates, check the console for more info", "OK", popNotice);
+        }
+    });
+
+    VencordNative.tray.onRepair(async () => {
+        try {
+            await update();
+            relaunch();
+        } catch (err) {
+            UpdateLogger.error("Failed to repair Equicord", err);
+        }
+    });
+
+    VencordNative.tray.setUpdateState(getIsOutdated);
 }
 
 async function init() {
@@ -199,6 +224,7 @@ async function init() {
     startAllPlugins(StartAt.WebpackReady);
 
     syncSettings();
+    initTrayIpc();
 
     // Log startup time for diagnostics
     const totalTime = performance.now() - startTime;

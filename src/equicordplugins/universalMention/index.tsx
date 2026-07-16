@@ -39,6 +39,7 @@ export default definePlugin({
     name: "UniversalMention",
     authors: [EquicordDevs.justjxke],
     description: "Mention any user, regardless of channel access.",
+    tags: ["Chat", "Servers", "Utility"],
     settings,
     settingsAboutComponent: () => (
         <Notice.Warning>
@@ -60,7 +61,7 @@ export default definePlugin({
                     predicate: () => settings.store.globalMention || settings.store.onlyDMUsers,
                 },
                 {
-                    match: /(?<=\i=)\i\.recipients\.map\(.{0,100}:null\}\}\)/,
+                    match: /(?<=\i=)\i\.recipients\.map\(.{0,100}\?\?null\}\)\)/,
                     replace: "$self.useFilter(true)",
                 }
             ],

@@ -21,17 +21,15 @@ import { definePluginSettings } from "@api/Settings";
 import { Paragraph } from "@components/Paragraph";
 import { ApngBlendOp, ApngDisposeOp, parseAPNG } from "@utils/apng";
 import { Devs } from "@utils/constants";
-import { getCurrentGuild, getEmojiURL } from "@utils/discord";
+import { getCurrentGuild } from "@utils/discord";
 import { Logger } from "@utils/Logger";
-import definePlugin, { OptionType, Patch } from "@utils/types";
-import type { Emoji, Message, Sticker } from "@vencord/discord-types";
+import definePlugin, { OptionType } from "@utils/types";
+import type { Emoji, Message, RenderModalProps, Sticker } from "@vencord/discord-types";
 import { StickerFormatType } from "@vencord/discord-types/enums";
-import { findByCodeLazy, findByPropsLazy, findStoreLazy, proxyLazyWebpack } from "@webpack";
-import { Alerts, ChannelStore, DraftType, EmojiStore, FluxDispatcher, GuildMemberStore, lodash, OverridePremiumTypeStore, Parser, PermissionsBits, PermissionStore, StickersStore, UploadHandler, UserSettingsActionCreators } from "@webpack/common";
+import { findByCodeLazy, findByPropsLazy, proxyLazyWebpack } from "@webpack";
+import { ChannelStore, ConfirmModal, DraftType, EmojiStore, FluxDispatcher, GuildMemberStore, IconUtils, lodash, openModal, OverridePremiumTypeStore, Parser, PermissionsBits, PermissionStore, StickersStore, UploadHandler, UserSettingsActionCreators, UserSettingsProtoStore } from "@webpack/common";
 import { applyPalette, GIFEncoder, quantize } from "gifenc";
 import type { ReactElement, ReactNode } from "react";
-
-const UserSettingsProtoStore = findStoreLazy("UserSettingsProtoStore");
 
 const BINARY_READ_OPTIONS = findByPropsLazy("readerFactory");
 
@@ -87,7 +85,7 @@ const settings = definePluginSettings({
         description: "Size of the emojis when sending",
         type: OptionType.SLIDER,
         default: 48,
-        markers: [32, 48, 64, 96, 128, 160, 256, 512]
+        markers: [32, 48, 56, 64, 96, 128, 160, 256, 512]
     },
     transformEmojis: {
         description: "Whether to transform fake emojis into real ones",
@@ -143,7 +141,7 @@ const settings = definePluginSettings({
         description: "Whether to disable the embed permission check when sending fake emojis and stickers",
         type: OptionType.BOOLEAN,
         default: false
-    }
+    },
 });
 
 function hasPermission(channelId: string, permission: bigint) {
@@ -159,43 +157,80 @@ const hasExternalStickerPerms = (channelId: string) => hasPermission(channelId, 
 const hasEmbedPerms = (channelId: string) => hasPermission(channelId, PermissionsBits.EMBED_LINKS);
 const hasAttachmentPerms = (channelId: string) => hasPermission(channelId, PermissionsBits.ATTACH_FILES);
 
-function makeBypassPatches(): Omit<Patch, "plugin"> {
-    const mapping: Array<{ func: string, predicate?: () => boolean; }> = [
-        { func: "canUseCustomStickersEverywhere", predicate: () => settings.store.enableStickerBypass },
-        { func: "canUseHighVideoUploadQuality", predicate: () => settings.store.enableStreamQualityBypass },
-        { func: "canStreamQuality", predicate: () => settings.store.enableStreamQualityBypass },
-        { func: "canUseClientThemes" },
-        { func: "canUsePremiumAppIcons" }
-    ];
+function getWordBoundary(origStr: string, offset: number) {
+    return (!origStr[offset] || /\s/.test(origStr[offset])) ? "" : " ";
+}
 
-    return {
-        find: "canUseCustomStickersEverywhere:",
-        replacement: mapping.map(({ func, predicate }) => ({
-            match: new RegExp(String.raw`(?<=${func}:)\i`),
-            replace: "() => true",
-            predicate
-        }))
-    };
+function CannotEmbedNoticeModal({ modalProps, resolve }: { modalProps: RenderModalProps; resolve: (value: boolean) => void; }) {
+    const s = settings.use(["disableEmbedPermissionCheck"]);
+    return (
+        <ConfirmModal
+            {...modalProps}
+            title="Hold on!"
+            subtitle="You are trying to send/edit a message that contains a FakeNitro emoji or sticker, however you do not have permissions to embed links in the current channel. Are you sure you want to send this message? Your FakeNitro items will appear as a link only."
+            confirmText="Send Anyway"
+            cancelText="Cancel"
+            onConfirm={() => resolve(true)}
+            onCloseCallback={() => setImmediate(() => resolve(false))}
+            checkboxProps={{
+                checked: s.disableEmbedPermissionCheck === true,
+                onChange: checked => s.disableEmbedPermissionCheck = checked
+            }}
+        />
+    );
+}
+
+function showCannotEmbedNotice() {
+    return new Promise<boolean>(resolve => {
+        openModal(props => <CannotEmbedNoticeModal modalProps={props} resolve={resolve} />);
+    });
 }
 
 export default definePlugin({
     name: "FakeNitro",
     authors: [Devs.Arjix, Devs.D3SOX, Devs.Ven, Devs.fawn, Devs.captain, Devs.Nuckyz, Devs.AutumnVN, Devs.sadan],
     description: "Allows you to send fake emojis/stickers, use nitro themes, and stream in nitro quality",
+    tags: ["Emotes", "Appearance", "Customisation", "Chat"],
     dependencies: ["MessageEventsAPI"],
 
     settings,
 
     patches: [
-        // General bypass patches
-        makeBypassPatches(),
+        {
+            find: "canUseCustomStickersEverywhere:",
+            replacement: [
+                {
+                    match: /(?<=canUseCustomStickersEverywhere:function\(\i\)\{)/,
+                    replace: "return true;",
+                    predicate: () => settings.store.enableStickerBypass
+                },
+                {
+                    match: /(?<=canUseHighVideoUploadQuality:function\(\i\)\{)/,
+                    replace: "return true;",
+                    predicate: () => settings.store.enableStreamQualityBypass
+                },
+                {
+                    match: /(?<=canStreamQuality:function\(\i,\i\)\{)/,
+                    replace: "return true;",
+                    predicate: () => settings.store.enableStreamQualityBypass
+                },
+                {
+                    match: /(?<=canUseClientThemes:function\(\i\)\{)/,
+                    replace: "return true;"
+                },
+                {
+                    match: /(?<=canUsePremiumAppIcons:function\(\i\)\{)/,
+                    replace: "return true;"
+                }
+            ],
+        },
         // Patch the emoji picker in voice calls to not be bypassed by fake nitro
         {
-            find: "emojiItemDisabled]",
+            find: '.getByName("fork_and_knife")',
             predicate: () => settings.store.enableEmojiBypass,
             replacement: {
-                match: /CHAT/,
-                replace: "STATUS"
+                match: ".CHAT",
+                replace: ".STATUS"
             }
         },
         {
@@ -261,8 +296,8 @@ export default definePlugin({
             replacement: [
                 {
                     // Overwrite incoming connection settings proto with our local settings
-                    match: /function (\i)\((\i)\){(?=.*CONNECTION_OPEN:\1)/,
-                    replace: (m, funcName, props) => `${m}$self.handleProtoChange(${props}.userSettingsProto,${props}.user);`
+                    match: /(?<=CONNECTION_OPEN:function\((\i)\){)/,
+                    replace: (_, props) => `$self.handleProtoChange(${props}.userSettingsProto,${props}.user);`
                 },
                 {
                     // Overwrite non local proto changes with our local settings
@@ -281,9 +316,7 @@ export default definePlugin({
         },
         // Allow users to use custom client themes
         {
-            find: "customUserThemeSettings:{",
-            // Discord has two separate modules for treatments 1 and 2
-            all: true,
+            find: '("custom_themes_editor_footer")',
             replacement: {
                 match: /(?<=\i=)\(0,\i\.\i\)\(\i\.\i\.TIER_2\)(?=,|;)/g,
                 replace: "true"
@@ -301,13 +334,13 @@ export default definePlugin({
                 {
                     // Patch the rendered message content to add fake nitro emojis or remove sticker links
                     predicate: () => settings.store.transformEmojis || settings.store.transformStickers,
-                    match: /(?=return{hasSpoilerEmbeds:\i,content:(\i))/,
+                    match: /(?=return{hasSpoilerEmbeds:\i,hasBailedAst:\i,content:(\i))/,
                     replace: (_, content) => `${content}=$self.patchFakeNitroEmojisOrRemoveStickersLinks(${content},arguments[2]?.formatInline);`
                 }
             ]
         },
         {
-            find: "}renderEmbeds(",
+            find: "}renderStickersAccessories(",
             replacement: [
                 {
                     // Call our function to decide whether the embed should be ignored or not
@@ -359,8 +392,8 @@ export default definePlugin({
             predicate: () => settings.store.transformEmojis,
             replacement: {
                 // Add the fake nitro emoji notice
-                match: /(?<=emojiDescription:)(\i)(?<=\1=\i\((\i)\).+?)/,
-                replace: (_, reactNode, props) => `$self.addFakeNotice(${FakeNoticeType.Emoji},${reactNode},!!${props}?.fakeNitroNode?.fake)`
+                match: /(?<=emojiDescription:)(\i)(?<=\1=function\(\i\)\{let\{sourceType:.+?)/,
+                replace: (_, reactNode) => `$self.addFakeNotice(${FakeNoticeType.Emoji},${reactNode},!!arguments[0]?.fakeNitroNode?.fake)`
             }
         },
         // Separate patch for allowing using custom app icons
@@ -378,7 +411,7 @@ export default definePlugin({
                 match: /(?<=type:"(?:SOUNDBOARD_SOUNDS_RECEIVED|GUILD_SOUNDBOARD_SOUND_CREATE|GUILD_SOUNDBOARD_SOUND_UPDATE|GUILD_SOUNDBOARD_SOUNDS_UPDATE)".+?available:)\i\.available/g,
                 replace: "true"
             }
-        }
+        },
     ],
 
     get guildId() {
@@ -794,38 +827,7 @@ export default definePlugin({
             return;
         }
 
-        function getWordBoundary(origStr: string, offset: number) {
-            return (!origStr[offset] || /\s/.test(origStr[offset])) ? "" : " ";
-        }
-
-        function cannotEmbedNotice() {
-            return new Promise<boolean>(resolve => {
-                Alerts.show({
-                    title: "Hold on!",
-                    body: <div>
-                        <Paragraph>
-                            You are trying to send/edit a message that contains a FakeNitro emoji or sticker,
-                            however you do not have permissions to embed links in the current channel.
-                            Are you sure you want to send this message? Your FakeNitro items will appear as a link only.
-                        </Paragraph>
-                        <Paragraph>
-                            You can disable this notice in the plugin settings.
-                        </Paragraph>
-                    </div>,
-                    confirmText: "Send Anyway",
-                    cancelText: "Cancel",
-                    secondaryConfirmText: "Do not show again",
-                    onConfirm: () => resolve(true),
-                    onCloseCallback: () => setImmediate(() => resolve(false)),
-                    onConfirmSecondary() {
-                        settings.store.disableEmbedPermissionCheck = true;
-                        resolve(true);
-                    }
-                });
-            });
-        }
-
-        this.preSend = addMessagePreSendListener(async (channelId, messageObj, extra) => {
+        this.preSend = addMessagePreSendListener(async (channelId, messageObj, options) => {
             const { guildId } = this;
 
             let hasBypass = false;
@@ -834,7 +836,7 @@ export default definePlugin({
                 if (!s.enableStickerBypass)
                     break stickerBypass;
 
-                const sticker = StickersStore.getStickerById(extra.stickers?.[0]!);
+                const sticker = StickersStore.getStickerById(options.stickerIds?.[0]!);
                 if (!sticker)
                     break stickerBypass;
 
@@ -850,15 +852,21 @@ export default definePlugin({
 
                 if (sticker.format_type === StickerFormatType.APNG) {
                     if (!hasAttachmentPerms(channelId)) {
-                        Alerts.show({
-                            title: "Hold on!",
-                            body: <div>
-                                <Paragraph>
-                                    You cannot send this message because it contains an animated FakeNitro sticker,
-                                    and you do not have permissions to attach files in the current channel. Please remove the sticker to proceed.
-                                </Paragraph>
-                            </div>
-                        });
+                        openModal(props => (
+                            <ConfirmModal
+                                {...props}
+                                title="Hold on!"
+                                confirmText="OK"
+                                variant="primary"
+                            >
+                                <div>
+                                    <Paragraph>
+                                        You cannot send this message because it contains an animated FakeNitro sticker,
+                                        and you do not have permissions to attach files in the current channel. Please remove the sticker to proceed.
+                                    </Paragraph>
+                                </div>
+                            </ConfirmModal>
+                        ));
                     } else {
                         this.sendAnimatedSticker(link, sticker.id, channelId);
                     }
@@ -869,11 +877,12 @@ export default definePlugin({
 
                     const url = new URL(link);
                     url.searchParams.set("name", sticker.name);
+                    url.searchParams.set("lossless", "true");
 
                     const linkText = s.hyperLinkText.replaceAll("{{NAME}}", sticker.name);
 
                     messageObj.content += `${getWordBoundary(messageObj.content, messageObj.content.length - 1)}${s.useStickerHyperLinks ? `[${linkText}](${url})` : url}`;
-                    extra.stickers!.length = 0;
+                    options.stickerIds!.length = 0;
                 }
             }
 
@@ -885,12 +894,12 @@ export default definePlugin({
 
                     const emojiString = `<${emoji.animated ? "a" : ""}:${emoji.originalName || emoji.name}:${emoji.id}>`;
 
-                    const url = new URL(getEmojiURL(emoji.id, emoji.animated, s.emojiSize));
+                    const url = new URL(IconUtils.getEmojiURL({ id: emoji.id, animated: emoji.animated, size: s.emojiSize }));
                     url.searchParams.set("size", s.emojiSize.toString());
                     url.searchParams.set("name", emoji.name);
-                    if (emoji.animated) {
-                        url.pathname = url.pathname.replace(".webp", ".gif");
-                    }
+                    url.searchParams.set("lossless", "true");
+
+                    if (emoji.animated) url.pathname = url.pathname.replace(".webp", ".gif");
 
                     const linkText = s.hyperLinkText.replaceAll("{{NAME}}", emoji.name);
 
@@ -901,7 +910,7 @@ export default definePlugin({
             }
 
             if (hasBypass && !s.disableEmbedPermissionCheck && !hasEmbedPerms(channelId)) {
-                if (!await cannotEmbedNotice()) {
+                if (!await showCannotEmbedNotice()) {
                     return { cancel: true };
                 }
             }
@@ -921,9 +930,10 @@ export default definePlugin({
 
                 hasBypass = true;
 
-                const url = new URL(getEmojiURL(emoji.id, emoji.animated, s.emojiSize));
+                const url = new URL(IconUtils.getEmojiURL({ id: emoji.id, animated: emoji.animated, size: s.emojiSize }));
                 url.searchParams.set("size", s.emojiSize.toString());
                 url.searchParams.set("name", emoji.name);
+                url.searchParams.set("lossless", "true");
 
                 const linkText = s.hyperLinkText.replaceAll("{{NAME}}", emoji.name);
 
@@ -931,7 +941,7 @@ export default definePlugin({
             });
 
             if (hasBypass && !s.disableEmbedPermissionCheck && !hasEmbedPerms(channelId)) {
-                if (!await cannotEmbedNotice()) {
+                if (!await showCannotEmbedNotice()) {
                     return { cancel: true };
                 }
             }

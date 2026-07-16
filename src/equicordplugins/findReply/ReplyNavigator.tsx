@@ -7,15 +7,17 @@
 import "./styles.css";
 
 import ErrorBoundary from "@components/ErrorBoundary";
-import { ModalCloseButton } from "@utils/modal";
+import { Paginator, requirePaginator } from "@plugins/reviewDB/components/ReviewModal";
 import { Message } from "@vencord/discord-types";
-import { findByPropsLazy } from "@webpack";
-import { Paginator, React, useRef, useState } from "@webpack/common";
+import { findComponentByCodeLazy, findCssClassesLazy } from "@webpack";
+import { React, useRef, useState } from "@webpack/common";
+
+const CloseButton = findComponentByCodeLazy("CLOSE_BUTTON_LABEL");
 import { MutableRefObject } from "react";
 
 import { jumper } from "./index";
 
-const containerStyles = findByPropsLazy("containerBottom", "containerTop");
+const containerStyles = findCssClassesLazy("containerBottom", "containerTop");
 
 export default function ReplyNavigator({ replies }: { replies: Message[]; }) {
     const [page, setPage] = useState(1);
@@ -38,6 +40,7 @@ export default function ReplyNavigator({ replies }: { replies: Message[]; }) {
             document.removeEventListener("mousedown", onMouseDown);
         };
     }, [ref]);
+    requirePaginator();
     return (
         <ErrorBoundary>
             <div ref={ref} className={containerStyles.containerBottom + " vc-findreply-div"} style={{
@@ -51,7 +54,7 @@ export default function ReplyNavigator({ replies }: { replies: Message[]; }) {
                     totalCount={replies.length}
                     onPageChange={processPageChange}
                 />
-                <ModalCloseButton className={"vc-findreply-close"} onClick={() => setVisible(false)} />
+                <CloseButton className={"vc-findreply-close"} onClick={() => setVisible(false)} />
             </div>
         </ErrorBoundary>
     );

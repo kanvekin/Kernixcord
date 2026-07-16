@@ -5,12 +5,14 @@
  */
 
 import { showNotice } from "@api/Notices";
+import { plugins, startDependenciesRecursive, startPlugin, stopPlugin } from "@api/PluginManager";
 import { Settings } from "@api/Settings";
 import { canonicalizeMatch } from "@utils/patches";
-import { CodeFilter, stringMatches, wreq } from "@webpack";
+import { Module } from "@vencord/discord-types/webpack";
+import { CodeFilter, FilterFn, stringMatches, wreq } from "@webpack";
 import { Toasts } from "@webpack/common";
-import { WebpackPatcher } from "Vencord";
 
+import { WebpackPatcher } from "../../Vencord";
 import { logger, settings as companionSettings } from ".";
 import { FindNode } from "./types/recieve";
 
@@ -44,11 +46,22 @@ export function extractModule(id: PropertyKey, patched = companionSettings.store
     }
     return extractUnpatchedModule(id);
 }
+
+// FIXME: maybe update companion to support new style later
+function getNormalizedModuleText(id_: PropertyKey): string {
+    const id = String(id_);
+    if (Number.isNaN(parseInt(String(id), 10))) {
+        throw new Error("can't normalize module with non-numeric id");
+    }
+    const moduleText = wreq.m[id].toString();
+    return "function" + moduleText.substring(moduleText.indexOf("("));
+}
+
 function extractUnpatchedModule(id: PropertyKey): string {
     if (!wreq.m[id]) {
         throw new Error(`Module not found for id: ${String(id)}`);
     }
-    return `// Webpack Module ${String(id)} - Patched by\n0,${wreq.m[id]}\n//# sourceURL=WebpackModule${String(id)}`;
+    return `// Webpack Module ${String(id)} - Patched by\n0,${getNormalizedModuleText(id)}\n//# sourceURL=WebpackModule${String(id)}`;
 }
 
 /**
@@ -126,7 +139,7 @@ export function toggleEnabled(name: string, beforeReload: (error?: string) => vo
             });
         }
     }
-    const plugin = Vencord.Plugins.plugins[name];
+    const plugin = plugins[name];
 
     const settings = Settings.plugins[plugin.name];
 
@@ -136,7 +149,7 @@ export function toggleEnabled(name: string, beforeReload: (error?: string) => vo
 
     // If we're enabling a plugin, make sure all deps are enabled recursively.
     if (!wasEnabled) {
-        const { restartNeeded, failures } = Vencord.Plugins.startDependenciesRecursive(plugin);
+        const { restartNeeded, failures } = startDependenciesRecursive(plugin);
         if (failures.length) {
             console.error(`Failed to start dependencies for ${plugin.name}: ${failures.join(", ")}`);
             showNotice("Failed to start dependencies: " + failures.join(", "), "Close", () => null);
@@ -166,7 +179,7 @@ export function toggleEnabled(name: string, beforeReload: (error?: string) => vo
         return;
     }
 
-    const result = wasEnabled ? Vencord.Plugins.stopPlugin(plugin) : Vencord.Plugins.startPlugin(plugin);
+    const result = wasEnabled ? stopPlugin(plugin) : startPlugin(plugin);
 
     if (!result) {
         settings.enabled = false;
@@ -180,4 +193,32 @@ export function toggleEnabled(name: string, beforeReload: (error?: string) => vo
 
     settings.enabled = !wasEnabled;
     beforeReturn();
+}
+
+export function findAllModuleIds(filter: FilterFn, { topLevelOnly = false }: { topLevelOnly?: boolean; } = {}): string[] {
+    const { c } = wreq;
+    const ret: string[] = [];
+
+    outer: for (const key in c) {
+        const mod: Module | undefined = c[key];
+        if (!mod?.loaded || mod.exports == null) {
+            continue;
+        }
+        if (filter(mod.exports)) {
+            ret.push(key);
+            continue;
+        }
+        if (typeof mod.exports !== "object" || topLevelOnly) {
+            continue;
+        }
+        for (const nestedMod in mod.exports) {
+            const nested = mod.exports[nestedMod];
+            if (nested && filter(nested)) {
+                ret.push(key);
+                continue outer;
+            }
+        }
+    }
+
+    return ret;
 }

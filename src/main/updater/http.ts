@@ -49,7 +49,7 @@ async function calculateGitChanges() {
 
     return data.commits.map((c: any) => ({
         hash: c.sha,
-        author: c.author?.login ?? c.commit?.author?.name ?? "Ghost",
+        author: c.author?.login ?? c.commit?.author?.name ?? "Unknown Author",
         message: c.commit.message.split("\n")[0]
     }));
 }
@@ -60,7 +60,6 @@ async function fetchUpdates() {
     const hash = data.name.slice(data.name.lastIndexOf(" ") + 1);
     if (hash === gitHash)
         return false;
-
 
     const asset = data.assets.find(a => a.name === ASAR_FILE);
     PendingUpdate = asset.browser_download_url;

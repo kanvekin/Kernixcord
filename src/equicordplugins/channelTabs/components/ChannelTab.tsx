@@ -5,23 +5,23 @@
  */
 
 import { BaseText } from "@components/BaseText";
-import { ChannelTabsProps, closeTab, isTabSelected, moveDraggedTabs, moveToTab, openedTabs, settings } from "@equicordplugins/channelTabs/util";
+import { ChannelTabsProps, closeTab, ensureUnreadFallbackCountsLoaded, getNotificationDotState, getUnreadFallbackCounts, isTabSelected, moveDraggedTabs, moveToTab, openedTabs, settings, updateUnreadFallbackCounts } from "@equicordplugins/channelTabs/util";
 import { ActivityIcon, CircleQuestionIcon, DiscoveryIcon, EnvelopeIcon, FriendsIcon, ICYMIIcon, NitroIcon, QuestIcon, ShopIcon } from "@equicordplugins/channelTabs/util/icons";
-import { activeQuestIntervals } from "@equicordplugins/questify"; // sorry murphy!
+import { getActiveAutoCompletes } from "@equicordplugins/questify/utils/completion";
 import { classNameFactory } from "@utils/css";
 import { getGuildAcronym, getIntlMessage, getUniqueUsername } from "@utils/discord";
 import { classes } from "@utils/misc";
 import { Channel, Guild, User } from "@vencord/discord-types";
-import { findByPropsLazy, findComponentByCodeLazy } from "@webpack";
-import { Avatar, ChannelStore, ContextMenuApi, GuildStore, PresenceStore, ReadStateStore, TypingStore, useDrag, useDrop, useEffect, useRef, UserStore, useState, useStateFromStores } from "@webpack/common";
+import { findComponentByCodeLazy, findCssClassesLazy } from "@webpack";
+import { ActiveJoinedThreadsStore, Avatar, ChannelStore, ContextMenuApi, GuildStore, PresenceStore, ReadStateStore, TypingStore, useDrag, useDrop, useEffect, useRef, UserStore, useState, useStateFromStores } from "@webpack/common";
 import { JSX } from "react";
 
 import { TabContextMenu } from "./ContextMenus";
 
-const ThreeDots = findComponentByCodeLazy(".dots,", "dotRadius:");
-const dotStyles = findByPropsLazy("numberBadge", "textBadge");
+const ThreeDots = findComponentByCodeLazy("Math.min(1,Math.max(", "dotRadius:");
+const dotStyles = findCssClassesLazy("numberBadge", "baseShapeRound");
 
-const ChannelTypeIcon = findComponentByCodeLazy(".iconContainerWithGuildIcon,");
+const ChannelTypeIcon = findComponentByCodeLazy('"ChannelItemIcon")');
 
 // Custom SVG icons for pages that don't have findable components
 
@@ -75,27 +75,68 @@ function TypingIndicator({ isTyping }: { isTyping: boolean; }) {
         : null;
 }
 
+function getChannelUnreadState(channelId: string) {
+    const channel = ChannelStore.getChannel(channelId);
+    const newForumPostCount = channel?.guild_id && channel.isForumLikeChannel?.()
+        ? ActiveJoinedThreadsStore.getNewThreadCount(channel.guild_id, channel.id)
+        : 0;
+    const unreadCount = ReadStateStore.getUnreadCount(channelId) || newForumPostCount;
+
+    return {
+        channelId,
+        hasUnread: ReadStateStore.hasUnread(channelId) || newForumPostCount > 0,
+        mentionCount: ReadStateStore.getMentionCount(channelId),
+        unreadCount
+    };
+}
+
 export const NotificationDot = ({ channelIds }: { channelIds: string[]; }) => {
-    const [unreadCount, mentionCount] = useStateFromStores(
-        [ReadStateStore],
-        () => [
-            channelIds.reduce((count, channelId) => count + ReadStateStore.getUnreadCount(channelId), 0),
-            channelIds.reduce((count, channelId) => count + ReadStateStore.getMentionCount(channelId), 0),
-        ]
+    const userId = UserStore.getCurrentUser()?.id;
+    const { persistUnreadCountFallback } = settings.use(["persistUnreadCountFallback"]);
+    const [, forceUpdate] = useState(0);
+    const channelStateKey = channelIds.join(",");
+    const channelStates = useStateFromStores(
+        [ActiveJoinedThreadsStore, ReadStateStore],
+        () => channelIds.map(getChannelUnreadState)
+    );
+    const stateSignature = channelStates.map(state => `${state.channelId}:${Number(state.hasUnread)}:${state.mentionCount}:${state.unreadCount}`).join("|");
+    const { badgeText, hasMention, shouldShow } = getNotificationDotState(
+        channelStates,
+        userId ? getUnreadFallbackCounts(userId) : {},
+        persistUnreadCountFallback
     );
 
-    return unreadCount > 0 ?
+    useEffect(() => {
+        if (!userId || !persistUnreadCountFallback) return;
+
+        let didCancel = false;
+        ensureUnreadFallbackCountsLoaded(userId).then(() => {
+            if (didCancel) return;
+            forceUpdate(prev => prev + 1);
+        });
+
+        return () => {
+            didCancel = true;
+        };
+    }, [persistUnreadCountFallback, userId]);
+
+    useEffect(() => {
+        if (!userId || !persistUnreadCountFallback) return;
+        updateUnreadFallbackCounts(userId, channelStates);
+    }, [channelStateKey, persistUnreadCountFallback, stateSignature, userId]);
+
+    return shouldShow ?
         <div
-            data-has-mention={!!mentionCount}
+            data-has-mention={hasMention}
             className={classes(cl("notification-badge"), dotStyles.numberBadge, dotStyles.baseShapeRound)}
             style={{
                 width: "16px"
             }}
             ref={node => node?.style.setProperty("background-color",
-                mentionCount ? "var(--red-400)" : "var(--brand-500)", "important"
+                hasMention ? "var(--red-400)" : "var(--brand-500)", "important"
             )}
         >
-            {mentionCount || unreadCount}
+            {badgeText}
         </div> : null;
 };
 
@@ -426,9 +467,7 @@ export default function ChannelTab(props: ChannelTabsProps & { index: number; })
     }), []);
     drag(drop(ref));
 
-    // check if quests running (questify momentLet)
-    const hasActiveQuests = activeQuestIntervals.size > 0;
-
+    const hasActiveQuests = getActiveAutoCompletes().length > 0;
     return <div
         className={cl("tab", {
             "tab-compact": compact,

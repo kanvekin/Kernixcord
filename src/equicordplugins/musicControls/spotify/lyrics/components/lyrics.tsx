@@ -5,11 +5,11 @@
  */
 
 import { BaseText } from "@components/BaseText";
+import { TooltipContainer } from "@components/TooltipContainer";
 import { settings } from "@equicordplugins/musicControls/settings";
 import { SpotifyLrcStore } from "@equicordplugins/musicControls/spotify/lyrics/providers/store";
 import { SpotifyStore } from "@equicordplugins/musicControls/spotify/SpotifyStore";
-import { openModal } from "@utils/modal";
-import { ContextMenuApi, React, TooltipContainer, useEffect, useState, useStateFromStores } from "@webpack/common";
+import { ContextMenuApi, openModal,React, useEffect, useState, useStateFromStores } from "@webpack/common";
 
 import { LyricsContextMenu } from "./ctxMenu";
 import { LyricsModal } from "./modal";
@@ -20,7 +20,7 @@ const nextCl = cl("next");
 const currentCl = cl("current");
 
 function LyricsDisplay({ scroll = true }: { scroll?: boolean; }) {
-    const { ShowMusicNoteOnNoLyrics } = settings.use(["ShowMusicNoteOnNoLyrics"]);
+    const { showMusicNoteOnNoLyrics } = settings.use(["showMusicNoteOnNoLyrics"]);
     const { lyricsInfo, lyricRefs, currLrcIndex } = useLyrics({ scroll });
 
     const currentLyrics = lyricsInfo?.lyricsVersions[lyricsInfo.useLyric] || null;
@@ -49,7 +49,7 @@ function LyricsDisplay({ scroll = true }: { scroll?: boolean; }) {
                         {line.text || NoteSvg()}
                     </BaseText>
                 </div>
-            )) : ShowMusicNoteOnNoLyrics ? (
+            )) : showMusicNoteOnNoLyrics ? (
                 <TooltipContainer text="No synced lyrics found">
                     <NoteSvg />
                 </TooltipContainer>

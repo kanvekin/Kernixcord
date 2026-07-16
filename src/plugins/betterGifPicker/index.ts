@@ -20,16 +20,19 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "BetterGifPicker",
     description: "Makes the gif picker open the favourite category by default",
+    tags: ["Emotes", "Customisation"],
     authors: [Devs.Samwich, EquicordDevs.justjxke],
     isModified: true,
     settings,
     patches: [
         {
-            find: '"state",{resultType:',
-            replacement: [{
-                match: /(?<="state",{resultType:)null/,
-                replace: '"Favorites"'
-            }]
+            find: "renderHeaderContent(){",
+            replacement: [
+                {
+                    match: /(?<=state={resultType:)null/,
+                    replace: '"Favorites"'
+                }
+            ]
         },
         {
             find: "#{intl::NO_GIF_FAVORITES_HOW_TO_FAVORITE}",

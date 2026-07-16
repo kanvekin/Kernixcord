@@ -29,6 +29,10 @@ export const enum BadgePosition {
 }
 
 export interface ProfileBadge {
+    /**
+     * Badge id, unused by vencord, required by discord
+     */
+    id: string,
     /** The tooltip to show on hover. Required for image badges */
     description?: string;
     /** Custom component for the badge (tooltip not included) */
@@ -51,7 +55,7 @@ export interface ProfileBadge {
 
     /**
      * Allows dynamically returning multiple badges.
-     * May call hooks but then you must not use shouldShow
+     * Must not call hooks
      */
     getBadges?(userInfo: BadgeUserArgs): ProfileBadge[];
 }

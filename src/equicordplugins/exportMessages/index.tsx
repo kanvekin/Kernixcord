@@ -7,7 +7,7 @@
 import "./styles.css";
 
 import { showNotification } from "@api/Notifications";
-import { definePluginSettings, migratePluginToSetting } from "@api/Settings";
+import { definePluginSettings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { copyToClipboard } from "@utils/clipboard";
 import { EquicordDevs } from "@utils/constants";
@@ -19,7 +19,6 @@ import { Menu, Toasts } from "@webpack/common";
 
 import { ContactsList } from "./types";
 
-migratePluginToSetting("ExportMessages", "ExportContacts", "exportContacts");
 const settings = definePluginSettings({
     openFileAfterExport: {
         type: OptionType.BOOLEAN,
@@ -130,6 +129,7 @@ function getUsernames(contacts: ContactsList[], type: number): string[] {
 export default definePlugin({
     name: "ExportMessages",
     description: "Allows you to export any message to a file",
+    tags: ["Chat", "Utility"],
     authors: [EquicordDevs.veygax, EquicordDevs.dat_insanity],
     settings,
     contextMenus: {

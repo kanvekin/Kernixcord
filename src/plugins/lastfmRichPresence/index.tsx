@@ -69,6 +69,7 @@ function setActivity(activity: Activity | null) {
 
 const settings = definePluginSettings({
     apiKey: {
+        displayName: "API Key",
         description: "Custom Last.fm API key. Not required but highly recommended to avoid rate limiting with our shared key",
         type: OptionType.STRING,
     },
@@ -97,7 +98,7 @@ const settings = definePluginSettings({
         default: false,
     },
     statusName: {
-        description: "Custom status text",
+        description: "Custom status text. You can use the following variables: {artist} | {album} | {title}",
         type: OptionType.STRING,
         default: "some music",
     },
@@ -172,20 +173,22 @@ const settings = definePluginSettings({
         ],
     },
     showLastFmLogo: {
+        displayName: "Show Last.fm Logo",
         description: "Show the Last.fm logo by the album cover",
         type: OptionType.BOOLEAN,
         default: true,
     },
-    alwaysHideArt: {
-        description: "Disable downloading album art",
+    showAlbumCover: {
+        description: "Show album cover. Disabling this will display a placeholder. Useful if your Music has inappropriate art",
         type: OptionType.BOOLEAN,
-        default: false,
-    },
+        default: true,
+    }
 });
 
 export default definePlugin({
     name: "LastFMRichPresence",
     description: "Little plugin for Last.fm rich presence",
+    tags: ["Activity", "Media"],
     authors: [Devs.dzshn, Devs.RuiNtD, Devs.blahajZip, Devs.archeruwu],
 
     settings,
@@ -257,7 +260,7 @@ export default definePlugin({
     },
 
     getLargeImage(track: TrackData): string | undefined {
-        if (!settings.store.alwaysHideArt && track.imageUrl && !track.imageUrl.includes(LASTFM_PLACEHOLDER_IMAGE_HASH))
+        if (settings.store.showAlbumCover && track.imageUrl && !track.imageUrl.includes(LASTFM_PLACEHOLDER_IMAGE_HASH))
             return track.imageUrl;
 
         if (settings.store.missingArt === "placeholder")
@@ -314,9 +317,15 @@ export default definePlugin({
                 case NameFormat.SongOnly:
                     return trackData.name;
                 case NameFormat.AlbumName:
-                    return trackData.album || settings.store.statusName;
+                    return trackData.album || settings.store.statusName
+                        .replaceAll("{artist}", trackData.artist || "")
+                        .replaceAll("{album}", trackData.album || "")
+                        .replaceAll("{title}", trackData.name || "");
                 default:
-                    return settings.store.statusName;
+                    return settings.store.statusName
+                        .replaceAll("{artist}", trackData.artist || "")
+                        .replaceAll("{album}", trackData.album || "")
+                        .replaceAll("{title}", trackData.name || "");
             }
         })();
 

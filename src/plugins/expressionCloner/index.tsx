@@ -18,19 +18,19 @@
 
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { migratePluginSettings } from "@api/Settings";
+import { BaseText } from "@components/BaseText";
 import { CheckedTextInput } from "@components/CheckedTextInput";
+import { Flex } from "@components/Flex";
 import { Heading } from "@components/Heading";
 import { Paragraph } from "@components/Paragraph";
 import { Devs } from "@utils/constants";
 import { getGuildAcronym } from "@utils/discord";
 import { Logger } from "@utils/Logger";
-import { Margins } from "@utils/margins";
-import { ModalContent, ModalHeader, ModalRoot, openModalLazy } from "@utils/modal";
 import definePlugin from "@utils/types";
 import { Guild, GuildSticker } from "@vencord/discord-types";
 import { StickerFormatType } from "@vencord/discord-types/enums";
 import { findByCodeLazy } from "@webpack";
-import { Constants, EmojiStore, FluxDispatcher, GuildStore, IconUtils, Menu, PermissionsBits, PermissionStore, React, RestAPI, StickersStore, Toasts, Tooltip, UserStore } from "@webpack/common";
+import { Constants, EmojiStore, FluxDispatcher, GuildStore, IconUtils, Menu, Modal, openModalLazy, PermissionsBits, PermissionStore, React, RestAPI, StickersStore, Toasts, Tooltip, UserStore } from "@webpack/common";
 import { Promisable } from "type-fest";
 
 const uploadEmoji = findByCodeLazy(".GUILD_EMOJIS(", "EMOJI_UPLOAD_START");
@@ -76,9 +76,9 @@ function getGuildMaxStickerSlots(guild: Guild) {
 
 function getUrl(data: Data, size: number) {
     if (data.t === "Emoji")
-        return `${location.protocol}//${window.GLOBAL_ENV.CDN_HOST}/emojis/${data.id}.${data.isAnimated ? "gif" : "png"}?size=${size}&lossless=true`;
+        return `${location.protocol}//${window.GLOBAL_ENV.CDN_HOST}/emojis/${data.id}.webp?size=${size}&lossless=true&animated=true`;
 
-    return `${window.GLOBAL_ENV.MEDIA_PROXY_ENDPOINT}/stickers/${data.id}.${StickerExtMap[data.format_type]}?size=${size}&lossless=true`;
+    return `${window.GLOBAL_ENV.MEDIA_PROXY_ENDPOINT}/stickers/${data.id}.${StickerExtMap[data.format_type]}?size=${size}&lossless=true&animated=true`;
 }
 
 async function fetchSticker(id: string) {
@@ -230,9 +230,9 @@ function CloneModal({ data }: { data: Sticker | Emoji; }) {
 
     return (
         <>
-            <Heading className={Margins.top20}>Custom Name</Heading>
+            <Heading tag="h5">Custom Name</Heading>
             <CheckedTextInput
-                value={name}
+                initialValue={name}
                 onChange={v => {
                     data.name = v;
                     setName(v);
@@ -331,23 +331,24 @@ function buildMenuItem(type: "Emoji" | "Sticker", fetchData: () => Promisable<Om
                     const url = getUrl(data, 128);
 
                     return modalProps => (
-                        <ModalRoot {...modalProps}>
-                            <ModalHeader>
-                                <img
-                                    role="presentation"
-                                    aria-hidden
-                                    src={url}
-                                    alt=""
-                                    height={24}
-                                    width={24}
-                                    style={{ marginRight: "0.5em" }}
-                                />
-                                <Paragraph>Clone {data.name}</Paragraph>
-                            </ModalHeader>
-                            <ModalContent>
-                                <CloneModal data={data} />
-                            </ModalContent>
-                        </ModalRoot>
+                        <Modal
+                            {...modalProps}
+                            title={
+                                <Flex gap="0.5em" alignItems="center">
+                                    <img
+                                        role="presentation"
+                                        aria-hidden
+                                        src={url}
+                                        alt=""
+                                        height={24}
+                                        width={24}
+                                    />
+                                    <BaseText tag="h3" size="md" weight="medium">Clone {data.name}</BaseText>
+                                </Flex>
+                            }
+                        >
+                            <CloneModal data={data} />
+                        </Modal>
                     );
                 })
             }
@@ -411,7 +412,8 @@ migratePluginSettings("ExpressionCloner", "EmoteCloner");
 export default definePlugin({
     name: "ExpressionCloner",
     description: "Allows you to clone Emotes & Stickers to your own server (right click them)",
-    tags: ["StickerCloner", "EmoteCloner", "EmojiCloner"],
+    tags: ["Emotes", "Servers"],
+    searchTerms: ["StickerCloner", "EmoteCloner", "EmojiCloner"],
     authors: [Devs.Ven, Devs.Nuckyz],
     contextMenus: {
         "message": messageContextMenuPatch,

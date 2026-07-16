@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { findByCodeLazy, findLazy } from "webpack";
+import { findByCodeLazy, findLazy } from "@webpack";
 
 let defaultSounds: null | string[] = null;
 const findDefaultSounds = findLazy(module => module.resolve && module.id && module.keys().some(key => key.endsWith(".mp3")), false);
@@ -184,11 +184,11 @@ export function createAudioPlayer(
     options: AudioPlayerOptions = {}
 ): AudioPlayerInterface {
     const internalPlayer: AudioPlayerInternal = new AudioPlayerConstructor(
+        options,
         audio,
         null,
         null,
-        "default",
-        options
+        "default"
     );
 
     return new AudioPlayerWrapper(internalPlayer);
@@ -235,7 +235,7 @@ export function identifyAudioType(audio: string): AudioType {
 /**
  * Adds a function to process an audio before it is played.
  * @param key A unique identifier for this audio processor. Plugin name is recommended.
- * @param processor A function that takes an audio, volume (0-100), and type (AudioType), and returns the replacement audio and volume.
+ * @param processor A function that takes a data object with audio, volume (0-100), and type (AudioType) attributes, and modifies the audio and volume in place.
  */
 export function addAudioProcessor(key: string, processor: AudioProcessor): void {
     audioProcessorFunctions[key] = processor;

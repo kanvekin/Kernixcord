@@ -76,6 +76,7 @@ export default definePlugin({
     name: "RoleColorEverywhere",
     authors: [Devs.KingFish, Devs.lewisakura, Devs.AutumnVN, Devs.Kyuuhachi, Devs.jamesbt365],
     description: "Adds the top role color anywhere possible",
+    tags: ["Roles", "Appearance"],
     settings,
 
     patches: [
@@ -92,7 +93,8 @@ export default definePlugin({
         },
         // Slate
         {
-            find: ".userTooltip,children",
+            // Same find as FullUserInChatbox
+            find: '"text":"locked"',
             replacement: [
                 {
                     match: /let\{id:(\i),guildId:\i,channelId:(\i)[^}]*\}.*?\.\i,{(?=children)/,
@@ -106,8 +108,8 @@ export default definePlugin({
             find: 'tutorialId:"whos-online',
             replacement: [
                 {
-                    match: /null,\i," — ",\i\]/,
-                    replace: "null,$self.RoleGroupColor(arguments[0])]"
+                    match: /(#{intl::CHANNEL_MEMBERS_A11Y_LABEL}.+}\):null,).{0,100}?(?:—|\\u2014) ",\i\]\}\)\]/,
+                    replace: "$1$self.RoleGroupColor(arguments[0])]"
                 },
             ],
             predicate: () => settings.store.memberList
@@ -116,7 +118,7 @@ export default definePlugin({
             find: "#{intl::THREAD_BROWSER_PRIVATE}",
             replacement: [
                 {
-                    match: /children:\[\i," — ",\i\]/,
+                    match: /children:\[\i," (?:—|\\u2014) ",\i\]/,
                     replace: "children:[$self.RoleGroupColor(arguments[0])]"
                 },
             ],
@@ -124,20 +126,20 @@ export default definePlugin({
         },
         // Voice Users
         {
-            find: ".usernameSpeaking]:",
+            find: "#{intl::GUEST_NAME_SUFFIX})]",
             replacement: [
                 {
-                    match: /\.usernameSpeaking\]:.+?,(?=children)(?<=guildId:(\i),.+?user:(\i).+?)/,
-                    replace: "$&style:$self.getColorStyle($2.id,$1),"
+                    match: /#{intl::GUEST_NAME_SUFFIX}.{0,50}?"".{0,100}\](?=\}\))(?<=guildId:(\i),.+?user:(\i).+?)/,
+                    replace: "$&,style:$self.getColorStyle($2.id,$1),"
                 }
             ],
             predicate: () => settings.store.voiceUsers
         },
         // Reaction List
         {
-            find: ".reactionDefault",
+            find: "MessageReactions.render:",
             replacement: {
-                match: /tag:"strong"(?=.{0,50}\i\.name)(?<=onContextMenu:.{0,15}\((\i),(\i),\i\).+?)/,
+                match: /tag:"strong",variant:"text-md\/medium"(?<=onContextMenu:.{0,15}\((\i),(\i),\i\).+?)/,
                 replace: "$&,style:$self.getColorStyle($2?.id,$1?.channel?.id)"
             },
             predicate: () => settings.store.reactorsList,
@@ -146,7 +148,7 @@ export default definePlugin({
         {
             find: ",reactionVoteCounts",
             replacement: {
-                match: /\.name,(?="aria-label)/,
+                match: /\.SIZE_32.+?variant:"text-md\/normal",className:\i\.\i,(?="aria-label":)/,
                 replace: "$&style:$self.getColorStyle(arguments[0]?.user?.id,arguments[0]?.channel?.id),"
             },
             predicate: () => settings.store.pollResults
@@ -155,7 +157,7 @@ export default definePlugin({
         {
             find: ".SEND_FAILED,",
             replacement: {
-                match: /(?<=isUnsupported\]:(\i)\.isUnsupported\}\),)(?=children:\[)/,
+                match: /(?<=\]:(\i)\.isUnsupported.{0,50}?,)(?=children:\[)/,
                 replace: "style:$self.useMessageColorsStyle($1),"
             },
             predicate: () => settings.store.colorChatMessages
@@ -197,6 +199,9 @@ export default definePlugin({
         try {
             const { messageSaturation } = settings.use(["messageSaturation"]);
             const author = useMessageAuthor(message);
+
+            // Do not apply role color if the send fails, otherwise it becomes indistinguishable
+            if (message.state === "SEND_FAILED") return;
 
             if (author.colorString != null && messageSaturation !== 0) {
                 const value = `color-mix(in oklab, ${author.colorString} ${messageSaturation}%, var({DEFAULT}))`;

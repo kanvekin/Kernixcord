@@ -17,12 +17,15 @@
 */
 
 import { useSettings } from "@api/Settings";
+import { Button } from "@components/Button";
+import { Card } from "@components/Card";
 import { Divider } from "@components/Divider";
+import { Flex } from "@components/Flex";
 import { FormSwitch } from "@components/FormSwitch";
-import { Heading } from "@components/Heading";
+import { Heading, HeadingSecondary } from "@components/Heading";
 import { Link } from "@components/Link";
 import { Paragraph } from "@components/Paragraph";
-import { SettingsTab, wrapTab } from "@components/settings";
+import { SettingsTab, wrapTab } from "@components/settings/tabs/BaseTab";
 import { Margins } from "@utils/margins";
 import { useAwaiter } from "@utils/react";
 import { changes, checkForUpdates, getRepo, isNewer, update, updateError, UpdateLogger } from "@utils/updater";
@@ -35,6 +38,34 @@ import { HashLink, Newer, Updatable } from "./Components";
 interface CommonProps {
     repo: string;
     repoPending: boolean;
+}
+
+function EquibopSection() {
+    if (!IS_EQUIBOP) return null;
+
+    const [isEquibopOutdated] = useAwaiter<boolean>(VesktopNative.app.isOutdated, { fallbackValue: false });
+
+    return (
+        <Flex className={Margins.bottom20} flexDirection="column" gap="1em">
+            <Card variant="brand">
+                <HeadingSecondary>Privbop & Kernixcord</HeadingSecondary>
+                <Paragraph>Privbop and Kernixcord are two separate things. This updater is for Kernixcord.</Paragraph>
+                <Paragraph className={Margins.top8}>
+                    You receive separate popups for Privbop updates. You can also manually update by installing the <Link href="https://github.com/kanvekin/Privbopl">latest version</Link>.
+                </Paragraph>
+            </Card>
+
+            {isEquibopOutdated && (
+                <Card variant="warning">
+                    <HeadingSecondary>Privbop Outdated</HeadingSecondary>
+                    <Flex flexDirection="column" gap="0.5em">
+                        <Paragraph>Your version of Privbop is outdated!</Paragraph>
+                        <Button variant="link" onClick={() => VesktopNative.app.openUpdater()}>Open Privbop Updater</Button>
+                    </Flex>
+                </Card>
+            )}
+        </Flex>
+    );
 }
 
 function Updater() {
@@ -54,7 +85,11 @@ function Updater() {
 
     return (
         <SettingsTab>
-            <Forms.FormTitle tag="h5">Updater Settings</Forms.FormTitle>
+            <EquibopSection />
+            <Heading className={Margins.top16}>Update Preferences</Heading>
+            <Paragraph className={Margins.bottom20}>
+                Control how Kernixcord keeps itself up to date. You can choose to update automatically in the background or be notified when new updates are available.
+            </Paragraph>
             <FormSwitch
                 title="Automatically update"
                 description="Automatically update Kernixcord without confirmation prompt"

@@ -39,16 +39,17 @@ function settingsComponent() {
 export default definePlugin({
     name: "SearchFix",
     description: 'Fixes the annoying "We dropped the magnifying glass!" error.',
+    tags: ["Utility"],
     settingsAboutComponent: () => settingsComponent(),
     authors: [EquicordDevs.Jaxx],
     patches: [
         {
-            find: '"SearchQueryStore");',
+            find: '"SearchQueryStore";',
             replacement: {
                 match: /\i\.searchResultsQuery=(\i)/,
                 replace: "$&,$self.main($1)"
             }
-        }
+        },
     ],
     main(query) {
         if (query.offset > 5000) {

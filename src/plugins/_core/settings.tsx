@@ -5,7 +5,7 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { BackupRestoreIcon, CloudIcon, LogIcon, MainSettingsIcon, PaintbrushIcon, PatchHelperIcon, PluginsIcon, UpdaterIcon, VesktopSettingsIcon } from "@components/Icons";
+import { BackupRestoreIcon, CloudIcon, LogIcon, MainSettingsIcon, PaintbrushIcon, PatchHelperIcon, PluginsIcon, UpdaterIcon } from "@components/Icons";
 import {
     BackupAndRestoreTab,
     ChangelogTab,
@@ -18,27 +18,48 @@ import {
 } from "@components/settings";
 import { gitHashShort } from "@shared/vencordUserAgent";
 import { Devs } from "@utils/constants";
-import { getIntlMessage } from "@utils/discord";
 import { isTruthy } from "@utils/guards";
 import definePlugin, { IconProps, OptionType } from "@utils/types";
 import { waitFor } from "@webpack";
 import { React } from "@webpack/common";
 import type { ComponentType, PropsWithChildren, ReactNode } from "react";
 
+const enum LayoutType {
+    ROOT = 0,
+    SECTION = 1,
+    SIDEBAR_ITEM = 2,
+    PANEL = 3,
+    SPLIT = 4,
+    CATEGORY = 5,
+    ACCORDION = 6,
+    LIST = 7,
+    RELATED = 8,
+    FIELD_SET = 9,
+    TAB_ITEM = 10,
+    STATIC = 11,
+    BUTTON = 12,
+    TOGGLE = 13,
+    SLIDER = 14,
+    SELECT = 15,
+    RADIO = 16,
+    NAVIGATOR = 17,
+    CUSTOM = 18
+}
+
 let LayoutTypes = {
     SECTION: 1,
     SIDEBAR_ITEM: 2,
     PANEL: 3,
-    PANE: 4
+    CATEGORY: 5,
+    CUSTOM: 19,
 };
-waitFor(["SECTION", "SIDEBAR_ITEM", "PANEL"], v => LayoutTypes = v);
+waitFor(["SECTION", "SIDEBAR_ITEM", "PANEL", "CUSTOM"], v => LayoutTypes = v);
 
-const FallbackSectionTypes = {
-    HEADER: "HEADER",
-    DIVIDER: "DIVIDER",
-    CUSTOM: "CUSTOM"
-};
-type SectionTypes = typeof FallbackSectionTypes;
+const enum SectionType {
+    HEADER = "HEADER",
+    DIVIDER = "DIVIDER",
+    CUSTOM = "CUSTOM"
+}
 
 type SettingsLocation =
     | "top"
@@ -49,7 +70,7 @@ type SettingsLocation =
     | "bottom";
 
 interface SettingsLayoutNode {
-    type: number;
+    type: LayoutType;
     key?: string;
     legacySearchKey?: string;
     getLegacySearchKey?(): string;
@@ -62,12 +83,13 @@ interface SettingsLayoutNode {
 }
 
 interface EntryOptions {
-    key: string,
-    title: string,
-    panelTitle?: string,
-    Component: ComponentType<{}>,
+    key: string;
+    title: string;
+    panelTitle?: string;
+    Component: ComponentType<{}>;
     Icon: ComponentType<IconProps>;
 }
+
 interface SettingsLayoutBuilder {
     key?: string;
     buildLayout(): SettingsLayoutNode[];
@@ -85,6 +107,11 @@ const settings = definePluginSettings({
             { label: "Below Activity Settings", value: "belowActivity" },
             { label: "At the very bottom", value: "bottom" },
         ] as { label: string; value: SettingsLocation; default?: boolean; }[]
+    },
+    includeVencordInfoWhenCopying: {
+        type: OptionType.BOOLEAN,
+        description: "Also copy Vencord info (Vencord, Electron, Chromium) when clicking the version info in the bottom left area of the Settings page",
+        default: true
     }
 });
 
@@ -92,31 +119,24 @@ export default definePlugin({
     name: "Settings",
     description: "Adds Settings UI and debug info",
     authors: [Devs.Ven, Devs.Megu],
+    tags: ["Utility"],
     required: true,
 
     settings,
 
     patches: [
         {
-            find: ".versionHash",
+            find: "#{intl::COPY_VERSION}",
             replacement: [
-                // for whatever reason the first letter of RELEASE_CHANNEL is now lowercase, so we fix that here because it looks better imo
                 {
                     match: /\.RELEASE_CHANNEL/,
                     replace: "$&.replace(/^./, c => c.toUpperCase())"
                 },
                 {
-                    match: /\.compactInfo.+?(?=null!=(\i)&&(.{0,20}\i\.Text.{0,200}?,children:).{0,15}?("span"),({className:\i\.versionHash,children:\["Build Override: ",\1\.id\]\})\)\}\))/,
+                    match: /"text-xxs\/normal".{0,300}?(?=null!=(\i)&&(.{0,20}\i\.\i.{0,200}?,children:).{0,15}?("span"),({className:\i\.\i,children:\["Build Override: ",\1\.id\]\})\)\}\))/,
                     replace: (m, _buildOverride, makeRow, component, props) => {
                         props = props.replace(/children:\[.+\]/, "");
                         return `${m},$self.makeInfoElements(${component},${props}).map(e=>${makeRow}e})),`;
-                    }
-                },
-                {
-                    match: /\.info.+?\[\(0,\i\.jsxs?\)\((.{1,10}),(\{[^{}}]+\{.{0,20}.versionHash,.+?\})\)," "/,
-                    replace: (m, component, props) => {
-                        props = props.replace(/children:\[.+\]/, "");
-                        return `${m},$self.makeInfoElements(${component},${props})`;
                     }
                 },
                 {
@@ -126,47 +146,10 @@ export default definePlugin({
             ]
         },
         {
-            find: ".SEARCH_NO_RESULTS&&0===",
-            replacement: [
-                {
-                    match: /(?<=section:(.{0,50})\.DIVIDER\}\))([,;])(?=.{0,200}(\i)\.push.{0,100}label:(\i)\.header)/,
-                    replace: (
-                        _,
-                        sectionTypes,
-                        commaOrSemi,
-                        elements,
-                        element,
-                    ) =>
-                        `${commaOrSemi} $self.addSettings(${elements}, ${element}, ${sectionTypes}) ${commaOrSemi}`,
-                },
-                {
-                    match: /({(?=.+?function (\i).{0,160}(\i)=\i\.useMemo.{0,140}return \i\.useMemo\(\(\)=>\i\(\3).+?\(\)=>)\2/,
-                    replace: (_, rest, settingsHook) =>
-                        `${rest}$self.wrapSettingsHook(${settingsHook})`,
-                },
-            ],
-        },
-        // Fix the settings cog context menu to work properly
-        {
-            find: "#{intl::USER_SETTINGS_ACTIONS_MENU_LABEL}",
-            replacement: {
-                // Skip the check Discord performs to make sure the section being selected in the user settings context menu is valid
-                match: /(?<=function\((\i),(\i),\i\)\{)(?=let \i=Object.values\(\i\.\i\).+?(\(0,\i\.openUserSettings\))\()/,
-                replace: (_, settingsPanel, section, openUserSettings) => `${openUserSettings}(${settingsPanel},{section:${section}});return;`
-            }
-        },
-        {
             find: ".buildLayout().map",
             replacement: {
                 match: /(\i)\.buildLayout\(\)(?=\.map)/,
                 replace: "$self.buildLayout($1)"
-            }
-        },
-        {
-            find: "getWebUserSettingFromSection",
-            replacement: {
-                match: /new Map\(\[(?=\[.{0,10}\.ACCOUNT,.{0,10}\.ACCOUNT_PANEL)/,
-                replace: "new Map([...$self.getSettingsSectionMappings(),"
             }
         }
     ],
@@ -178,64 +161,31 @@ export default definePlugin({
             key: key + "_panel",
             type: LayoutTypes.PANEL,
             useTitle: () => panelTitle,
+            buildLayout: () => [{
+                type: LayoutTypes.CATEGORY,
+                key: key + "_category",
+                buildLayout: () => [{
+                    type: LayoutTypes.CUSTOM,
+                    key: key + "_custom",
+                    Component: Component,
+                    useSearchTerms: () => [title]
+                }]
+            }]
         };
-
-        const render = {
-            // FIXME
-            StronglyDiscouragedCustomComponent: () => <Component />,
-            render: () => <Component />,
-        };
-
-        // FIXME
-        if (LayoutTypes.PANE) {
-            panel.buildLayout = () => [
-                {
-                    key: key + "_pane",
-                    type: LayoutTypes.PANE,
-                    useTitle: () => panelTitle,
-                    buildLayout: () => [],
-                    ...render
-                }
-            ];
-        } else {
-            Object.assign(panel, render);
-            panel.buildLayout = () => [];
-        }
 
         return ({
             key,
             type: LayoutTypes.SIDEBAR_ITEM,
-            // FIXME
-            legacySearchKey: title.toUpperCase(),
-            getLegacySearchKey: () => title.toUpperCase(),
             useTitle: () => title,
             icon: () => <Icon width={20} height={20} />,
             buildLayout: () => [panel]
         });
     },
 
-    getSettingsSectionMappings() {
-        return [
-            ["EquicordSettings", "equicord_main_panel"],
-            ["EquicordPlugins", "equicord_plugins_panel"],
-            ["EquicordThemes", "equicord_themes_panel"],
-            ["EquicordUpdater", "equicord_updater_panel"],
-            ["EquicordChangelog", "equicord_changelog_panel"],
-            ["EquicordCloud", "equicord_cloud_panel"],
-            ["EquicordBackupAndRestore", "equicord_backup_restore_panel"],
-            ["EquicordPatchHelper", "equicord_patch_helper_panel"],
-            ["EquibopSettings", "equicord_equibop_settings_panel"],
-            ["EquicordDiscordIcons", "equicord_icon_viewer"],
-            ["EquicordThemeLibrary", "equicord_theme_library"],
-            ["EquicordIRememberYou", "equicord_i_remember_you"],
-        ];
-    },
-
     buildLayout(originalLayoutBuilder: SettingsLayoutBuilder) {
         const layout = originalLayoutBuilder.buildLayout();
         if (originalLayoutBuilder.key !== "$Root") return layout;
         if (!Array.isArray(layout)) return layout;
-
         if (layout.some(s => s?.key === "equicord_section")) return layout;
 
         const { buildEntry } = this;
@@ -286,25 +236,13 @@ export default definePlugin({
                 Component: BackupAndRestoreTab,
                 Icon: BackupRestoreIcon
             }),
-            IS_DEV && PatchHelperTab && buildEntry({
+            !IS_STANDALONE && PatchHelperTab && buildEntry({
                 key: "equicord_patch_helper",
                 title: "Patch Helper",
                 Component: PatchHelperTab,
                 Icon: PatchHelperIcon
             }),
-            ...this.customEntries.map(buildEntry),
-            // TODO: Remove deprecated customSections in a future update
-            ...this.customSections.map((func, i) => {
-                const { section, element, label } = func(FallbackSectionTypes);
-                if (section !== "Equibop") return null;
-
-                return buildEntry({
-                    key: `equicord_deprecated_custom_${section}`,
-                    title: label,
-                    Component: element,
-                    Icon: VesktopSettingsIcon
-                });
-            })
+            ...this.customEntries.map(buildEntry)
         ].filter(isTruthy);
 
         const equicordSection: SettingsLayoutNode = {
@@ -322,7 +260,7 @@ export default definePlugin({
             belowNitro: "billing_section",
             aboveActivity: "activity_section",
             belowActivity: "activity_section",
-            bottom: "logout_section"
+            bottom: "utility_section"
         };
 
         const key = places[settingsLocation] ?? places.top;
@@ -339,10 +277,8 @@ export default definePlugin({
         return layout;
     },
 
-    /** @deprecated Use customEntries */
-    customSections: [] as ((SectionTypes: SectionTypes) => any)[],
+    customSections: [] as ((SectionTypes: Record<string, string>) => { section: string; element: ComponentType; label: string; id?: string; })[],
     customEntries: [] as EntryOptions[],
-
     makeSettingsCategories(SectionTypes: SectionTypes) {
         return [
             {
@@ -472,28 +408,21 @@ export default definePlugin({
             return elements;
         };
     },
-
     get electronVersion() {
-        return (
-            VencordNative.native.getVersions().electron ||
-            window.legcord?.electron ||
-            null
-        );
+        return VencordNative.native.getVersions().electron ?? window.legcord?.electron ?? null;
     },
 
     get chromiumVersion() {
         try {
             return (
-                VencordNative.native.getVersions().chrome ||
-                // @ts-expect-error Typescript will add userAgentData IMMEDIATELY
+                VencordNative.native.getVersions().chrome ??
+                // @ts-expect-error userAgentData types
                 navigator.userAgentData?.brands?.find(
-                    b =>
-                        b.brand === "Chromium" || b.brand === "Google Chrome",
-                )?.version ||
+                    (b: { brand: string; }) => b.brand === "Chromium" || b.brand === "Google Chrome",
+                )?.version ??
                 null
             );
         } catch {
-            // inb4 some stupid browser throws unsupported error for navigator.userAgentData, it's only in chromium
             return null;
         }
     },
@@ -501,7 +430,7 @@ export default definePlugin({
     getVersionInfo(support = true) {
         let version = "";
 
-        if (IS_DEV) version = "Dev";
+        if (IS_DEV) version = "Dev Build";
         if (IS_WEB) version = "Web";
         if (IS_VESKTOP) version = `Vesktop v${VesktopNative.app.getVersion()}`;
         if (IS_EQUIBOP) version = `Equibop v${VesktopNative.app.getVersion()}`;
@@ -521,6 +450,7 @@ export default definePlugin({
     },
 
     getInfoString() {
+        if (!settings.store.includeVencordInfoWhenCopying) return "";
         return "\n" + this.getInfoRows().join("\n");
     },
 

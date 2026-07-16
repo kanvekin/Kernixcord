@@ -6,9 +6,9 @@
 
 import "./styles.css";
 
-import { MessageOptions } from "@api/MessageEvents";
+import { MessageObject, SendMessageOptions } from "@api/MessageEvents";
 import { definePluginSettings } from "@api/Settings";
-import { EquicordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 
 import { isScheduleModeEnabled, ScheduledMessagesButton, setScheduleModeEnabled } from "./components/ChatBarButton";
@@ -63,7 +63,6 @@ export const settings = definePluginSettings({
 function handleReactionEvent(event: FluxReactionEvent): void {
     const { messageId, channelId, emoji } = event;
 
-
     if (!messageId || !channelId || !emoji) return;
 
     const isPhantom = isPhantomMessage(messageId);
@@ -87,7 +86,9 @@ function handleReactionEvent(event: FluxReactionEvent): void {
 export default definePlugin({
     name: "ScheduledMessages",
     description: "Schedule messages to be sent at a specific time or after a delay.",
-    authors: [EquicordDevs.mmeta, EquicordDevs.Prism],
+    tags: ["Chat", "Utility"],
+    dependencies: ["ChatInputButtonAPI", "MessageAccessoriesAPI", "MessageEventsAPI"],
+    authors: [EquicordDevs.mmeta, Devs.prism],
     settings,
 
     flux: {
@@ -118,7 +119,7 @@ export default definePlugin({
         return <MessageAccessory message={props.message} />;
     },
 
-    async onBeforeMessageSend(channelId: string, messageObj: { content: string; }, options: MessageOptions) {
+    async onBeforeMessageSend(channelId: string, messageObj: MessageObject, options: SendMessageOptions) {
         if (!isScheduleModeEnabled) return;
         if (!messageObj.content.trim() && !options.uploads?.length) return;
 
