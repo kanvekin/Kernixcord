@@ -55,6 +55,15 @@ ipcMain.on(IpcEvents.PRELOAD_GET_RENDERER_JS, event => {
     }
 });
 
+ipcMain.handle(IpcEvents.GET_RENDERER_CSS, async () => {
+    try {
+        return await readFile(RENDERER_CSS_PATH, "utf-8");
+    } catch (err) {
+        console.error("[Vencord] Failed to read renderer.css", err);
+        return "";
+    }
+});
+
 async function listThemes(): Promise<UserThemeHeader[]> {
     const files = await readdir(THEMES_DIR).catch(() => []);
 

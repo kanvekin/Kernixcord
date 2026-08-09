@@ -57,20 +57,27 @@ export function initStyles() {
     const vesktopCssNode = (IS_VESKTOP || IS_EQUIBOP) ? createAndAppendStyle("vesktop-css-core", coreStyleRootNode) : null;
     createAndAppendStyle("vencord-margins", coreStyleRootNode).textContent = generateMarginCss();
 
-    // Add error handling for CSS loading
-    VencordNative.native.getRendererCss().then(css => {
-        rendererCssNode.textContent = css;
-        console.log("[Kernixcord] Renderer CSS loaded successfully");
-    }).catch(err => {
-        console.error("[Kernixcord] Failed to load renderer CSS:", err);
-        // Fallback basic CSS to prevent complete UI breakage
-        rendererCssNode.textContent = "/* Fallback CSS due to loading error */";
-    });
-
-    if (IS_DEV) {
-        VencordNative.native.onRendererCssUpdate(newCss => {
-            rendererCssNode.textContent = newCss;
+    // Only try to load renderer CSS if we're in a proper desktop environment with the handler
+    if (IS_DISCORD_DESKTOP && !IS_WEB) {
+        VencordNative.native.getRendererCss().then(css => {
+            if (css) {
+                rendererCssNode.textContent = css;
+                console.log("[Kernixcord] Renderer CSS loaded successfully");
+            } else {
+                console.warn("[Kernixcord] Renderer CSS is empty, skipping");
+            }
+        }).catch(err => {
+            console.warn("[Kernixcord] Failed to load renderer CSS (this is expected in some environments):", err.message);
+            // Don't set fallback CSS - Discord's own CSS should be sufficient
         });
+
+        if (IS_DEV) {
+            VencordNative.native.onRendererCssUpdate(newCss => {
+                rendererCssNode.textContent = newCss;
+            });
+        }
+    } else {
+        console.log("[Kernixcord] Skipping renderer CSS load in non-desktop environment");
     }
 
     if (IS_VESKTOP && VesktopNative.app.getRendererCss || IS_EQUIBOP && VesktopNative.app.getRendererCss) {
@@ -93,7 +100,7 @@ export function initStyles() {
         osValuesNode.textContent = `:root{${variables}}`;
         console.log("[Kernixcord] System theme values loaded");
     }).catch(err => {
-        console.error("[Kernixcord] Failed to load system theme values:", err);
+        console.warn("[Kernixcord] Failed to load system theme values:", err.message);
         // Fallback basic theme values
         osValuesNode.textContent = ":root{--background-primary: #313338;--background-secondary: #2b2d31;}";
     });
