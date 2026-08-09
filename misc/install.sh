@@ -2,7 +2,7 @@
 
 # Configuration
 INSTALLER_PATH="$HOME/.equilotl"
-GITHUB_URL="https://github.com/kanvekin/Privxe/releases/download/v1.0.1/PrivcordCli-linux"
+GITHUB_URL="https://github.com/kanvekin/Kernixe/releases/download/v1.0.1/KernixeCli-linux"
 PRIVILEGE_CMDS=("sudo" "doas")
 DEBUG=false
 LOG_FILE="$(dirname "$(realpath "$0")")/equicordinstalldebug.log"

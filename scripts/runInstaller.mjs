@@ -1,3 +1,21 @@
+/*
+ * Vencord, a modification for Discord's desktop app
+ * Copyright (c) 2023 Vendicated and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 import "./checkNodeVersion.js";
 
 import { execFileSync, execSync } from "child_process";
@@ -7,8 +25,9 @@ import { Readable } from "stream";
 import { finished } from "stream/promises";
 import { fileURLToPath } from "url";
 
-const REPO = "Privcord";
-const BASE_URL = `https://github.com/kanvekin/Privxe/releases/download/v1.0.1/`;
+const BASE_URL = "https://github.com/kanvekin/Kernixe/releases/latest/download/";
+const INSTALLER_PATH_DARWIN = "Kernixe.app/Contents/MacOS/Kernixe";
+const INSTALLER_APP_DARWIN = "Kernixe.app";
 
 const BASE_DIR = join(dirname(fileURLToPath(import.meta.url)), "..");
 const FILE_DIR = join(BASE_DIR, "dist", "Installer");
@@ -17,11 +36,18 @@ const ETAG_FILE = join(FILE_DIR, "etag.txt");
 function getFilename() {
     switch (process.platform) {
         case "win32":
-            return "PrivcordCli.exe";
+            return "KernixeCli.exe";
         case "darwin":
-            return "Privcord.MacOS.zip";
+            switch (process.arch) {
+                case "x64":
+                    return "Kernixe-darwin-x64.zip";
+                case "arm64":
+                    return "Kernixe-darwin-arm64.zip";
+                default:
+                    throw new Error("Unsupported macOS architecture: " + process.arch);
+            }
         case "linux":
-            return "PrivcordCli-linux";
+            return "KernixeCli-linux";
         default:
             throw new Error("Unsupported platform: " + process.platform);
     }
@@ -33,10 +59,13 @@ async function ensureBinary() {
 
     mkdirSync(FILE_DIR, { recursive: true });
 
-    const downloadPath = join(FILE_DIR, filename);
+    const downloadName = join(FILE_DIR, filename);
     const outputFile = process.platform === "darwin"
-        ? join(FILE_DIR, "Privcord")
-        : downloadPath;
+        ? join(FILE_DIR, INSTALLER_PATH_DARWIN)
+        : downloadName;
+    const outputApp = process.platform === "darwin"
+        ? join(FILE_DIR, INSTALLER_APP_DARWIN)
+        : null;
 
     const etag = existsSync(outputFile) && existsSync(ETAG_FILE)
         ? readFileSync(ETAG_FILE, "utf-8")
@@ -44,7 +73,7 @@ async function ensureBinary() {
 
     const res = await fetch(BASE_URL + filename, {
         headers: {
-            "User-Agent": `Privcord Installer`,
+            "User-Agent": "Kernixcord (https://github.com/kanvekin/Kernixcord)",
             "If-None-Match": etag
         }
     });
@@ -63,29 +92,21 @@ async function ensureBinary() {
         const zip = new Uint8Array(await res.arrayBuffer());
         writeFileSync(downloadName, zip);
 
-        const ff = await import("fflate");
-        const unzipped = ff.unzipSync(zip);
-        const macosBinaryPath = Object.keys(unzipped).find(p =>
-            p.endsWith("/Contents/MacOS/Privcord")
-        );
-        if (!macosBinaryPath) {
-            throw new Error("macOS binary path not found in zip");
-        }
-        const bytes = unzipped[macosBinaryPath];
+        console.log("Unzipping app bundle...");
+        execSync(`ditto -x -k '${downloadName}' '${FILE_DIR}'`);
 
-        writeFileSync(outputFile, bytes, { mode: 0o755 });
+        console.log("Clearing quarantine from installer app (this is required to run it)");
+        console.log("xattr might error, that's okay");
 
         const logAndRun = cmd => {
             console.log("Running", cmd);
             try {
                 execSync(cmd);
-            } catch (e) {
-                console.warn("Command failed:", e.message);
-            }
+            } catch { }
         };
-        logAndRun(`sudo spctl --add '${outputFile}' --label "${REPO}"`);
-        logAndRun(`sudo xattr -d com.apple.quarantine '${outputFile}'`);
+        logAndRun(`sudo xattr -dr com.apple.quarantine '${outputApp}'`);
     } else {
+        // WHY DOES NODE FETCH RETURN A WEB STREAM OH MY GOD
         const body = Readable.fromWeb(res.body);
         await finished(body.pipe(createWriteStream(outputFile, {
             mode: 0o755,
@@ -94,8 +115,11 @@ async function ensureBinary() {
     }
 
     console.log("Finished downloading!");
+
     return outputFile;
 }
+
+
 
 const installerBin = await ensureBinary();
 
@@ -109,12 +133,11 @@ try {
         stdio: "inherit",
         env: {
             ...process.env,
-            PRIVXE_USER_DATA_DIR: BASE_DIR,
-            PRIVXE_INSTALL_DIR: join(BASE_DIR, "dist", "desktop"),
-            PRIVXE_DEV_INSTALL: "1"
+            EQUICORD_USER_DATA_DIR: BASE_DIR,
+            EQUICORD_DIRECTORY: join(BASE_DIR, "dist/desktop"),
+            EQUICORD_DEV_INSTALL: "1"
         }
     });
-} catch (e) {
+} catch {
     console.error("Something went wrong. Please check the logs above.");
-    console.error(e);
 }
