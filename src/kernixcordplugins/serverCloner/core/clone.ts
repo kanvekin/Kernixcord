@@ -1,7 +1,8 @@
 import { NavigationRouter, RestAPI, GuildStore } from "@webpack/common";
 import { findByPropsLazy } from "@webpack";
 
-import { notify, createMainProgressNotification, completeMainProgress, updateProgress, updateWithTime, formatElapsed } from "../utils/notifications";
+import { notify, createMainProgressNotification, completeMainProgress, updateProgress, updateWithTime } from "../utils/notifications";
+import { formatElapsed } from "../utils/notifications";
 
 import { fetchGuildData, fetchGuildRoles, extractChannels, normalizeChannel, fetchAssetBase64 } from "../utils/api";
 import { TaskQueue } from "../utils/TaskQueue";
@@ -38,11 +39,12 @@ async function waitForGuildInStore(guildId: string, maxWaitMs = 10000): Promise<
     return false;
 }
 
-import { extractAndCloneEmojis, cloneRoles } from "./cloneRoles";
+import { cloneRoles } from "./cloneRoles";
 import { cloneChannels } from "./cloneChannels";
 import { cloneSettings } from "./cloneSettings";
 import { cloneOnboarding } from "./cloneOnboarding";
 import { cloneStickers, cloneSoundboard } from "./cloneAssets";
+import { cloneEmojis } from "./cloneEmojis";
 
 
 
@@ -188,10 +190,11 @@ export async function cloneServer(sourceGuild: Guild, options: CloneOptions) {
         const hasRoles = options.cloneRoles;
         const hasChannels = options.cloneChannels;
         const hasOnboarding = options.cloneOnboarding;
+        const hasEmojis = options.cloneEmojis;
         const hasStickers = options.cloneStickers;
         const hasSoundboard = options.cloneSoundboard;
 
-        let totalWeight = (hasRoles ? 30 : 0) + (hasChannels ? 50 : 0) + 5 + (hasOnboarding ? 5 : 0) + (hasStickers ? 5 : 0) + (hasSoundboard ? 5 : 0);
+        let totalWeight = (hasRoles ? 30 : 0) + (hasChannels ? 50 : 0) + 5 + (hasOnboarding ? 5 : 0) + (hasEmojis ? 5 : 0) + (hasStickers ? 5 : 0) + (hasSoundboard ? 5 : 0);
         const scale = totalWeight > 0 ? (90 / totalWeight) : 1;
         let currentProgress = 5;
 
@@ -201,6 +204,7 @@ export async function cloneServer(sourceGuild: Guild, options: CloneOptions) {
             return { start, end: currentProgress };
         };
 
+        const emojisProgress = advanceProgress(hasEmojis ? 5 : 0);
         const stickersProgress = advanceProgress(hasStickers ? 5 : 0);
         const soundboardProgress = advanceProgress(hasSoundboard ? 5 : 0);
         const rolesProgress = advanceProgress(hasRoles ? 30 : 0);
@@ -367,6 +371,8 @@ export async function cloneServer(sourceGuild: Guild, options: CloneOptions) {
             channelsProgressEnd: channelsProgress.end,
             settingsProgressEnd: settingsProgress.end,
             onboardingProgressStart: onboardingProgress.start,
+            emojisProgressStart: emojisProgress.start,
+            emojisProgressEnd: emojisProgress.end,
             stickersProgressStart: stickersProgress.start,
             stickersProgressEnd: stickersProgress.end,
             soundboardProgressStart: soundboardProgress.start,
@@ -374,8 +380,8 @@ export async function cloneServer(sourceGuild: Guild, options: CloneOptions) {
         };
 
 
-        if (options.cloneEmojis || options.cloneOnboarding) {
-            await extractAndCloneEmojis(cloneContext);
+        if (options.cloneEmojis) {
+            await cloneEmojis(cloneContext);
         }
 
         throwIfCancelled();

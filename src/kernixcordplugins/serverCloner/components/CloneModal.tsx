@@ -166,15 +166,22 @@ export const CloneModal = ({
     const [cloneRoles, setCloneRoles]             = React.useState(initialOptions?.cloneRoles ?? true);
     const [cloneOnboarding, setCloneOnboarding]   = React.useState(initialOptions?.cloneOnboarding ?? true);
     const [cloneSystemFlags, setCloneSystemFlags] = React.useState(initialOptions?.cloneSystemFlags ?? true);
+    const [cloneEmojis, setCloneEmojis]           = React.useState(initialOptions?.cloneEmojis ?? true);
     const [cloneStickers, setCloneStickers]       = React.useState(initialOptions?.cloneStickers ?? true);
     const [cloneSoundboard, setCloneSoundboard]   = React.useState(initialOptions?.cloneSoundboard ?? true);
     const [resumeMode, setResumeMode]             = React.useState(initialOptions?.resumeMode ?? false);
     const [targetGuildId, setTargetGuildId]       = React.useState<string | null>(null);
+    const [sourceEmojisCount, setSourceEmojisCount] = React.useState(0);
     const [sourceStickersCount, setSourceStickersCount] = React.useState(0);
     const [sourceSoundsCount, setSourceSoundsCount] = React.useState(0);
 
     React.useEffect(() => {
         const { RestAPI } = require("@webpack/common");
+        RestAPI.get({ url: `/guilds/${guild.id}/emojis` }).then((resp: any) => {
+            const list = resp.body || [];
+            setSourceEmojisCount(list.length);
+        }).catch(() => {});
+
         RestAPI.get({ url: `/guilds/${guild.id}/stickers` }).then((resp: any) => {
             const list = resp.body || [];
             setSourceStickersCount(list.length);
@@ -200,22 +207,24 @@ export const CloneModal = ({
         [guild.id]
     );
 
-    const nothingSelected = !cloneChannels && !cloneRoles && !cloneOnboarding && !cloneSystemFlags && !cloneStickers && !cloneSoundboard;
+    const nothingSelected = !cloneChannels && !cloneRoles && !cloneOnboarding && !cloneSystemFlags && !cloneEmojis && !cloneStickers && !cloneSoundboard;
 
     const itemSummaryStr = React.useMemo(() => {
         const roleCount     = cloneRoles    ? (GuildRoleStore.getSortedRoles(guild.id) || []).filter((r: any) => r.name !== "@everyone").length : 0;
         const channelCount  = cloneChannels ? extractChannels(guild.id, true).length : 0;
+        const emojiEst      = cloneEmojis ? sourceEmojisCount : 0;
         const stickerEst    = cloneStickers ? sourceStickersCount : 0;
         const soundboardEst = cloneSoundboard ? sourceSoundsCount : 0;
 
         const parts: string[] = [];
         if (roleCount > 0) parts.push(`${roleCount} roles`);
         if (channelCount > 0) parts.push(`${channelCount} channels`);
+        if (emojiEst > 0) parts.push(`${emojiEst} emojis`);
         if (stickerEst > 0) parts.push(`${stickerEst} stickers`);
         if (soundboardEst > 0) parts.push(`${soundboardEst} sounds`);
 
         return parts.length > 0 ? parts.join(", ") : "None";
-    }, [guild.id, cloneRoles, cloneChannels, cloneStickers, cloneSoundboard, sourceStickersCount, sourceSoundsCount]);
+    }, [guild.id, cloneRoles, cloneChannels, cloneEmojis, cloneStickers, cloneSoundboard, sourceEmojisCount, sourceStickersCount, sourceSoundsCount]);
 
     const handleTargetChange = React.useCallback((v: string) => {
         setTargetGuildId(v === "new" ? null : v);
@@ -241,15 +250,15 @@ export const CloneModal = ({
                     sourceName={guild.name}
                     deletingText={deletingParts.join(", ")}
                     onConfirm={() =>
-                        onClone({ cloneChannels, cloneRoles, cloneOnboarding, cloneSystemFlags, cloneStickers, cloneSoundboard, resumeMode: false, targetGuildId })
+                        onClone({ cloneChannels, cloneRoles, cloneOnboarding, cloneSystemFlags, cloneEmojis, cloneStickers, cloneSoundboard, resumeMode: false, targetGuildId })
                     }
                 />
             ));
         } else {
-            onClone({ cloneChannels, cloneRoles, cloneOnboarding, cloneSystemFlags, cloneStickers, cloneSoundboard, resumeMode, targetGuildId });
+            onClone({ cloneChannels, cloneRoles, cloneOnboarding, cloneSystemFlags, cloneEmojis, cloneStickers, cloneSoundboard, resumeMode, targetGuildId });
             props.onClose();
         }
-    }, [nothingSelected, targetGuildId, resumeMode, cloneChannels, cloneRoles, cloneOnboarding, cloneSystemFlags, cloneStickers, cloneSoundboard, guild.name, ownedGuilds, onClone, props]);
+    }, [nothingSelected, targetGuildId, resumeMode, cloneChannels, cloneRoles, cloneOnboarding, cloneSystemFlags, cloneEmojis, cloneStickers, cloneSoundboard, guild.name, ownedGuilds, onClone, props]);
 
     const selectOptions = React.useMemo(
         () => [
@@ -349,6 +358,13 @@ export const CloneModal = ({
                         <span className="sc-modal-label">
                             Assets:
                         </span>
+                        <Checkbox value={cloneEmojis} type="inverted" onChange={(_: any, val: boolean) => setCloneEmojis(val)}>
+                            <span className="sc-modal-title-bold" style={{ fontWeight: 500 }}>Emojis</span>
+                            <span className="sc-modal-subtext" style={{ display: "block", marginTop: "2px" }}>
+                                Clone all custom server emojis to the target server
+                            </span>
+                        </Checkbox>
+
                         <Checkbox value={cloneStickers} type="inverted" onChange={(_: any, val: boolean) => setCloneStickers(val)}>
                             <span className="sc-modal-title-bold" style={{ fontWeight: 500 }}>Stickers</span>
                             <span className="sc-modal-subtext" style={{ display: "block", marginTop: "2px" }}>
