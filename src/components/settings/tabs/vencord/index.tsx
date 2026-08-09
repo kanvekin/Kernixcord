@@ -334,6 +334,7 @@ export default wrapTab(KernixcordSettings, "Kernixcord Settings");
 export function isEquicordDonor(userId: string): boolean {
     if (!userId) return false;
     try {
+        if (!BadgeAPI || typeof BadgeAPI.getEquicordDonorBadges !== "function") return false;
         const donorBadges = BadgeAPI.getEquicordDonorBadges(userId);
         return !!donorBadges;
     } catch (e) {
@@ -345,6 +346,7 @@ export function isEquicordDonor(userId: string): boolean {
 export function isVencordDonor(userId: string): boolean {
     if (!userId) return false;
     try {
+        if (!BadgeAPI || typeof BadgeAPI.getDonorBadges !== "function") return false;
         const donorBadges = BadgeAPI.getDonorBadges(userId);
         return !!donorBadges;
     } catch (e) {
@@ -356,6 +358,7 @@ export function isVencordDonor(userId: string): boolean {
 export function isKernixcordDonor(userId: string): boolean {
     if (!userId) return false;
     try {
+        if (!BadgeAPI || typeof BadgeAPI.getKernixcordDonorBadges !== "function") return false;
         const donorBadges = BadgeAPI.getKernixcordDonorBadges(userId);
         return !!donorBadges?.length;
     } catch (e) {
