@@ -23,11 +23,11 @@ function refresh_voice_state(enabled: boolean) {
         caca += 1;
     }
     if (caca > 0) return;
-
+    
     const socket = wsModule.getSocket();
     const channelId = SelectedChannelStore.getVoiceChannelId();
     const channel = channelId ? ChannelStore?.getChannel(channelId) : null;
-
+    
     if (socket && channelId) {
         try {
             // op code 4 = voiceStateUpdate
@@ -47,24 +47,24 @@ function refresh_voice_state(enabled: boolean) {
 
 function fd_icon() {
     const iconColor = enabled ? "#ed4245" : "currentColor";
-
+    
     return (
         <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
-            <rect x="6" y="8" width="20" height="4" rx="2" fill={iconColor} />
-            <rect x="11" y="3" width="10" height="8" rx="3" fill={iconColor} />
+            <rect x="6" y="8" width="20" height="4" rx="2" fill={iconColor}/>
+            <rect x="11" y="3" width="10" height="8" rx="3" fill={iconColor}/>
             {enabled ? (
                 <>
-                    <line x1="7" y1="18" x2="13" y2="24" stroke={iconColor} strokeWidth="2" />
-                    <line x1="13" y1="18" x2="7" y2="24" stroke={iconColor} strokeWidth="2" />
-                    <line x1="19" y1="18" x2="25" y2="24" stroke={iconColor} strokeWidth="2" />
-                    <line x1="25" y1="18" x2="19" y2="24" stroke={iconColor} strokeWidth="2" />
-                    <path d="M14 23c1-1 3-1 4 0" stroke={iconColor} strokeWidth="2" strokeLinecap="round" />
+                    <line x1="7" y1="18" x2="13" y2="24" stroke={iconColor} strokeWidth="2"/>
+                    <line x1="13" y1="18" x2="7" y2="24" stroke={iconColor} strokeWidth="2"/>
+                    <line x1="19" y1="18" x2="25" y2="24" stroke={iconColor} strokeWidth="2"/>
+                    <line x1="25" y1="18" x2="19" y2="24" stroke={iconColor} strokeWidth="2"/>
+                    <path d="M14 23c1-1 3-1 4 0" stroke={iconColor} strokeWidth="2" strokeLinecap="round"/>
                 </>
             ) : (
                 <>
-                    <circle cx="10" cy="21" r="4" stroke={iconColor} strokeWidth="2" fill="none" />
-                    <circle cx="22" cy="21" r="4" stroke={iconColor} strokeWidth="2" fill="none" />
-                    <path d="M14 21c1 1 3 1 4 0" stroke={iconColor} strokeWidth="2" strokeLinecap="round" />
+                    <circle cx="10" cy="21" r="4" stroke={iconColor} strokeWidth="2" fill="none"/>
+                    <circle cx="22" cy="21" r="4" stroke={iconColor} strokeWidth="2" fill="none"/>
+                    <path d="M14 21c1 1 3 1 4 0" stroke={iconColor} strokeWidth="2" strokeLinecap="round"/>
                 </>
             )}
         </svg>
@@ -98,10 +98,10 @@ export default definePlugin({
         if (!wsModule) return;
         const socket = wsModule.getSocket();
         if (!socket) return;
-
+        
         // default send function
         originalSend = socket.send;
-
+        
         // modify send function 
         socket.send = function (op: number, data: any, ...args: any[]) {
             // op code 4 = voiceStateUpdate don't ask me why
