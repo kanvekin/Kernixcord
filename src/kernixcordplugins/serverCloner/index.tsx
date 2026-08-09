@@ -3,6 +3,7 @@ import { ModalProps, openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
 import { Guild } from "@vencord/discord-types";
 import { Menu, React } from "@webpack/common";
+import { Devs } from "@utils/constants";
 import { DataStore } from "@api/index";
 
 import "./styles.css";

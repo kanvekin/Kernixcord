@@ -28,9 +28,9 @@ export class ScreensharePatcher extends Patcher {
     private mediaEngineStore: types.MediaEngineStore;
     private mediaEngine: types.MediaEngine;
     public connection?: types.Connection;
-    public oldGetQuality: types.Connection["videoQualityManager"]["getQuality"];
-    public oldOnDesktopEncodingOptionsSet: types.Connection["onDesktopEncodingOptionsSet"];
-    public oldSetDesktopEncodingOptions: types.Connection["setDesktopEncodingOptions"];
+    public oldGetQuality: any;
+    public oldOnDesktopEncodingOptionsSet: any;
+    public oldSetDesktopEncodingOptions: any;
     public oldSetDesktopSourceWithOptions: (...args: any[]) => void;
     public oldSetTransportOptions: (...args: any[]) => void;
     public forceUpdateDesktopEncodingOptions: () => void;
@@ -69,6 +69,10 @@ export class ScreensharePatcher extends Patcher {
 
                 this.connection = connection;
 
+                const res = {
+                    ...patchConnectionVideoTransportOptions(connection, get, logger),
+                    ...patchConnectionVideoSetDesktopSourceWithOptions(connection, get, logger)
+                } as any;
                 const {
                     oldGetQuality,
                     oldOnDesktopEncodingOptionsSet,
@@ -78,10 +82,7 @@ export class ScreensharePatcher extends Patcher {
                     forceUpdateDesktopEncodingOptions,
                     forceUpdateDesktopSourceOptions,
                     forceUpdateTransportationOptions
-                } = {
-                    ...patchConnectionVideoTransportOptions(connection, get, logger),
-                    ...patchConnectionVideoSetDesktopSourceWithOptions(connection, get, logger)
-                };
+                } = res;
 
                 this.oldGetQuality = oldGetQuality;
                 this.oldOnDesktopEncodingOptionsSet = oldOnDesktopEncodingOptionsSet;
@@ -95,9 +96,9 @@ export class ScreensharePatcher extends Patcher {
                 const restoreConnection = () => {
                     connection.conn.setTransportOptions = oldSetTransportOptions;
                     connection.conn.setDesktopSourceWithOptions = oldSetDesktopSourceWithOptions;
-                    connection.setDesktopEncodingOptions = oldSetDesktopEncodingOptions;
-                    connection.onDesktopEncodingOptionsSet = oldOnDesktopEncodingOptionsSet;
-                    connection.videoQualityManager.getQuality = oldGetQuality;
+                    (connection as any).setDesktopEncodingOptions = oldSetDesktopEncodingOptions;
+                    (connection as any).onDesktopEncodingOptionsSet = oldOnDesktopEncodingOptionsSet;
+                    (connection.videoQualityManager as any).getQuality = oldGetQuality;
                 };
                 let didCleanupConnection = false;
                 let removeConnectedListener: () => void = () => void 0;
@@ -112,13 +113,13 @@ export class ScreensharePatcher extends Patcher {
                 };
                 this.unpatchFunctions.push(cleanupConnection);
 
-                removeConnectedListener = Emitter.addListener(connection.emitter, "on", "connected", () => {
+                removeConnectedListener = (Emitter.addListener as any)(connection.emitter as any, "on", "connected", () => {
                     this.forceUpdateTransportationOptions();
                     this.forceUpdateDesktopEncodingOptions();
                     if (this.hasActiveDesktopSource()) this.forceUpdateDesktopSourceOptions();
                 }, PluginInfo.PLUGIN_NAME);
 
-                removeDestroyListener = Emitter.addListener(connection.emitter, "on", "destroy", () => {
+                removeDestroyListener = (Emitter.addListener as any)(connection.emitter as any, "on", "destroy", () => {
                     cleanupConnection();
                     if (this.connection === connection)
                         this.connection = undefined;
@@ -134,7 +135,7 @@ export class ScreensharePatcher extends Patcher {
                 }, PluginInfo.PLUGIN_NAME);
             };
 
-        this.unpatchFunctions.push(Emitter.addListener(
+        this.unpatchFunctions.push((Emitter.addListener as any)(
             this.mediaEngine.emitter,
             "on",
             "connection",

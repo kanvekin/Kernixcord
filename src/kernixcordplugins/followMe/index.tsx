@@ -5,11 +5,12 @@
 
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
+// Devs is imported below via this file's existing import; avoid duplicate import
 import definePlugin, { OptionType } from "@utils/types";
 import { Channel, User, VoiceState } from "@vencord/discord-types";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
-import { Forms, Menu, React, VoiceStateStore, RestAPI, PermissionStore, PermissionsBits, ChannelStore, Toasts, UserStore, Button } from "@webpack/common";
+import { Forms, Menu, React, VoiceStateStore, RestAPI, PermissionStore, PermissionsBits, ChannelStore, Toasts, Button } from "@webpack/common";
+import { Devs } from "@utils/constants";
 import { HeaderBarButton } from "@api/HeaderBar";
 import { Modal, openModal } from "@webpack/common";
 

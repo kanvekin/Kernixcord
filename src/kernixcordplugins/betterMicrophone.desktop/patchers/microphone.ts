@@ -74,11 +74,11 @@ export class MicrophonePatcher extends Patcher {
                 };
                 this.unpatchFunctions.push(cleanupConnection);
 
-                removeConnectedListener = Emitter.addListener(connection.emitter, "on", "connected", () => {
+                removeConnectedListener = (Emitter.addListener as any)(connection.emitter as any, "on", "connected", () => {
                     this.forceUpdateTransportationOptions();
                 }, PluginInfo.PLUGIN_NAME);
 
-                removeDestroyListener = Emitter.addListener(connection.emitter, "on", "destroy", () => {
+                removeDestroyListener = (Emitter.addListener as any)(connection.emitter as any, "on", "destroy", () => {
                     cleanupConnection();
                     if (this.connection === connection)
                         this.connection = undefined;
@@ -89,8 +89,8 @@ export class MicrophonePatcher extends Patcher {
                 }, PluginInfo.PLUGIN_NAME);
             };
 
-        this.unpatchFunctions.push(Emitter.addListener(
-            this.mediaEngine.emitter,
+        this.unpatchFunctions.push((Emitter.addListener as any)(
+            this.mediaEngine.emitter as any,
             "on",
             "connection",
             connectionEventFunction,

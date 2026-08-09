@@ -58,7 +58,7 @@ export class ScreenshareAudioPatcher extends Patcher {
                     forceUpdateTransportationOptions: forceUpdateTransportationOptionsAudio,
                     oldSetTransportOptions: oldSetTransportOptionsAudio,
                     oldSetVoiceBitRate
-                } = patchConnectionAudioTransportOptions(connection, get, logger);
+                } = patchConnectionAudioTransportOptions(connection, get, logger) as any;
 
                 this.forceUpdateTransportationOptions = forceUpdateTransportationOptionsAudio;
                 this.oldSetTransportOptions = oldSetTransportOptionsAudio;
@@ -81,11 +81,11 @@ export class ScreenshareAudioPatcher extends Patcher {
                 };
                 this.unpatchFunctions.push(cleanupConnection);
 
-                removeConnectedListener = Emitter.addListener(connection.emitter, "on", "connected", () => {
+                removeConnectedListener = (Emitter.addListener as any)(connection.emitter as any, "on", "connected", () => {
                     this.forceUpdateTransportationOptions();
                 }, PluginInfo.PLUGIN_NAME);
 
-                removeDestroyListener = Emitter.addListener(connection.emitter, "on", "destroy", () => {
+                removeDestroyListener = (Emitter.addListener as any)(connection.emitter as any, "on", "destroy", () => {
                     cleanupConnection();
                     if (this.connection === connection)
                         this.connection = undefined;
@@ -96,7 +96,7 @@ export class ScreenshareAudioPatcher extends Patcher {
                 }, PluginInfo.PLUGIN_NAME);
             };
 
-        this.unpatchFunctions.push(Emitter.addListener(
+        this.unpatchFunctions.push((Emitter.addListener as any)(
             this.mediaEngine.emitter,
             "on",
             "connection",

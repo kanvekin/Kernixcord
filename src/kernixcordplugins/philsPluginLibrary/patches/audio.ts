@@ -69,6 +69,7 @@ export function patchConnectionAudioTransportOptions(
     logger?: Logger
 ) {
     const oldSetTransportOptions = connection.conn.setTransportOptions;
+    const oldSetVoiceBitRate = (connection as any).setVoiceBitRate ?? (() => void 0);
 
     connection.conn.setTransportOptions = function (this: any, options: Record<string, any>) {
         replaceObjectValuesIfExist(options, getReplaceableAudioTransportationOptions(connection, get));
@@ -84,5 +85,5 @@ export function patchConnectionAudioTransportOptions(
         oldSetTransportOptions(transportOptions);
     };
 
-    return { oldSetTransportOptions, forceUpdateTransportationOptions };
+    return { oldSetTransportOptions, forceUpdateTransportationOptions, oldSetVoiceBitRate } as any;
 }
