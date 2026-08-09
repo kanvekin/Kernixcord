@@ -42,6 +42,10 @@ pnpm build
 
 Inject Kernixcord into your client:
 
+```shell
+pnpm inject
+```
+
 Note: Firefox extension zip requires Firefox for developers
 
 ## Credits
