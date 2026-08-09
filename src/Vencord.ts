@@ -199,25 +199,14 @@ function initTrayIpc() {
 }
 
 async function init() {
-    // Emergency timeout to prevent infinite loading
-    const startupTimeout = setTimeout(() => {
-        console.error("[Kernixcord] CRITICAL: Startup timeout reached, forcing initialization");
-        // Force webpack ready state to prevent hanging
-        if (typeof (globalThis as any)._resolveReady === 'function') {
-            (globalThis as any)._resolveReady();
-        }
-    }, 15000); // 15 second timeout
-
     // Performance optimizations for faster startup
     const startTime = performance.now();
 
     try {
         await onceReady;
-        clearTimeout(startupTimeout);
         console.log("[Kernixcord] Webpack ready successfully");
     } catch (error) {
         console.error("[Kernixcord] Webpack initialization failed:", error);
-        clearTimeout(startupTimeout);
         // Continue anyway to prevent complete failure
     }
 

@@ -32,6 +32,19 @@ waitFor(["dispatch", "subscribe"], m => {
         _resolveReady();
     };
     m.subscribe("CONNECTION_OPEN", cb);
+
+    // Fallback timeout to prevent infinite loading if CONNECTION_OPEN never fires
+    // This can happen in some network conditions or Discord startup issues
+    setTimeout(() => {
+        if (typeof _resolveReady === 'function') {
+            console.warn("[Kernixcord] CONNECTION_OPEN timeout reached, forcing webpack ready state");
+            try {
+                _resolveReady();
+            } catch (e) {
+                console.error("[Kernixcord] Failed to force resolve ready state:", e);
+            }
+        }
+    }, 10000); // 10 second fallback timeout
 });
 
 export let ComponentDispatch: any;
