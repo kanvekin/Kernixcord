@@ -47,7 +47,7 @@ import { addProfileCollection, removeProfileCollection } from "./ProfileCollecti
 import { addProfileSection, removeProfileSection } from "./ProfileSections";
 import { addUserAreaButton, removeUserAreaButton } from "./UserArea";
 
-const logger = new Logger("PluginManager", "#a6d189");
+const logger = new Logger("Kernixcord PluginManager", "#a6d189");
 
 export const PMLogger = logger;
 

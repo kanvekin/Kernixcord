@@ -35,9 +35,6 @@
             "@utils/*": [
                 "./src/utils/*"
             ],
-            "@plugins/*": [
-                "./src/plugins/*"
-            ],
             "@shared/*": [
                 "./src/shared/*"
             ],
@@ -59,8 +56,20 @@
             "@webpack/types": [
                 "./src/webpack/types"
             ],
+            "Vencord": [
+                "./src/Vencord.ts"
+            ],
+            "webpack/common/internal": [
+                "./src/webpack/common/internal.tsx"
+            ],
+            "@plugins/*": [
+                "./src/plugins/*"
+            ],
             "@equicordplugins/*": [
                 "./src/equicordplugins/*"
+            ],
+            "@kernixcordplugins/*": [
+                "./src/kernixcordplugins/*"
             ]
         },
         "plugins": [

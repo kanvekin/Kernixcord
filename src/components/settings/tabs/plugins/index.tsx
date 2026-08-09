@@ -104,6 +104,8 @@ const enum SearchStatus {
     DISABLED,
     EQUICORD,
     VENCORD,
+    KERNIXCORD,
+    CUSTOM,
     NEW,
     USER_PLUGINS,
     API_PLUGINS
@@ -210,6 +212,7 @@ export default function PluginSettings() {
 
     const search = searchValue.value.toLowerCase();
     const onSearch = (query: string) => setSearchValue(prev => ({ ...prev, value: query }));
+    const onStatusChange = (status: SearchStatus) => setSearchValue(prev => ({ ...prev, status }));
 
     const pluginFilter = useCallback((plugin: typeof Plugins[keyof typeof Plugins], newPluginsSet: Set<string> | null) => {
         const { status, tags } = searchValue;
@@ -229,6 +232,9 @@ export default function PluginSettings() {
                 break;
             case SearchStatus.VENCORD:
                 if (!PluginMeta[plugin.name].folderName.startsWith("src/plugins/")) return false;
+                break;
+            case SearchStatus.KERNIXCORD:
+                if (!PluginMeta[plugin.name].folderName.startsWith("src/kernixcordplugins/")) return false;
                 break;
             case SearchStatus.NEW:
                 if (!newPluginsSet?.has(plugin.name)) return false;
@@ -431,23 +437,14 @@ export default function PluginSettings() {
                             { label: "Show Disabled", value: SearchStatus.DISABLED },
                             { label: "Show Equicord", value: SearchStatus.EQUICORD },
                             { label: "Show Vencord", value: SearchStatus.VENCORD },
+                            { label: "Show Kernixcord", value: SearchStatus.KERNIXCORD },
+                            ...(totalUserPlugins > 0 ? [{ label: "Show Custom", value: SearchStatus.CUSTOM }] : []),
                             { label: "Show New", value: SearchStatus.NEW },
-                            hasUserPlugins && { label: "Show UserPlugins", value: SearchStatus.USER_PLUGINS },
-                            { label: "Show API Plugins", value: SearchStatus.API_PLUGINS },
-                        ].filter(isTruthy)}
+                        ]}
                         serialize={String}
-                        select={status => setSearchValue(prev => ({ ...prev, status }))}
+                        select={onStatusChange}
                         isSelected={v => v === searchValue.status}
                         closeOnSelect={true}
-                        placeholder="Filter by Type"
-                    />
-                    <SearchableSelect
-                        options={PluginTags.map(tag => ({ label: tag, value: tag }))}
-                        value={searchValue.tags}
-                        onChange={tags => setSearchValue(prev => ({ ...prev, tags }))}
-                        closeOnSelect={false}
-                        placeholder="Filter by Tags"
-                        multi
                     />
                 </div>
             </ErrorBoundary>

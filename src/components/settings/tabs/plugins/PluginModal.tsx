@@ -174,6 +174,7 @@ export default function PluginModal({ plugin, onRestartNeeded, onClose, transiti
 
     const pluginMeta = PluginMeta[plugin.name];
     const isEquicordPlugin = pluginMeta.folderName.startsWith("src/equicordplugins/") ?? false;
+    const isKernixcordPlugin = pluginMeta.folderName.startsWith("src/kernixcordplugins/") ?? false;
 
     return (
         <Modal

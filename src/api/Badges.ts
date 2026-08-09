@@ -32,7 +32,7 @@ export interface ProfileBadge {
     /**
      * Badge id, unused by vencord, required by discord
      */
-    id: string,
+    id?: string,
     /** The tooltip to show on hover. Required for image badges */
     description?: string;
     /** Custom component for the badge (tooltip not included) */
@@ -107,18 +107,7 @@ export function _getBadges(args: BadgeUserArgs) {
 
     const donorBadges = BadgeAPIPlugin.getDonorBadges(args.userId);
     const equicordDonorBadges = BadgeAPIPlugin.getEquicordDonorBadges(args.userId);
-    const GlobalBadges = isPluginEnabled(globalBadges.name) ? globalBadges.getGlobalBadges(args.userId) : false;
-
-    // do globalbadges first so it shows before the contrib badges but after donor badges
-    if (GlobalBadges) {
-        badges.unshift(
-            ...GlobalBadges.map(badge => ({
-                ...args,
-                ...badge,
-            }))
-        );
-    }
-
+    const kernixcordDonorBadges = BadgeAPIPlugin.getKernixcordDonorBadges(args.userId);
     if (donorBadges) {
         badges.unshift(
             ...donorBadges.map(badge => ({
@@ -131,6 +120,15 @@ export function _getBadges(args: BadgeUserArgs) {
     if (equicordDonorBadges) {
         badges.unshift(
             ...equicordDonorBadges.map(badge => ({
+                ...args,
+                ...badge,
+            }))
+        );
+    }
+
+    if (kernixcordDonorBadges) {
+        badges.unshift(
+            ...kernixcordDonorBadges.map(badge => ({
                 ...args,
                 ...badge,
             }))

@@ -11,7 +11,7 @@ import { moment, Toasts } from "@webpack/common";
 
 import { DataStore } from "..";
 
-type BackupType = "all" | "plugins" | "css" | "datastore";
+type BackupType = "all" | "plugins" | "css" | "datastore" | "settings";
 
 const toast = (type: string, message: string) =>
     Toasts.show({
@@ -139,6 +139,9 @@ export async function exportSettings({ syncDataStore = true, type = "all", minif
         case "datastore": {
             return JSON.stringify({ dataStore }, null, minify ? undefined : 4);
         }
+        case "settings": {
+            return JSON.stringify({ settings }, null, minify ? undefined : 4);
+        }
     }
 }
 
@@ -146,7 +149,7 @@ export async function downloadSettingsBackup(type: BackupType = "all", { minify 
     try {
         const syncDataStore = type === "all" || type === "datastore";
         const backup = await exportSettings({ minify, type, syncDataStore });
-        const filename = `equicord-${type}-backup-${moment().format("YYYY-MM-DD")}.json`;
+        const filename = `kernixcord-${type}-backup-${moment().format("YYYY-MM-DD")}.json`;
         const data = new TextEncoder().encode(backup);
 
         if (IS_DISCORD_DESKTOP) {
@@ -165,7 +168,7 @@ export async function uploadSettingsBackup(type: BackupType = "all", showToast =
     if (IS_DISCORD_DESKTOP) {
         const [file] = await DiscordNative.fileManager.openFiles({
             filters: [
-                { name: "Equicord Settings Backup", extensions: ["json"] },
+                { name: "Kernixcord Settings Backup", extensions: ["json"] },
                 { name: "all", extensions: ["*"] }
             ]
         });

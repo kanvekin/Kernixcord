@@ -146,7 +146,7 @@ async function runUpdateCheck() {
                 notifiedForUpdatesThisSession = true;
 
                 showNotice(
-                    "Equicord has been updated!",
+                    "Kernixcord has been updated!",
                     "Restart",
                     relaunch
                 );
@@ -158,7 +158,7 @@ async function runUpdateCheck() {
         notifiedForUpdatesThisSession = true;
 
         showNotice(
-            "A new version of Equicord is available!",
+            "A new version of Kernixcord is available!",
             "View Update",
             () => openSettingsTabModal(UpdaterTab!)
         );
@@ -176,7 +176,7 @@ function initTrayIpc() {
             VencordNative.tray.setUpdateState(isOutdated);
 
             if (isOutdated) {
-                showNotice("An Equicord update is available!", "View Update", () => openSettingsTabModal(UpdaterTab!));
+                showNotice("An Kernixcord update is available!", "View Update", () => openSettingsTabModal(UpdaterTab!));
             } else {
                 showNotice("No updates available, you're on the latest version!", "OK", popNotice);
             }
@@ -199,11 +199,40 @@ function initTrayIpc() {
 }
 
 async function init() {
-    await onceReady;
+    // Emergency timeout to prevent infinite loading
+    const startupTimeout = setTimeout(() => {
+        console.error("[Kernixcord] CRITICAL: Startup timeout reached, forcing initialization");
+        // Force webpack ready state to prevent hanging
+        if (typeof (globalThis as any)._resolveReady === 'function') {
+            (globalThis as any)._resolveReady();
+        }
+    }, 15000); // 15 second timeout
+
+    // Performance optimizations for faster startup
+    const startTime = performance.now();
+
+    try {
+        await onceReady;
+        clearTimeout(startupTimeout);
+        console.log("[Kernixcord] Webpack ready successfully");
+    } catch (error) {
+        console.error("[Kernixcord] Webpack initialization failed:", error);
+        clearTimeout(startupTimeout);
+        // Continue anyway to prevent complete failure
+    }
+
     startAllPlugins(StartAt.WebpackReady);
 
     syncSettings();
     initTrayIpc();
+
+    // Log startup time for diagnostics
+    const totalTime = performance.now() - startTime;
+    console.log(`[Kernixcord] Startup completed in ${totalTime.toFixed(2)}ms`);
+
+    if (totalTime > 10000) {
+        console.warn("[Kernixcord] Slow startup detected");
+    }
 
     if (!IS_DEV && !IS_WEB && !IS_UPDATER_DISABLED) {
         runUpdateCheck();
@@ -221,7 +250,7 @@ async function init() {
                 "Webpack has finished initialising, but some patches haven't been applied yet.",
                 "This might be expected since some Modules are lazy loaded, but please verify",
                 "that all plugins are working as intended.",
-                "You are seeing this warning because this is a Development build of Equicord.",
+                "You are seeing this warning because this is a Development build of Kernixcord.",
                 "\nThe following patches have not been applied:",
                 "\n\n" + pendingPatches.map(p => `${p.plugin}: ${p.find}`).join("\n")
             );
@@ -235,6 +264,24 @@ init();
 
 document.addEventListener("DOMContentLoaded", () => {
     startAllPlugins(StartAt.DOMContentLoaded);
+
+    // Menu loading fix - ensure menu components are ready
+    setTimeout(() => {
+        // Check if menu components are loaded by accessing the Menu export
+        try {
+            const { Menu } = require("./webpack/common");
+            if (!Menu.Menu) {
+                console.warn("[Kernixcord] Menu components not loaded, attempting refresh");
+                // Force menu component refresh
+                const event = new Event('resize');
+                window.dispatchEvent(event);
+            } else {
+                console.log("[Kernixcord] Menu components verified as loaded");
+            }
+        } catch (error) {
+            console.error("[Kernixcord] Error checking menu components:", error);
+        }
+    }, 3000);
 
     // FIXME
     if (IS_DISCORD_DESKTOP && Settings.winNativeTitleBar && IS_WINDOWS) {

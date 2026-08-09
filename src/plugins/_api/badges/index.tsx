@@ -1,41 +1,29 @@
 /*
- * Vencord, a modification for Discord's desktop app
- * Copyright (c) 2022 Vendicated and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
+ * Vencord, a Discord client mod
+ * Copyright (c) 2025 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 
 import "./fixDiscordBadgePadding.css";
 
 import { _getBadges, BadgePosition, BadgeUserArgs, ProfileBadge } from "@api/Badges";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { openContributorModal } from "@components/settings/tabs";
+import { isEquicordDonor, isKernixcordDonor } from "@components/settings/tabs/vencord";
 import { Devs } from "@utils/constants";
 import { copyWithToast } from "@utils/discord";
 import { Logger } from "@utils/Logger";
-import { shouldShowContributorBadge, shouldShowEquicordContributorBadge } from "@utils/misc";
+import { shouldShowContributorBadge, shouldShowEquicordContributorBadge, shouldShowKernixcordContributorBadge } from "@utils/misc";
 import definePlugin from "@utils/types";
 import { ContextMenuApi, Menu, Toasts, UserStore } from "@webpack/common";
-
 import Plugins, { PluginMeta } from "~plugins";
-
-import { EquicordDonorModal, EquicordTranslatorModal, VencordDonorModal } from "./modals";
+import { EquicordDonorModal, EquicordTranslatorModal, KernixcordDonorModal, VencordDonorModal } from "./modals";
 
 const CONTRIBUTOR_BADGE = "https://cdn.discordapp.com/emojis/1092089799109775453.png?size=64";
 const EQUICORD_CONTRIBUTOR_BADGE = "https://equicord.org/assets/favicon.png";
-const USERPLUGIN_CONTRIBUTOR_BADGE = "https://equicord.org/assets/icons/misc/userplugin.png";
-
+const KERNIXCORD_CONTRIBUTOR_BADGE = "https://cdn.discordapp.com/emojis/1349141323705352222.webp?size=64";
+const EQUICORD_DONOR_BADGE = "https://images.equicord.org/api/v1/files/raw/0199e71a-5555-7000-aafb-a07a355d9b28";
+const KERNIXCORD_DONOR_BADGE = "https://cdn.discordapp.com/emojis/1422406660281995264.webp?size=64";
 const ContributorBadge: ProfileBadge = {
     id: "vencord_contributor_badge",
     description: "Vencord Contributor",
@@ -60,19 +48,11 @@ const EquicordContributorBadge: ProfileBadge = {
     },
 };
 
-const UserPluginContributorBadge: ProfileBadge = {
-    id: "user_plugin_contributor_badge",
-    description: "User Plugin Contributor",
-    iconSrc: USERPLUGIN_CONTRIBUTOR_BADGE,
+const KernixcordContributorBadge: ProfileBadge = {
+    description: "Kernixcord Contributor",
+    iconSrc: KERNIXCORD_CONTRIBUTOR_BADGE,
     position: BadgePosition.START,
-    shouldShow: ({ userId }) => {
-        if (!IS_DEV) return false;
-        const allPlugins = Object.values(Plugins);
-        return allPlugins.some(p => {
-            const pluginMeta = PluginMeta[p.name];
-            return pluginMeta?.userPlugin && p.authors.some(a => a.id.toString() === userId);
-        });
-    },
+    shouldShow: ({ userId }) => shouldShowKernixcordContributorBadge(userId),
     onClick: (_, { userId }) => openContributorModal(UserStore.getUser(userId)),
     props: {
         style: {
@@ -82,46 +62,70 @@ const UserPluginContributorBadge: ProfileBadge = {
     },
 };
 
+const EquicordDonorBadge: ProfileBadge = {
+    description: "Equicord Donor",
+    iconSrc: EQUICORD_DONOR_BADGE,
+    position: BadgePosition.START,
+    shouldShow: ({ userId }) => {
+        const donorBadges = EquicordDonorBadges[userId]?.map(badge => badge.badge);
+        const hasDonorBadge = donorBadges?.includes(EQUICORD_DONOR_BADGE);
+        return isEquicordDonor(userId) && !hasDonorBadge;
+    },
+    onClick: () => EquicordDonorModal()
+};
+
+const KernixcordDonorBadge: ProfileBadge = {
+    description: "Kernixcord Donor",
+    iconSrc: KERNIXCORD_DONOR_BADGE,
+    position: BadgePosition.START,
+    shouldShow: ({ userId }) => {
+        const donorBadges = KernixcordDonorBadges[userId]?.map(badge => badge.badge);
+        const hasDonorBadge = donorBadges?.includes(KERNIXCORD_DONOR_BADGE);
+        return isKernixcordDonor(userId) && !hasDonorBadge;
+    },
+    onClick: () => KernixcordDonorModal()
+};
 let DonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
 let EquicordDonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
+let KernixcordDonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
 
 async function loadBadges(url: string, noCache = false) {
     const init = {} as RequestInit;
     if (noCache) init.cache = "no-cache";
-
-    return await fetch(url, init).then(r => r.json());
+    try {
+        const response = await fetch(url, init);
+        if (!response.ok) throw new Error(`Failed to fetch badges: ${response.status} ${response.statusText} (${url})`);
+        const json = await response.json();
+        if (!json || typeof json !== "object") {
+            throw new Error(`Badges JSON is invalid (${url})`);
+        }
+        return json;
+    } catch (err) {
+        new Logger("BadgeAPI#loadBadges").error(err);
+        return {};
+    }
 }
 
 async function loadAllBadges(noCache = false) {
     const vencordBadges = await loadBadges("https://badges.vencord.dev/badges.json", noCache);
     const equicordBadges = await loadBadges("https://badge.equicord.org/badges.json", noCache);
+    const kernixcordBadges = await loadBadges("https://raw.githubusercontent.com/kanvekin/Donors/main/badges.json", noCache);
 
-    DonorBadges = vencordBadges;
-    EquicordDonorBadges = equicordBadges;
+    DonorBadges = vencordBadges || {};
+    EquicordDonorBadges = equicordBadges || {};
+    KernixcordDonorBadges = kernixcordBadges || {};
 }
 
 let intervalId: any;
 
 export function BadgeContextMenu({ badge }: { badge: Omit<ProfileBadge, "id"> & BadgeUserArgs; }) {
     return (
-        <Menu.Menu
-            navId="vc-badge-context"
-            onClose={ContextMenuApi.closeContextMenu}
-            aria-label="Badge Options"
-        >
+        <Menu.Menu navId="vc-badge-context" onClose={ContextMenuApi.closeContextMenu} aria-label="Badge Options">
             {badge.description && (
-                <Menu.MenuItem
-                    id="vc-badge-copy-name"
-                    label="Copy Badge Name"
-                    action={() => copyWithToast(badge.description!)}
-                />
+                <Menu.MenuItem id="vc-badge-copy-name" label="Copy Badge Name" action={() => copyWithToast(badge.description!)} />
             )}
             {badge.iconSrc && (
-                <Menu.MenuItem
-                    id="vc-badge-copy-link"
-                    label="Copy Badge Image Link"
-                    action={() => copyWithToast(badge.iconSrc!)}
-                />
+                <Menu.MenuItem id="vc-badge-copy-link" label="Copy Badge Image Link" action={() => copyWithToast(badge.iconSrc!)} />
             )}
         </Menu.Menu>
     );
@@ -130,7 +134,7 @@ export function BadgeContextMenu({ badge }: { badge: Omit<ProfileBadge, "id"> & 
 export default definePlugin({
     name: "BadgeAPI",
     description: "API to add badges to users",
-    authors: [Devs.Megu, Devs.Ven, Devs.TheSun],
+    authors: [Devs.Megu, Devs.Ven, Devs.TheSun, Devs.feelslove],
     required: true,
     patches: [
         {
@@ -150,7 +154,6 @@ export default definePlugin({
                     match: /(?<=fallbackIconSrc:.{0,50}?)children:(?=.{0,50}?(\i)\.id)/,
                     replace: "children:$1.component?$self.renderBadgeComponent({...$1}):"
                 },
-                // handle onClick and onContextMenu
                 {
                     match: /href:(\i)\.link/,
                     replace: "...$self.getBadgeMouseEventHandlers($1),$&"
@@ -166,13 +169,14 @@ export default definePlugin({
         }
     ],
 
-    // for access from the console or other plugins
     get DonorBadges() {
         return DonorBadges;
     },
-
     get EquicordDonorBadges() {
         return EquicordDonorBadges;
+    },
+    get KernixcordDonorBadges() {
+        return KernixcordDonorBadges;
     },
 
     toolboxActions: {
@@ -185,13 +189,12 @@ export default definePlugin({
             });
         }
     },
-
-    userProfileBadges: [ContributorBadge, EquicordContributorBadge, UserPluginContributorBadge],
+    userProfileBadges: [ContributorBadge, EquicordContributorBadge, KernixcordContributorBadge, EquicordDonorBadge, KernixcordDonorBadge],
 
     async start() {
         await loadAllBadges();
         clearInterval(intervalId);
-        intervalId = setInterval(loadAllBadges, 1000 * 60 * 30); // 30 minutes
+        intervalId = setInterval(loadAllBadges, 1000 * 60 * 30);
     },
 
     async stop() {
@@ -216,14 +219,11 @@ export default definePlugin({
 
     getBadgeMouseEventHandlers(badge: ProfileBadge & BadgeUserArgs) {
         const handlers = {} as Record<string, (e: React.MouseEvent) => void>;
-
-        if (!badge) return handlers; // sanity check
+        if (!badge) return handlers;
 
         const { onClick, onContextMenu } = badge;
-
         if (onClick) handlers.onClick = e => onClick(e, badge);
         if (onContextMenu) handlers.onContextMenu = e => onContextMenu(e, badge);
-
         return handlers;
     },
 
@@ -233,18 +233,11 @@ export default definePlugin({
             iconSrc: badge.badge,
             description: badge.tooltip,
             position: BadgePosition.START,
-            props: {
-                style: {
-                    borderRadius: "50%",
-                    transform: "scale(0.9)" // The image is a bit too big compared to default badges
-                }
-            },
+            props: { style: { borderRadius: "50%", transform: "scale(0.9)" } },
             onContextMenu(event, badge) {
                 ContextMenuApi.openContextMenu(event, () => <BadgeContextMenu badge={badge} />);
             },
-            onClick() {
-                return VencordDonorModal();
-            },
+            onClick: () => VencordDonorModal()
         } satisfies ProfileBadge));
     },
 
@@ -254,18 +247,26 @@ export default definePlugin({
             iconSrc: badge.badge,
             description: badge.tooltip,
             position: BadgePosition.START,
-            props: {
-                style: {
-                    borderRadius: "50%",
-                    transform: "scale(0.9)" // The image is a bit too big compared to default badges
-                }
-            },
+            props: { style: { borderRadius: "50%", transform: "scale(0.9)" } },
             onContextMenu(event, badge) {
                 ContextMenuApi.openContextMenu(event, () => <BadgeContextMenu badge={badge} />);
             },
             onClick() {
                 return badge.tooltip === "Equicord Translator" ? EquicordTranslatorModal() : EquicordDonorModal();
+            }
+        } satisfies ProfileBadge));
+    },
+
+    getKernixcordDonorBadges(userId: string) {
+        return KernixcordDonorBadges[userId]?.map(badge => ({
+            iconSrc: badge.badge,
+            description: badge.tooltip,
+            position: BadgePosition.START,
+            props: { style: { borderRadius: "50%", transform: "scale(0.9)" } },
+            onContextMenu(event, badge) {
+                ContextMenuApi.openContextMenu(event, () => <BadgeContextMenu badge={badge} />);
             },
+            onClick: () => KernixcordDonorModal()
         } satisfies ProfileBadge));
     }
 });

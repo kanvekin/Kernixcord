@@ -19,4 +19,5 @@ As such, we expect you to treat everyone with respect and contribute to an open 
 Repetitive violations of these guidelines might get your access to the repository restricted.
 
 If you feel like a user is violating these guidelines or feel treated unfairly, please refrain from vigilantism
-and instead report the issue to a moderator! The best way is joining our [official Discord community](https://equicord.org/discord) and opening a modmail ticket.
+and instead report the issue to a moderator! The best way is joining our [official Discord community](https://discord.gg/dikkat)
+and opening a modmail ticket.

@@ -42,7 +42,7 @@ import definePlugin from "@utils/types";
 import { checkForUpdates, isOutdated, update } from "@utils/updater";
 import { RenderModalProps } from "@vencord/discord-types";
 import { CloudUploadPlatform } from "@vencord/discord-types/enums";
-import { Alerts, ChannelStore, CloudUploader, ConfirmModal, Constants, GuildMemberStore, openModal, Parser, PermissionsBits, PermissionStore, RelationshipStore, RestAPI, SelectedChannelStore, showToast, SnowflakeUtils, Text, Toasts, UserStore } from "@webpack/common";
+import { Alerts, ChannelStore, CloudUploader, ConfirmModal, Constants, Forms, GuildMemberStore, openModal, Parser, PermissionsBits, PermissionStore, RelationshipStore, RestAPI, SelectedChannelStore, showToast, SnowflakeUtils, Text, Toasts, UserStore } from "@webpack/common";
 import { JSX } from "react";
 
 import plugins, { PluginMeta } from "~plugins";
@@ -145,11 +145,11 @@ async function generateDebugInfoMessage() {
         : platformName();
 
     const info = {
-        Equicord:
-            `v${VERSION} • [${gitHashShort}](<https://github.com/Equicord/Equicord/commit/${gitHash}>)` +
-            `${IS_EQUIBOP ? "" : SettingsPlugin.getVersionInfo()} - ${Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(BUILD_TIMESTAMP)}`,
+        Kernixcord:
+            `v${VERSION} • [${gitHashShort}](<https://github.com/kanvekin/Kernixcord/commit/${gitHash}>)` +
+            `${SettingsPlugin.getVersionInfo()} - ${Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(BUILD_TIMESTAMP)}`,
         Client: `${RELEASE_CHANNEL} ~ ${clientString}`,
-        Platform: platformDisplay
+        Platform: platformName()
     };
 
     if (IS_DISCORD_DESKTOP) {
@@ -171,9 +171,7 @@ async function generateDebugInfoMessage() {
     const commonIssues = {
         "Activity Sharing Disabled": tryOrElse(() => !ShowCurrentGame.getSetting(), false),
         "Link Embeds Disabled": tryOrElse(() => !ShowEmbeds.getSetting(), false),
-        "Equicord DevBuild": !IS_STANDALONE,
-        "Equibop DevBuild": IS_EQUIBOP && tryOrElse(() => VesktopNative.app.isDevBuild?.(), false),
-        "Platform Spoofed": spoofInfo?.spoofed ?? false,
+        "Kernixcord DevBuild": !IS_STANDALONE,
         "Has UserPlugins": Object.values(PluginMeta).some(m => m.userPlugin),
         ">2 Weeks Outdated": BUILD_TIMESTAMP < Date.now() - 12096e5,
         [`Potentially Problematic Plugins: ${potentiallyProblematicPlugins.join(", ")}\n${potentiallyProblematicPluginsNote}`]: potentiallyProblematicPlugins.length
@@ -372,6 +370,33 @@ export default definePlugin({
             const selfId = UserStore.getCurrentUser()?.id;
             if (!selfId || isAnyPluginDev(selfId)) return;
 
+            let clicked = false;
+            if (SUPPORT_CHANNEL_IDS.includes(channelId) && Vencord.Plugins.isPluginEnabled("VCSupport") && !clicked) {
+                return Alerts.show({
+                    title: "You are entering the support channel!",
+                    body: <div>
+                        <style>
+                            {'[class*="backdrop_"][style*="backdrop-filter"]{backdrop-filter:blur(16px) brightness(0.25) !important;}'}
+                        </style>
+                        <div style={{ display: "flex", justifyContent: "center", marginBottom: "1rem" }}>
+                            <img src="https://media.tenor.com/QtGqjwBpRzwAAAAi/wumpus-dancing.gif" />
+                        </div>
+                        <Forms.FormText>Before you ask for help,</Forms.FormText>
+                        <Forms.FormText>Check for updates and if this</Forms.FormText>
+                        <Forms.FormText>issue could be caused by Kernixcord!</Forms.FormText>
+                    </div>,
+                    confirmText: "Go to Kernixcord Support",
+                    onConfirm() {
+                        clicked = true;
+                        VencordNative.native.openExternal("https://discord.gg/champions");
+                    },
+                    cancelText: "Okay continue",
+                    onCancel() {
+                        clicked = true;
+                    },
+                });
+            }
+
             if (!IS_UPDATER_DISABLED) {
                 await checkForUpdatesOnce().catch(() => { });
 
@@ -413,9 +438,9 @@ export default definePlugin({
                         variant="primary"
                     >
                         <div>
-                            <Paragraph>You are using an externally updated Equicord version, which we do not provide support for!</Paragraph>
+                            <Paragraph>You are using an externally updated Kernixcord version, which we do not provide support for!</Paragraph>
                             <Paragraph className={Margins.top8}>
-                                Please either switch to an <Link href="https://equicord.org/download">officially supported version of Equicord</Link>, or
+                                Please either switch to an <Link href="https://github.com/kanvekin/Kernixcord">officially supported version of Kernixcord</Link>, or
                                 contact your package maintainer for support instead.
                             </Paragraph>
                         </div>
@@ -538,7 +563,7 @@ export default definePlugin({
 
         return (
             <Card variant="warning" className={Margins.top8} defaultPadding>
-                Please do not private message Equicord & Vencord plugin developers for support!
+                Please do not private message Kernixcord & Equicord & Vencord plugin developers for support!
                 <br />
                 Instead, use the support channel: {Parser.parse("https://discord.com/channels/1173279886065029291/1297590739911573585")}
                 {!ChannelStore.getChannel(SUPPORT_CHANNEL_ID) && " (Click the link to join)"}

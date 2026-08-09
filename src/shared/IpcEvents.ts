@@ -47,10 +47,11 @@ export const enum IpcEvents {
 
     OPEN_THEMES_FOLDER = "VencordOpenThemesFolder",
     OPEN_SETTINGS_FOLDER = "VencordOpenSettingsFolder",
+    OPEN_MESSAGE_SCRAPPER_WINDOW = "VencordOpenMessageScrapperWindow",
+    OPEN_USER_TOOLS_WINDOW = "VencordOpenUserToolsWindow",
     GET_RENDERER_CSS = "VencordGetRendererCss",
     RENDERER_CSS_UPDATE = "VencordRendererCssUpdate",
     PRELOAD_GET_RENDERER_JS = "VencordPreloadGetRendererJs",
-
     SET_TRAY_UPDATE_STATE = "VencordSetTrayUpdateState",
     TRAY_REPAIR = "VencordTrayRepair",
     TRAY_CHECK_UPDATES = "VencordTrayCheckUpdates",

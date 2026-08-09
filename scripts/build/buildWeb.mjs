@@ -34,7 +34,7 @@ const commonOptions = {
     entryPoints: ["browser/Vencord.ts"],
     format: "iife",
     globalName: "Vencord",
-    external: ["~plugins", "~git-hash", "/assets/*"],
+    external: ["~plugins", "~git-hash", "/assets/*", "plugins"],
     target: ["esnext"],
     plugins: [
         globPlugins("web"),

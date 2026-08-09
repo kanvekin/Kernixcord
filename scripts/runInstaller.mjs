@@ -25,9 +25,9 @@ import { Readable } from "stream";
 import { finished } from "stream/promises";
 import { fileURLToPath } from "url";
 
-const BASE_URL = "https://github.com/Equicord/Equilotl/releases/latest/download/";
-const INSTALLER_PATH_DARWIN = "Equilotl.app/Contents/MacOS/Equilotl";
-const INSTALLER_APP_DARWIN = "Equilotl.app";
+const BASE_URL = "https://github.com/kanvekin/Kernixe/releases/latest/download/";
+const INSTALLER_PATH_DARWIN = "Kernixe.app/Contents/MacOS/Kernixe";
+const INSTALLER_APP_DARWIN = "Kernixe.app";
 
 const BASE_DIR = join(dirname(fileURLToPath(import.meta.url)), "..");
 const FILE_DIR = join(BASE_DIR, "dist", "Installer");
@@ -36,18 +36,18 @@ const ETAG_FILE = join(FILE_DIR, "etag.txt");
 function getFilename() {
     switch (process.platform) {
         case "win32":
-            return "EquilotlCli.exe";
+            return "KernixeCli.exe";
         case "darwin":
             switch (process.arch) {
                 case "x64":
-                    return "Equilotl-darwin-x64.zip";
+                    return "Kernixe-darwin-x64.zip";
                 case "arm64":
-                    return "Equilotl-darwin-arm64.zip";
+                    return "Kernixe-darwin-arm64.zip";
                 default:
                     throw new Error("Unsupported macOS architecture: " + process.arch);
             }
         case "linux":
-            return "EquilotlCli-linux";
+            return "KernixeCli-linux";
         default:
             throw new Error("Unsupported platform: " + process.platform);
     }
@@ -73,7 +73,7 @@ async function ensureBinary() {
 
     const res = await fetch(BASE_URL + filename, {
         headers: {
-            "User-Agent": "Equicord (https://github.com/Equicord/Equicord)",
+            "User-Agent": "Kernixcord (https://github.com/kanvekin/Kernixcord)",
             "If-None-Match": etag
         }
     });

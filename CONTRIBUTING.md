@@ -1,3 +1,4 @@
+# Contributing to Kernixcord
 # Introduction
 
 > [!NOTE]
@@ -6,15 +7,16 @@
 > Your contribution must be majority human written! Some AI assistance like inline suggestions is acceptable, but "vibecoded" contributions are not welcome.
 > Also **do not** use AI to generate your pull request description, README.md or in communication. Ignoring this rule will lead to a permanent block.
 
-Equicord is a community project and welcomes any kind of contribution from anyone!
+Kernixcord is a community project and welcomes any kind of contribution from anyone!
 
-We have development documentation for new contributors, which can be found at <https://docs.equicord.org>.
+We have development documentation for new contributors, which can be found at https://wwww.discord.gg/.
 
 > [!IMPORTANT]
 > All contributions must follow our [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 ## How to contribute
 
+Contributions can be sent via discord requests.
 Contributions are submitted through pull requests. If you are new to Git or GitHub, we recommend reading [this guide](https://opensource.com/article/19/7/create-pull-request-github).
 
 Pull requests can be made either to the `main` or the `dev` branch. However, unless you're an advanced user, I recommend sticking to `main`.
@@ -44,9 +46,10 @@ Before starting your plugin:
 > [!WARNING]
 > Skipping these steps may result in your plugin being rejected, even if it is technically correct.
 
-## Plugin Rules
+## Improve Kernixcord itself
 
-To keep Equicord stable, secure and maintainable, all plugins must follow these rules:
+If you have any ideas on how to improve Kernixcord itself, or want to propose a new plugin API, feel free to open a feature request so we can discuss.
+## Plugin Rules
 
 1. No simple slash-command plugins (e.g. `/cat`). If applicable, create a [user-installable Discord app](https://discord.com/developers/docs/change-log#userinstallable-apps-preview) instead.
 2. No simple text replacement plugins (the built-in TextReplace plugin already covers this).
@@ -70,5 +73,5 @@ Bug fixes, refactors, and documentation improvements are also highly appreciated
 
 ## Helping the Community
 
-We have an open support channel in our [Discord community](https://equicord.org/discord).
+We have an open support channel in our [Discord community](https://discord.gg/).
 Helping out users there is always appreciated! The more, the merrier.

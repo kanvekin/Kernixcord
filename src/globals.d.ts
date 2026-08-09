@@ -50,6 +50,8 @@ declare global {
     export var VencordNative: typeof import("./VencordNative").default;
     export var Vencord: typeof import("./Vencord");
     export var VencordStyles: Map<string, Style>;
+    export var _resolveReady: (() => void) | undefined;
+    export var wreq: (id: PropertyKey) => any;
     export var appSettings: {
         set(setting: string, v: any): void;
     };

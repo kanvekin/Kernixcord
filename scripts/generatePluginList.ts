@@ -42,16 +42,14 @@ import { getEntryPoint, isPluginFile, parseDevs, parseEquicordDevs, parseFile, P
 
     const plugins = [] as PluginData[];
 
-    await Promise.all(
-        dirs.flatMap(dir =>
-            readdirSync(dir, { withFileTypes: true })
-                .filter(isPluginFile)
-                .map(async dirent => {
-                    const [data] = await parseFile(await getEntryPoint(dir, dirent));
-                    plugins.sort().push(data);
-                })
-        )
-    );
+    await Promise.all(["src/plugins", "src/plugins/_core", "src/equicordplugins", "src/kernixcordplugins"].flatMap(dir =>
+        readdirSync(dir, { withFileTypes: true })
+            .filter(isPluginFile)
+            .map(async dirent => {
+                const [data] = await parseFile(await getEntryPoint(dir, dirent));
+                plugins.sort().push(data);
+            })
+    ));
 
     const data = JSON.stringify(plugins);
 
