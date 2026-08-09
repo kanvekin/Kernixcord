@@ -41,40 +41,30 @@ function git(...args: string[]) {
 }
 
 async function getRepo() {
-    try {
-        const res = await git("remote", "get-url", "origin");
-        return res.stdout.trim()
-            .replace(/git@(.+):/, "https://$1/")
-            .replace(/\.git$/, "");
-    } catch (err: any) {
-        const error = err as { stderr?: string; stdout?: string; message?: string; code?: string; };
-        throw new Error(`Failed to get git remote: ${error.message || error.stderr || error.stdout || error.code || "Unknown error"}`);
-    }
+    const res = await git("remote", "get-url", "origin");
+    return res.stdout.trim()
+        .replace(/git@(.+):/, "https://$1/")
+        .replace(/\.git$/, "");
 }
 
 async function calculateGitChanges() {
-    try {
-        await git("fetch");
+    await git("fetch");
 
-        const branch = (await git("branch", "--show-current")).stdout.trim();
+    const branch = (await git("branch", "--show-current")).stdout.trim();
 
-        const existsOnOrigin = (await git("ls-remote", "origin", branch)).stdout.length > 0;
-        if (!existsOnOrigin) return [];
+    const existsOnOrigin = (await git("ls-remote", "origin", branch)).stdout.length > 0;
+    if (!existsOnOrigin) return [];
 
-        const res = await git("log", `HEAD...origin/${branch}`, "--pretty=format:%an/%h/%s");
+    const res = await git("log", `HEAD...origin/${branch}`, "--pretty=format:%an/%h/%s");
 
-        const commits = res.stdout.trim();
-        return commits ? commits.split("\n").map(line => {
-            const [author, hash, ...rest] = line.split("/");
-            return {
-                hash, author,
-                message: rest.join("/").split("\n")[0]
-            };
-        }) : [];
-    } catch (err: any) {
-        const error = err as { stderr?: string; stdout?: string; message?: string; code?: string; };
-        throw new Error(`Failed to calculate git changes: ${error.message || error.stderr || error.stdout || error.code || "Unknown error"}`);
-    }
+    const commits = res.stdout.trim();
+    return commits ? commits.split("\n").map(line => {
+        const [author, hash, ...rest] = line.split("/");
+        return {
+            hash, author,
+            message: rest.join("/").split("\n")[0]
+        };
+    }) : [];
 }
 
 async function pull() {
@@ -91,19 +81,6 @@ async function build() {
     if (IS_DEV) args.push("--dev");
 
     const res = await execFile(command, args, opts);
-
-    if (!res.stderr.includes("Build failed")) {
-        // After successful build, re-inject to update Discord with new files
-        console.log("[Kernixcord Updater] Build completed, re-injecting...");
-        try {
-            const injectArgs = isFlatpak ? ["--host", "node", "scripts/runInstaller.mjs", "--", "--install"] : ["scripts/runInstaller.mjs", "--", "--install"];
-            await execFile(isFlatpak ? "flatpak-spawn" : "node", injectArgs, opts);
-            console.log("[Kernixcord Updater] Re-injection completed successfully");
-        } catch (injectErr) {
-            console.error("[Kernixcord Updater] Re-injection failed:", injectErr);
-            // Don't fail the build if injection fails, user can manually inject
-        }
-    }
 
     return !res.stderr.includes("Build failed");
 }

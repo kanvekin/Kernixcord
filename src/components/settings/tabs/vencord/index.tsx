@@ -165,56 +165,32 @@ function KernixcordSettings() {
 
     const user = UserStore?.getCurrentUser();
 
-    // Check if stores are initialized to prevent crashes on first load
-    const isUserLoaded = user && UserStore;
-    const isGuildMemberStoreLoaded = GuildMemberStore;
-
-    // Memoize donor status checks to prevent unnecessary recalculations
-    const donorStatus = useMemo(() => {
-        if (!isUserLoaded || !isGuildMemberStoreLoaded) {
-            return { isDonor: false, isEquicord: false, isVencord: false, isKernixcord: false };
-        }
-        try {
-            return {
-                isDonor: isEquicordDonor(user?.id) || isVencordDonor(user?.id) || isKernixcordDonor(user?.id),
-                isEquicord: isEquicordDonor(user?.id),
-                isVencord: isVencordDonor(user?.id),
-                isKernixcord: isKernixcordDonor(user?.id)
-            };
-        } catch (e) {
-            console.warn("[Kernixcord] Error checking donor status:", e);
-            return { isDonor: false, isEquicord: false, isVencord: false, isKernixcord: false };
-        }
-    }, [isUserLoaded, isGuildMemberStoreLoaded, user?.id]);
-
-    const isContributor = useMemo(() => {
-        if (!isUserLoaded) return false;
-        try {
-            return isAnyPluginDev(user?.id);
-        } catch (e) {
-            console.warn("[Kernixcord] Error checking contributor status:", e);
-            return false;
-        }
-    }, [isUserLoaded, user?.id]);
-
     return (
         <SettingsTab>
-            {donorStatus.isDonor ? (
+            {(isEquicordDonor(user?.id) || isVencordDonor(user?.id) || isKernixcordDonor(user?.id)) ? (
                 <SpecialCard
                     title="Donations"
                     subtitle="Thank you for donating!"
                     description={
-                        donorStatus.isEquicord && donorStatus.isVencord && donorStatus.isKernixcord
-                            ? "All Vencord users can see your Vencord donor badge, and Kernixcord users can see your Kernixcord badge. To change your Vencord donor badge, contact @feelslove. For your Kernixcord donor badge, make a ticket in Kernixcord's server."
-                            : donorStatus.isVencord
-                                ? "All Vencord users can see your badge! You can manage your perks by messaging @feelslove"
-                                : "All Kernixcord users can see your badge! You can manage your perks by making a ticket in Kernixcord's server."
+                        isEquicordDonor(user?.id) && isVencordDonor(user?.id) && isKernixcordDonor(user?.id)
+                            ? "All Vencord users can see your Vencord donor badge, Equicord users can see your Equicord donor badge, and Kernixcord users can see your Kernixcord donor badge. To change your Vencord donor badge, contact @feelslove. For your Equicord donor badge, make a ticket in Equicord's server. For your Kernixcord donor badge, make a ticket in Kernixcord's server."
+                            : isEquicordDonor(user?.id) && isVencordDonor(user?.id)
+                                ? "All Vencord users can see your Vencord donor badge, and Equicord users can see your Equicord donor badge. To change your Vencord donor badge, contact @feelslove. For your Equicord donor badge, make a ticket in Equicord's server."
+                                : isEquicordDonor(user?.id) && isKernixcordDonor(user?.id)
+                                    ? "All Equicord users can see your Equicord donor badge, and Kernixcord users can see your Kernixcord donor badge. For your Equicord donor badge, make a ticket in Equicord's server. For your Kernixcord donor badge, make a ticket in Kernixcord's server."
+                                    : isVencordDonor(user?.id) && isKernixcordDonor(user?.id)
+                                        ? "All Vencord users can see your Vencord donor badge, and Kernixcord users can see your Kernixcord donor badge. To change your Vencord donor badge, contact @feelslove. For your Kernixcord donor badge, make a ticket in Kernixcord's server."
+                                        : isVencordDonor(user?.id)
+                                            ? "All Vencord users can see your badge! You can manage your perks by messaging @feelslove."
+                                            : isEquicordDonor(user?.id)
+                                                ? "All Equicord users can see your badge! You can manage your perks by making a ticket in Equicord's server."
+                                                : "All Kernixcord users can see your badge! You can manage your perks by making a ticket in Kernixcord's server."
                     }
                     cardImage={VENNIE_DONATOR_IMAGE}
                     backgroundImage={DONOR_BACKGROUND_IMAGE}
-                    backgroundColor="#c3a3ce"
+                    backgroundColor="#ED87A9"
                 >
-                    <DonateButtonComponent />
+                    <DonateButtonComponent donated={true} />
                 </SpecialCard>
             ) : (
                 <SpecialCard
@@ -227,7 +203,7 @@ function KernixcordSettings() {
                     <DonateButtonComponent />
                 </SpecialCard>
             )}
-            {isContributor && (
+            {isAnyPluginDev(user?.id) && (
                 <SpecialCard
                     title="Contributions"
                     subtitle="Thank you for contributing!"
@@ -294,7 +270,7 @@ function KernixcordSettings() {
 
             <Heading className={Margins.top20}>Client Settings</Heading>
             <Paragraph className={Margins.bottom16}>
-                Configure how Equicord behaves and integrates with Discord. These settings affect the Discord client's appearance and behavior.
+                Configure how Kernixcord behaves and integrates with Discord. These settings affect the Discord client's appearance and behavior.
             </Paragraph>
             <Notice.Info className={Margins.bottom20} style={{ width: "100%" }}>
                 You can customize where this settings section appears in Discord's settings menu by configuring the{" "}
@@ -332,38 +308,17 @@ function KernixcordSettings() {
 export default wrapTab(KernixcordSettings, "Kernixcord Settings");
 
 export function isEquicordDonor(userId: string): boolean {
-    if (!userId) return false;
-    try {
-        if (!BadgeAPI || typeof BadgeAPI.getEquicordDonorBadges !== "function") return false;
-        const donorBadges = BadgeAPI.getEquicordDonorBadges(userId);
-        return !!donorBadges;
-    } catch (e) {
-        console.warn("[Kernixcord] Error checking Equicord donor status:", e);
-        return false;
-    }
+    const donorBadges = BadgeAPI.getEquicordDonorBadges(userId);
+    return GuildMemberStore.getMember(GUILD_ID, userId)?.roles.includes(DONOR_ROLE_ID) || !!donorBadges;
 }
 
 export function isVencordDonor(userId: string): boolean {
-    if (!userId) return false;
-    try {
-        if (!BadgeAPI || typeof BadgeAPI.getDonorBadges !== "function") return false;
-        const donorBadges = BadgeAPI.getDonorBadges(userId);
-        return !!donorBadges;
-    } catch (e) {
-        console.warn("[Kernixcord] Error checking Vencord donor status:", e);
-        return false;
-    }
+    const donorBadges = BadgeAPI.getDonorBadges(userId);
+    return GuildMemberStore.getMember(VC_GUILD_ID, userId)?.roles.includes(VC_DONOR_ROLE_ID) || !!donorBadges;
 }
 
 export function isKernixcordDonor(userId: string): boolean {
-    if (!userId) return false;
-    try {
-        if (!BadgeAPI || typeof BadgeAPI.getKernixcordDonorBadges !== "function") return false;
-        const donorBadges = BadgeAPI.getKernixcordDonorBadges(userId);
-        return !!donorBadges?.length;
-    } catch (e) {
-        console.warn("[Kernixcord] Error checking Kernixcord donor status:", e);
-        return false;
-    }
+    const donorBadges = BadgeAPI.getKernixcordDonorBadges(userId);
+    return GuildMemberStore.getMember(KERNIXCORD_GUILD_ID, userId)?.roles.includes(KERNIXCORD_DONOR_ROLE_ID) || !!donorBadges;
 }
 
