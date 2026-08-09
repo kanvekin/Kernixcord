@@ -16,9 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import { PluginInfo } from "../../betterScreenshare.desktop/constants";
 import { createPluginStore, ProfilableInitializer, ProfilableStore, profileable, ProfileableProfile } from "../../philsPluginLibrary";
-import { PluginInfo } from "../constants";
-
 
 export interface ScreenshareProfile {
     width?: number,

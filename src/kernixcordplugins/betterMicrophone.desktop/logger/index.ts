@@ -18,6 +18,6 @@
 
 import { Logger } from "@utils/Logger";
 
-import { PluginInfo } from "../constants";
+import { PluginInfo } from "../../betterMicrophone.desktop/constants";
 
 export const logger = new Logger(PluginInfo.PLUGIN_NAME);

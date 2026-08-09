@@ -16,23 +16,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import type { CardProps } from "@components/Card";
+import { Settings } from "@api/Settings";
 import { Flex } from "@components/Flex";
 import { React } from "@webpack/common";
-import { Settings } from "Vencord";
 
-import { findChildren, SettingsModalCard, SettingsModalCardItem } from "../../philsPluginLibrary";
-import Plugin from "..";
-import { AudioSourceSelect, OpenScreenshareSettingsButton } from "../components";
-import { PluginInfo } from "../constants";
-import { screenshareStore } from "../stores";
+import { AudioSourceSelect, OpenScreenshareSettingsButton } from "../../betterScreenshare.desktop/components";
+import { PluginInfo } from "../../betterScreenshare.desktop/constants";
+import Plugin from "../../betterScreenshare.desktop/index";
+import { screenshareStore } from "../../betterScreenshare.desktop/stores";
+import { SettingsModalCard, SettingsModalCardItem } from "../../philsPluginLibrary";
 
 const ReplacedStreamSettings = () => {
     const { use } = screenshareStore;
 
     const { audioSourceEnabled, setAudioSourceEnabled } = use();
 
-    const cardProps: CardProps = { style: { border: "1px solid var(--primary-800)" } };
+    const cardProps = { style: { border: "1px solid var(--primary-800)" } };
 
     return (
         <div style={{ margin: "1em", display: "flex", flexDirection: "column", gap: "1em" }}>
@@ -59,42 +58,35 @@ const ReplacedStreamSettings = () => {
     );
 };
 
-export function replacedScreenshareModalSettingsContentType(oldType: (...args: any[]) => any, thisContext: any, functionArguments: any) {
-    const { hideDefaultSettings } = Settings.plugins[PluginInfo.PLUGIN_NAME];
-    const oldTypeResult = Reflect.apply(oldType, thisContext, functionArguments);
-
-    if (hideDefaultSettings)
-        oldTypeResult.props.children = oldTypeResult.props.children.filter(c => !c?.props?.selectedFPS);
-    oldTypeResult.props.children.push(<ReplacedStreamSettings />);
-
-    return oldTypeResult;
-}
-
-export function replacedScreenshareModalComponent(oldComponent: (...args: any[]) => any, thisContext: any, functionArguments: any) {
-    const oldComponentResult = Reflect.apply(oldComponent, thisContext, functionArguments);
-
-    const { children } = findChildren(oldComponentResult, (c: any) => (c as any)?.props?.selectedFPS !== undefined);
-    const oldContentType = children.type;
-
-    children.type = function () {
-        return replacedScreenshareModalSettingsContentType(oldContentType, this, arguments);
-    };
-
-    const { children: buttonsChildren } = findChildren(oldComponentResult, (c: any) => Boolean((c as any)?.props?.justify) && Array.isArray((c as any)?.props?.children) && (c as any).props.children.length === 3);
-    const [submitBtn] = buttonsChildren.props.children;
-
-    submitBtn.props.onClick = () => {
+export function replacedSubmitFunction(fn: (...args: unknown[]) => unknown) { // This is used to hook over the new OnSubmit function instead of implementing an OnClick function
+    return (...args: unknown[]) => {
         const { screensharePatcher, screenshareAudioPatcher } = Plugin;
+        const patchedArgs = args.map(arg => Plugin.patchStreamSubmitOptions(arg));
 
         if (screensharePatcher) {
             screensharePatcher.forceUpdateTransportationOptions();
-            if (screensharePatcher.connection?.connectionState === "CONNECTED")
+            if (screensharePatcher.hasActiveDesktopSource()) {
+                screensharePatcher.forceUpdateDesktopEncodingOptions();
                 screensharePatcher.forceUpdateDesktopSourceOptions();
+            }
         }
 
         if (screenshareAudioPatcher)
             screenshareAudioPatcher.forceUpdateTransportationOptions();
+        return fn(...patchedArgs);
     };
+}
 
-    return oldComponentResult;
+export function GoLivePanelWrapper({ children }: { children: React.JSX.Element; }) {
+    if (!children)
+        return;
+
+    const { hideDefaultSettings } = Settings.plugins[PluginInfo.PLUGIN_NAME];
+    if (hideDefaultSettings)
+        return <ReplacedStreamSettings />;
+
+    children.props.children.push(<ReplacedStreamSettings />);
+
+    return children;
+
 }

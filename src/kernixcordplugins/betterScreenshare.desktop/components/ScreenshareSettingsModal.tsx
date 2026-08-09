@@ -19,10 +19,12 @@
 import { Card } from "@components/Card";
 import { Flex } from "@components/Flex";
 import { Switch } from "@components/Switch";
-import { ModalSize, openModalLazy } from "@utils/modal";
-import { Button, Forms, React, Select, Slider, TextInput, useEffect, useState } from "@webpack/common";
+import { SelectOption } from "@vencord/discord-types";
+import { Button, Forms, openModalLazy, React, Select, Slider, TextInput, useEffect, useState } from "@webpack/common";
 
 import { MicrophoneSettingsModal } from "../../betterMicrophone.desktop/components";
+import { PluginInfo } from "../../betterScreenshare.desktop/constants";
+import { ScreenshareAudioProfile, ScreenshareAudioStore, ScreenshareProfile, ScreenshareStore } from "../../betterScreenshare.desktop/stores";
 import {
     MediaEngineStore,
     openURL,
@@ -37,12 +39,8 @@ import {
     validateTextInputNumber
 } from "../../philsPluginLibrary";
 import { Styles } from "../../philsPluginLibrary/styles";
-import { PluginInfo } from "../constants";
-import { ScreenshareAudioProfile, ScreenshareAudioStore, ScreenshareProfile, ScreenshareStore } from "../stores";
 
-type Option<T> = { label: string; value: T; };
-
-const simpleResolutions: readonly (Option<types.Resolution>)[] = [
+const simpleResolutions: readonly (SelectOption & { value: types.Resolution; })[] = [
     {
         label: "480p",
         value: {
@@ -80,7 +78,7 @@ const simpleResolutions: readonly (Option<types.Resolution>)[] = [
     }
 ] as const;
 
-const simpleVideoBitrates: readonly Option<number>[] = [
+const simpleVideoBitrates: readonly SelectOption[] = [
     {
         label: "Low",
         value: 2500
@@ -133,7 +131,6 @@ export const ScreenshareSettingsModal = (props: ScreenshareSettingsModalProps) =
         getCurrentProfile,
         getProfiles
     } = screenshareStore.use();
-
 
     const {
         name,
@@ -192,7 +189,10 @@ export const ScreenshareSettingsModal = (props: ScreenshareSettingsModalProps) =
                 <Select
                     isDisabled={!resolutionEnabled || isSaving}
                     options={simpleResolutions}
-                    select={(value: types.Resolution) => { setWidth(value.width); setHeight(value.height); }}
+                    select={(value: types.Resolution) => {
+                        setWidth(value.width);
+                        setHeight(value.height);
+                    }}
                     isSelected={(value: types.Resolution) => width === value.width && height === value.height}
                     serialize={() => ""} />
             </SettingsModalCardItem>
@@ -359,7 +359,7 @@ export const ScreenshareSettingsModal = (props: ScreenshareSettingsModalProps) =
                         });
                 }}
             >
-                {"Open"}
+                Open
             </Button>
         </SettingsModalCardItem>;
 
@@ -422,10 +422,9 @@ export const ScreenshareSettingsModal = (props: ScreenshareSettingsModalProps) =
             <Switch checked={simpleMode ?? false} disabled={isSaving} onChange={checked => setSimpleMode(checked)} />
         </Flex>;
 
-
     return (
         <SettingsModal
-            size={simpleMode ? ModalSize.DYNAMIC : ModalSize.LARGE}
+            size={simpleMode ? "lg" : "xl"}
             title="Screenshare Settings"
             closeButtonName="Apply"
             footerContent={
@@ -440,15 +439,17 @@ export const ScreenshareSettingsModal = (props: ScreenshareSettingsModalProps) =
             }}
         >
             {simpleMode
-                ? <div style={{ width: "55em" }}>
+                ? <div style={{ display: "inline-flex", flexDirection: "column", gap: "1em" }}>
                     <SettingsModalCardRow>
                         {settingsCardResolutionSimple}
                         {settingsCardFramerateSimple}
+                    </SettingsModalCardRow>
+                    <SettingsModalCardRow>
                         {settingsCardVideoBitrateSimple}
                         {screenshareAudioStore && settingsCardAudioSimple}
                     </SettingsModalCardRow>
                 </div>
-                : <>
+                : <div style={{ display: "inline-flex", flexDirection: "column", gap: "1em" }}>
                     <SettingsModalCardRow>
                         {settingsCardResolution}
                         {settingsCardFramerate}
@@ -464,7 +465,7 @@ export const ScreenshareSettingsModal = (props: ScreenshareSettingsModalProps) =
                         {settingsCardHdr}
                         {settingsCardProfiles}
                     </SettingsModalCardRow>
-                </>
+                </div>
             }
         </SettingsModal>
     );

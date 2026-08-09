@@ -24,8 +24,8 @@ export const PluginInfo = {
     PLUGIN_NAME: "BetterMicrophone",
     DESCRIPTION: "This plugin allows you to further customize your microphone.",
     AUTHOR: {
-        ...Devs.feelslove,
-        github: "https://github.com/kanvekin"
+        ...Devs.phil,
+        github: "https://github.com/philhk"
     },
     CONTRIBUTORS: {}
 } as const satisfies types.PluginInfo;

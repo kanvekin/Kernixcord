@@ -1,123 +1,136 @@
-/*
- * Vencord, a Discord client mod
- * Copyright (c) 2025 Vendicated and contributors
- * SPDX-License-Identifier: GPL-3.0-or-later
- */
+import ErrorBoundary from "@components/ErrorBoundary";
+import definePlugin from "@utils/types";
+import { findByProps, findComponentByCodeLazy } from "@webpack";
 
-import { Devs } from "@utils/constants";
-import definePlugin from "@utils/types"; // Função para registrar o plugin no Vencord
-import { findByProps, findComponentByCodeLazy } from "@webpack"; // Helpers para buscar módulos internos
-import { React } from "@webpack/common"; // React usado para criar componentes
+const Button = findComponentByCodeLazy(".GREEN,positionKeyStemOverride:");
+let enabled = false;
+let originalSend: any;
 
-let originalVoiceStateUpdate: any; // Guarda o método original de voiceStateUpdate
-let fakeDeafenEnabled = false; // Flag que indica se o “fake deafen” está ativo
+function refresh_voice_state(enabled: boolean) {
+    const ChannelStore = findByProps("getChannel", "getDMFromUserId");
+    const SelectedChannelStore = findByProps("getVoiceChannelId");
+    const wsModule = findByProps("getSocket");
+    const MediaEngineStore = findByProps("isDeaf", "isMute");
+    let caca = 0;
 
-// Componente Button genérico obtido via busca de código
-const Button = findComponentByCodeLazy(".NONE,disabled:", ".PANEL_BUTTON");
+    if (!wsModule) {
+        console.log("[FakeDeafen] WebSocket Gateway not found");
+        caca += 1;
+    }
+    if (!SelectedChannelStore) {
+        console.log("[FakeDeafen] SelectedChannelStore not found");
+        caca += 1;
+    }
+    if (caca > 0) return;
+    
+    const socket = wsModule.getSocket();
+    const channelId = SelectedChannelStore.getVoiceChannelId();
+    const channel = channelId ? ChannelStore?.getChannel(channelId) : null;
+    
+    if (socket && channelId) {
+        try {
+            // op code 4 = voiceStateUpdate
+            socket.send(4, {
+                guild_id: channel?.guild_id ?? null,
+                channel_id: channelId,
+                self_mute: enabled || (MediaEngineStore?.isMute() ?? false),
+                self_deaf: enabled || (MediaEngineStore?.isDeaf() ?? false),
+                self_video: false,
+                flags: 0
+            });
+        } catch (error) {
+            console.error("[FakeDeafen] failed to update voice state:", error);
+        }
+    }
+}
 
-/** Ícone que muda de cor quando o fake deafen está ativado/desativado */
-function FakeDeafenIcon() {
+function fd_icon() {
+    const iconColor = enabled ? "#ed4245" : "currentColor";
+    
     return (
-        <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-            {/* Chapéu */}
-            <rect x="6" y="8" width="20" height="4" rx="2" fill={fakeDeafenEnabled ? "#fff" : "#888"} />
-            <rect x="11" y="3" width="10" height="8" rx="3" fill={fakeDeafenEnabled ? "#fff" : "#888"} />
-            {/* Óculos */}
-            <circle cx="10" cy="21" r="4" stroke={fakeDeafenEnabled ? "#fff" : "#888"} strokeWidth="2" fill="none" />
-            <circle cx="22" cy="21" r="4" stroke={fakeDeafenEnabled ? "#fff" : "#888"} strokeWidth="2" fill="none" />
-            {/* Ponte dos óculos */}
-            <path d="M14 21c1 1 3 1 4 0" stroke={fakeDeafenEnabled ? "#fff" : "#888"} strokeWidth="2" strokeLinecap="round" />
+        <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
+            <rect x="6" y="8" width="20" height="4" rx="2" fill={iconColor}/>
+            <rect x="11" y="3" width="10" height="8" rx="3" fill={iconColor}/>
+            {enabled ? (
+                <>
+                    <line x1="7" y1="18" x2="13" y2="24" stroke={iconColor} strokeWidth="2"/>
+                    <line x1="13" y1="18" x2="7" y2="24" stroke={iconColor} strokeWidth="2"/>
+                    <line x1="19" y1="18" x2="25" y2="24" stroke={iconColor} strokeWidth="2"/>
+                    <line x1="25" y1="18" x2="19" y2="24" stroke={iconColor} strokeWidth="2"/>
+                    <path d="M14 23c1-1 3-1 4 0" stroke={iconColor} strokeWidth="2" strokeLinecap="round"/>
+                </>
+            ) : (
+                <>
+                    <circle cx="10" cy="21" r="4" stroke={iconColor} strokeWidth="2" fill="none"/>
+                    <circle cx="22" cy="21" r="4" stroke={iconColor} strokeWidth="2" fill="none"/>
+                    <path d="M14 21c1 1 3 1 4 0" stroke={iconColor} strokeWidth="2" strokeLinecap="round"/>
+                </>
+            )}
         </svg>
     );
 }
 
-/** Componente de botão que ativa/desativa o fake deafen */
-function FakeDeafenButton() {
+function fd_button(props: { nameplate?: any; }) {
     return (
         <Button
-            tooltipText={fakeDeafenEnabled ? "Disable Fake Deafen" : "Enable Fake Deafen"}
-            icon={FakeDeafenIcon}
+            tooltipText={enabled ? "Disable Fake Deafen" : "Enable Fake Deafen"}
+            icon={fd_icon}
             role="switch"
-            aria-checked={fakeDeafenEnabled}
-            redGlow={fakeDeafenEnabled}
+            aria-checked={enabled}
+            redGlow={enabled}
+            plated={props?.nameplate != null}
             onClick={() => {
-                // Inverte o estado
-                fakeDeafenEnabled = !fakeDeafenEnabled;
-
-                // Obtém stores necessários
-                const ChannelStore = findByProps("getChannel", "getDMFromUserId");
-                const SelectedChannelStore = findByProps("getVoiceChannelId");
-                const GatewayConnection = findByProps("voiceStateUpdate", "voiceServerPing");
-                const MediaEngineStore = findByProps("isDeaf", "isMute");
-
-                if (ChannelStore && SelectedChannelStore && GatewayConnection && typeof GatewayConnection.voiceStateUpdate === "function") {
-                    const channelId = SelectedChannelStore.getVoiceChannelId?.();
-                    const channel = channelId ? ChannelStore.getChannel?.(channelId) : null;
-
-                    if (channel) {
-                        if (fakeDeafenEnabled) {
-                            // Ao ativar, força mute+deaf falsos
-                            GatewayConnection.voiceStateUpdate({
-                                channelId: channel.id,
-                                guildId: channel.guild_id,
-                                selfMute: true,
-                                selfDeaf: true
-                            });
-                        } else {
-                            // Ao desativar, restaura estado real do usuário
-                            const selfMute = MediaEngineStore?.isMute?.() ?? false;
-                            const selfDeaf = MediaEngineStore?.isDeaf?.() ?? false;
-                            GatewayConnection.voiceStateUpdate({
-                                channelId: channel.id,
-                                guildId: channel.guild_id,
-                                selfMute,
-                                selfDeaf
-                            });
-                        }
-                    }
-                }
+                enabled = !enabled;
+                refresh_voice_state(enabled);
             }}
         />
     );
 }
 
-// Registro do plugin
 export default definePlugin({
     name: "FakeDeafen",
-    description: "Sahte sağırmı çok açıklamaya gerek yok aç ve dene.",
-    authors: [Devs.feelslove],
+    description: "Fake deafen yourself",
+    authors: [{ name: "hyyven", id: 449282863582412850n }],
+
+    start() {
+        const wsModule = findByProps("getSocket");
+        if (!wsModule) return;
+        const socket = wsModule.getSocket();
+        if (!socket) return;
+        
+        // default send function
+        originalSend = socket.send;
+        
+        // modify send function 
+        socket.send = function (op: number, data: any, ...args: any[]) {
+            // op code 4 = voiceStateUpdate don't ask me why
+            if (op === 4 && enabled && data) {
+                data.self_mute = true;
+                data.self_deaf = true;
+            }
+            return originalSend.apply(this, [op, data, ...args]);
+        };
+    },
+
+    stop() {
+        const wsModule = findByProps("getSocket");
+        if (wsModule) {
+            const socket = wsModule.getSocket();
+            if (socket && originalSend) {
+                socket.send = originalSend;
+            }
+        }
+    },
+
     patches: [
         {
-            // Injeta o botão na UI de “falando enquanto está mudo”
-            find: "#{intl::ACCOUNT_SPEAKING_WHILE_MUTED}",
+            find: "#{intl::USER_PROFILE_ACCOUNT_POPOUT_BUTTON_A11Y_LABEL}",
             replacement: {
-                match: /className:\i\.buttons,.{0,50}children:\[/,
-                replace: "$&$self.FakeDeafenButton(),"
+                match: /children:\[(?=.{0,25}?accountContainerRef)/,
+                replace: "children:[$self.fd_button(arguments[0]),"
             }
         }
     ],
-    FakeDeafenButton, // Expõe o componente para patch
-    start() {
-        // Ao iniciar, sobrescreve voiceStateUpdate para sempre aplicar fakeDeafenEnabled
-        const GatewayConnection = findByProps("voiceStateUpdate", "voiceServerPing");
-        if (!GatewayConnection || typeof GatewayConnection.voiceStateUpdate !== "function") {
-            console.warn("[FakeDeafen] GatewayConnection.voiceStateUpdate não encontrado");
-        } else {
-            originalVoiceStateUpdate = GatewayConnection.voiceStateUpdate;
-            GatewayConnection.voiceStateUpdate = function (args) {
-                if (fakeDeafenEnabled && args && typeof args === "object") {
-                    args.selfMute = true;
-                    args.selfDeaf = true;
-                }
-                return originalVoiceStateUpdate.apply(this, arguments);
-            };
-        }
-    },
-    stop() {
-        // Ao parar, restaura o método original
-        const GatewayConnection = findByProps("voiceStateUpdate", "voiceServerPing");
-        if (GatewayConnection && originalVoiceStateUpdate) {
-            GatewayConnection.voiceStateUpdate = originalVoiceStateUpdate;
-        }
-    }
+
+    fd_button: ErrorBoundary.wrap(fd_button, { noop: true }),
 });
