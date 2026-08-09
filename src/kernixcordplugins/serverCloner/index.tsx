@@ -4,6 +4,7 @@ import definePlugin from "@utils/types";
 import { Guild } from "@vencord/discord-types";
 import { Menu, React } from "@webpack/common";
 import { DataStore } from "@api/index";
+import { Devs } from "@utils/constants";
 
 import "./styles.css";
 
