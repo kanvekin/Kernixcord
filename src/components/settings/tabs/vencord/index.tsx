@@ -22,17 +22,15 @@ import { QuickAction, QuickActionCard } from "@components/settings/QuickAction";
 import { SpecialCard } from "@components/settings/SpecialCard";
 import BadgeAPI from "@plugins/_api/badges";
 import { gitRemote } from "@shared/vencordUserAgent";
-import { DONOR_ROLE_ID, GUILD_ID, KERNIXCORD_DONOR_ROLE_ID, KERNIXCORD_GUILD_ID, VC_DONOR_ROLE_ID, VC_GUILD_ID, IS_MAC, IS_WINDOWS } from "@utils/constants";
+import { DONOR_ROLE_ID, GUILD_ID, IS_WINDOWS, KERNIXCORD_DONOR_ROLE_ID, KERNIXCORD_GUILD_ID, VC_DONOR_ROLE_ID, VC_GUILD_ID } from "@utils/constants";
 import { Margins } from "@utils/margins";
 import { isAnyPluginDev } from "@utils/misc";
 import { relaunch } from "@utils/native";
 import { Alerts, GuildMemberStore, React, useMemo, UserStore } from "@webpack/common";
 
-import { DonateButton, InviteButton } from "@components/settings/DonateButton";
 import { DonateButtonComponent } from "./DonateButton";
 import { MacOSVibrancySettings } from "./MacVibrancySettings";
-import { NotificationSection, openNotificationSettingsModal } from "./NotificationSettings";
-import { Flex } from "@components/Flex";
+import { NotificationSection } from "./NotificationSettings";
 import { WindowsMaterialSettings } from "./WindowsMaterialSettings";
 
 const DEFAULT_DONATE_IMAGE = "https://cdn.discordapp.com/emojis/1026533090627174460.png";
@@ -288,19 +286,7 @@ function KernixcordSettings() {
             <MacOSVibrancySettings />
             <WindowsMaterialSettings />
 
-            <section
-                className={Margins.top16}
-                title="Kernixcord Notifications"
-            >
-                <Flex>
-                    <Button onClick={openNotificationSettingsModal}>
-                        Notification Settings
-                    </Button>
-                    <Button onClick={openNotificationLogModal} style={{ marginLeft: 16 }}>
-                        View Notification Log
-                    </Button>
-                </Flex>
-            </section>
+            <NotificationSection />
         </SettingsTab>
     );
 }
