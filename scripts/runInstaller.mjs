@@ -82,8 +82,9 @@ async function ensureBinary() {
         console.log("Up to date, not redownloading!");
         return outputFile;
     }
-    if (!res.ok)
-        throw new Error(`Failed to download installer: ${res.status} ${res.statusText}`);
+    if (!res.ok) {
+        throw new Error(`Failed to download installer: ${res.status} ${res.statusText}. You can manually download from https://github.com/kanvekin/Kernixe/releases/latest`);
+    }
 
     writeFileSync(ETAG_FILE, res.headers.get("etag"));
 
