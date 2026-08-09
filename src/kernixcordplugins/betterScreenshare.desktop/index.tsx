@@ -98,6 +98,8 @@ const quickResolutions = [
 const quickFramerates = [15, 30, 60, 75, 120, 144, 165, 240] as const;
 const quickBitrates = [2500, 5000, 7500, 10000] as const;
 
+let pluginRef: any;
+
 function isStreamQualityOptions(opts: unknown): opts is StreamQualityOptions {
     return typeof opts === "object" && opts !== null && !Array.isArray(opts);
 }
@@ -118,7 +120,7 @@ function screenshareSettingsButton() {
 }
 
 function refreshActiveScreenshareOptions() {
-    const plugin = BetterScreenshare;
+    const plugin = pluginRef;
     const { screensharePatcher, screenshareAudioPatcher } = plugin;
 
     if (screensharePatcher) {
@@ -597,7 +599,7 @@ function patchChannelRTCStore() {
     };
 }
 
-const BetterScreenshare = definePlugin({
+export default definePlugin({
     name: "BetterScreenshare",
     description: "This plugin allows you to further customize your screen sharing.",
     authors: [Devs.feelslove],
@@ -660,6 +662,7 @@ const BetterScreenshare = definePlugin({
         "stream-options": screenshareContextMenuPatch,
     },
     start(): void {
+        pluginRef = this;
         initScreenshareStore();
         initScreenshareAudioStore();
         this.unpatchChannelRTCStore?.();
@@ -741,6 +744,7 @@ const BetterScreenshare = definePlugin({
         Emitter.removeAllListeners(PluginInfo.PLUGIN_NAME);
         this.qualityObserver?.disconnect();
         if (this.updateTimeout) clearTimeout(this.updateTimeout);
+        pluginRef = undefined;
     },
     toolboxActions: {
         "Open Screenshare Settings": openScreenshareModal
@@ -753,5 +757,3 @@ const BetterScreenshare = definePlugin({
     patchStreamSubmitOptions,
     screenshareSettingsButton
 });
-
-export default BetterScreenshare;

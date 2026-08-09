@@ -1815,7 +1815,7 @@ function ClientDiagnosticsPage() {
 const DiagnosticsPageWrapped = ErrorBoundary.wrap(ClientDiagnosticsPage, { noop: true });
 
 export default definePlugin({
-    name: PLUGIN_NAME,
+    name: "Client diagnostics",
     description: "Profiles plugin callback time, heap deltas, and active resources to find laggy plugins.",
     authors: [Devs.feelslove],
     tags: ["Developers", "Utility"],
