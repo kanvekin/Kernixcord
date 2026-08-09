@@ -57,7 +57,16 @@ export function initStyles() {
     const vesktopCssNode = (IS_VESKTOP || IS_EQUIBOP) ? createAndAppendStyle("vesktop-css-core", coreStyleRootNode) : null;
     createAndAppendStyle("vencord-margins", coreStyleRootNode).textContent = generateMarginCss();
 
-    VencordNative.native.getRendererCss().then(css => rendererCssNode.textContent = css);
+    // Add error handling for CSS loading
+    VencordNative.native.getRendererCss().then(css => {
+        rendererCssNode.textContent = css;
+        console.log("[Kernixcord] Renderer CSS loaded successfully");
+    }).catch(err => {
+        console.error("[Kernixcord] Failed to load renderer CSS:", err);
+        // Fallback basic CSS to prevent complete UI breakage
+        rendererCssNode.textContent = "/* Fallback CSS due to loading error */";
+    });
+
     if (IS_DEV) {
         VencordNative.native.onRendererCssUpdate(newCss => {
             rendererCssNode.textContent = newCss;
@@ -65,7 +74,12 @@ export function initStyles() {
     }
 
     if (IS_VESKTOP && VesktopNative.app.getRendererCss || IS_EQUIBOP && VesktopNative.app.getRendererCss) {
-        VesktopNative.app.getRendererCss().then(css => vesktopCssNode!.textContent = css);
+        VesktopNative.app.getRendererCss().then(css => {
+            vesktopCssNode!.textContent = css;
+            console.log("[Kernixcord] Vesktop CSS loaded successfully");
+        }).catch(err => {
+            console.error("[Kernixcord] Failed to load Vesktop CSS:", err);
+        });
         VesktopNative.app.onRendererCssUpdate(newCss => {
             vesktopCssNode!.textContent = newCss;
         });
@@ -77,12 +91,26 @@ export function initStyles() {
             .map(([k, v]) => `--${k}: ${v};`)
             .join("");
         osValuesNode.textContent = `:root{${variables}}`;
+        console.log("[Kernixcord] System theme values loaded");
+    }).catch(err => {
+        console.error("[Kernixcord] Failed to load system theme values:", err);
+        // Fallback basic theme values
+        osValuesNode.textContent = ":root{--background-primary: #313338;--background-secondary: #2b2d31;}";
     });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
     document.documentElement.append(vencordRootNode);
+    console.log("[Kernixcord] Vencord root node appended to DOM");
 }, { once: true });
+
+// Fallback: Ensure root node is appended even if DOMContentLoaded already fired
+if (document.readyState === "complete" || document.readyState === "interactive") {
+    if (!document.documentElement.contains(vencordRootNode)) {
+        document.documentElement.append(vencordRootNode);
+        console.log("[Kernixcord] Vencord root node appended (fallback)");
+    }
+}
 
 export function requireStyle(name: string) {
     const style = styleMap.get(name);
