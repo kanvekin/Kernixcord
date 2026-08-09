@@ -5,7 +5,7 @@
  */
 
 import { app, BrowserWindow, nativeImage, session, shell } from "electron";
-import illegalcordIcon from "file://../../../browser/Illegalcord.png?base64";
+import kernixcordIcon from "file://../../../browser/icon.png?base64";
 import { join } from "path";
 
 export interface NativeResult {
@@ -34,7 +34,7 @@ const DISCORD_ATTACHMENT_HOSTS = new Set(["cdn.discordapp.com", "media.discordap
 const EXTERNAL_HOSTS = new Set(["discord.com", "ptb.discord.com", "canary.discord.com", "support.discord.com", "discord.gg"]);
 const PROFILE_ID_RE = /^[a-z0-9_-]{1,32}$/i;
 const DISCORD_USER_ID_RE = /^\d{17,20}$/;
-const ILLEGALCORD_ICON = nativeImage.createFromDataURL(`data:image/png;base64,${illegalcordIcon}`);
+const kernixcord_ICON = nativeImage.createFromDataURL(`data:image/png;base64,${kernixcordIcon}`);
 const openWindows = new Map<string, {
     ses: Electron.Session;
     win: BrowserWindow;
@@ -279,7 +279,7 @@ export async function openInstance(
     }
 
     try {
-        const savedPartition = `persist:illegalcord-mi-${profileId}`;
+        const savedPartition = `persist:kernixcord-mi-${profileId}`;
         if (blockExternalTokenAccess) {
             const savedSes = session.fromPartition(savedPartition, { cache: true });
             await savedSes.clearStorageData();
@@ -289,7 +289,7 @@ export async function openInstance(
 
         const partition = saveSession
             ? savedPartition
-            : `illegalcord-mi-${profileId}-${Date.now()}`;
+            : `kernixcord-mi-${profileId}-${Date.now()}`;
         const ses = session.fromPartition(partition, { cache: !blockExternalTokenAccess });
         configureSession(partition, ses);
 
@@ -302,7 +302,7 @@ export async function openInstance(
             autoHideMenuBar: true,
             backgroundColor: "#313338",
             darkTheme: true,
-            icon: mode === "detached" ? ILLEGALCORD_ICON : undefined,
+            icon: mode === "detached" ? kernixcord_ICON : undefined,
             show: false,
             webPreferences: {
                 preload: join(__dirname, "preload.js"),
@@ -432,7 +432,7 @@ export async function clearSavedSession(
     }
 
     try {
-        const partition = `persist:illegalcord-mi-${profileId}`;
+        const partition = `persist:kernixcord-mi-${profileId}`;
         const ses = session.fromPartition(partition, { cache: true });
 
         await ses.clearStorageData();

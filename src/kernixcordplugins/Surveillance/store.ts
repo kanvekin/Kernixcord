@@ -9,7 +9,7 @@ import { Logger } from "@utils/Logger";
 
 import type { SurveillanceEvent, SurveillanceScope } from "./types";
 
-const STORE_KEY = "Illegalcord_Surveillance_events";
+const STORE_KEY = "kernixcord_Surveillance_events";
 const MIN_EVENTS = 50;
 const LOAD_SAVE_DELAY = 3_000;
 const SAVE_DELAY = 750;

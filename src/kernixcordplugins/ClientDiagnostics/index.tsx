@@ -105,7 +105,7 @@ interface ImpactAnalysisItem {
 }
 
 const PLUGIN_NAME = "Client diagnostics";
-const ENTRY_KEY = "illegalcord_client_diagnostics";
+const ENTRY_KEY = "kernixcord_client_diagnostics";
 const SETTINGS_KEYS: SettingKey[] = ["sortBy", "showDisabled", "showApiPlugins", "refreshMs"];
 const REFRESH_SETTING_KEYS: SettingKey[] = ["refreshMs"];
 const MONITOR_SETTING_KEYS: SettingKey[] = ["showDisabled", "showApiPlugins", "refreshMs"];
@@ -1467,7 +1467,7 @@ function ImpactAnalysisPage() {
                 <div>
                     <BaseText tag="h2" size="xl" weight="semibold">Impact analysis</BaseText>
                     <BaseText size="sm" color="text-muted">
-                        This page interprets the metrics and flags plugins that may make Illegalcord lag.
+                        This page interprets the metrics and flags plugins that may make kernixcord lag.
                     </BaseText>
                 </div>
                 <div className={cl("actions")}>
@@ -1745,7 +1745,7 @@ function GuidePage() {
                     Client Diagnostics helps find plugins that may cause lag, freezes, or extra memory usage. It measures time spent inside plugin functions, JavaScript memory growth, and resources that remain active.
                 </BaseText>
                 <BaseText size="sm" color="text-muted">
-                    The numbers are samples collected while you use Illegalcord. If a plugin is not used during collection, it may look light even if it does more work in other situations.
+                    The numbers are samples collected while you use kernixcord. If a plugin is not used during collection, it may look light even if it does more work in other situations.
                 </BaseText>
             </div>
 

@@ -424,7 +424,7 @@ function MultiInstanceModal({ rootProps }: { rootProps: RenderModalProps; }) {
                 />
                 <Menu.MenuItem
                     id="multi-instance-open-detached"
-                    label="Open separate Illegalcord window"
+                    label="Open separate kernixcord window"
                     disabled={!!status || isBusy}
                     action={() => void openInstance(profile, "detached")}
                 />
@@ -523,8 +523,8 @@ function MultiInstanceModal({ rootProps }: { rootProps: RenderModalProps; }) {
                     <div className="vc-multi-instance-mode-card">
                         <div className="vc-multi-instance-mode-icon"><MultiInstanceIcon /></div>
                         <div className="vc-multi-instance-mode-copy">
-                            <strong>Separate Illegalcord instance</strong>
-                            <span>Gets its own taskbar identity and the Illegalcord app icon.</span>
+                            <strong>Separate kernixcord instance</strong>
+                            <span>Gets its own taskbar identity and the kernixcord app icon.</span>
                         </div>
                     </div>
                 </div>
@@ -668,7 +668,7 @@ const MultiInstanceButtonWithBoundary = ErrorBoundary.wrap(MultiInstanceButton, 
 
 export default definePlugin({
     name: "MultiInstance",
-    description: "Opens extra Illegalcord windows with separate Discord sessions.",
+    description: "Opens extra kernixcord windows with separate Discord sessions.",
     authors: [Devs.feelslove],
     dependencies: ["HeaderBarAPI"],
     enabledByDefault: true,

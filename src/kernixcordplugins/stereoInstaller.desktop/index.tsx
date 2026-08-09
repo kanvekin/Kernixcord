@@ -21,7 +21,7 @@ import type { ActionInfo, InstallInfo, NativeResult } from "./native";
 import { Devs } from "@utils/constants";
 
 const Native = VencordNative.pluginHelpers.StereoInstaller as PluginNative<typeof import("./native")>;
-const SETTINGS_ENTRY_KEY = "illegalcord_stereo_installer";
+const SETTINGS_ENTRY_KEY = "kernixcord_stereo_installer";
 const LOG_RETENTION_RESTARTS = 5;
 const DISCORD_AUDIO_COLLECTIVE_SOURCE_URL = "https://github.com/ProdHallow/Discord-Stereo-Windows-MacOS-Linux";
 const VOICE_PLAYGROUND_SOURCE_URL = "https://codeberg.org/UnpackedX/Discord-Experimental-Subsystem";

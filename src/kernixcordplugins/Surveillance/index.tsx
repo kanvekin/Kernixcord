@@ -20,7 +20,7 @@ import { recordEvent, trimEvents } from "./store";
 import type { MessageSnapshot, SurveillanceEvent, SurveillanceEventType, SurveillanceScope, VoiceParticipant, VoiceState, VoiceStateFlag } from "./types";
 import { Devs } from "@utils/constants";
 
-const SETTINGS_ENTRY_KEY = "illegalcord_surveillance";
+const SETTINGS_ENTRY_KEY = "kernixcord_surveillance";
 const NOTIFICATION_COLOR = "#5865f2";
 const MESSAGE_PREVIEW_LIMIT = 220;
 const MESSAGE_CACHE_LIMIT = 1000;

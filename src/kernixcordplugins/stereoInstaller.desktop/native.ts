@@ -18,7 +18,7 @@ const APP_NAME = "StereoInstaller";
 const DATA_DIR_NAME = "DiscordStereoHubSimple";
 const MAX_DOWNLOAD_BYTES = 160 * 1024 * 1024;
 const MAX_VISIBLE_LOG_LINES = 500;
-const SOURCE_DISCORD_VOICE_DIR = "C:/Users/Hisako/Documents/Illegalcord/src/userplugins/stereoInstaller.desktop/StereoMethods/Discord-Voice";
+const SOURCE_DISCORD_VOICE_DIR = "C:/Users/Hisako/Documents/kernixcord/src/userplugins/stereoInstaller.desktop/StereoMethods/Discord-Voice";
 const PATCHED_WINDOWS_GITHUB_CONTENTS_API = "https://api.github.com/repos/ProdHallow/Discord-Stereo-Windows-MacOS-Linux/contents/Updates%2FNodes%2FPatched%20Nodes%20%28for%20Installer%29%2FWindows";
 const PATCHED_LINUX_GITHUB_CONTENTS_API = "https://api.github.com/repos/ProdHallow/Discord-Stereo-Windows-MacOS-Linux/contents/Updates%2FNodes%2FPatched%20Nodes%20%28for%20Installer%29%2FLinux";
 
@@ -1230,14 +1230,14 @@ async function scheduleWorker(actionName: "Patch" | "Revert", sourceDir: string,
         await startWindowsWorker(launcherScript, taskName || "StereoInstaller", log);
     } else {
         const child = spawn(workerExecutable, [workerScript, configPath], {
-        detached: true,
-        stdio: "ignore",
-        windowsHide: true,
-        env: {
-            ...process.env,
-            ELECTRON_RUN_AS_NODE: "1"
-        }
-    });
+            detached: true,
+            stdio: "ignore",
+            windowsHide: true,
+            env: {
+                ...process.env,
+                ELECTRON_RUN_AS_NODE: "1"
+            }
+        });
 
         child.once("error", (error: Error) => log.fail(`Worker failed to start: ${errorMessage(error)}`));
         child.unref();
