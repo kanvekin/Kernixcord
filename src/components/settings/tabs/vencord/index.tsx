@@ -332,10 +332,10 @@ function KernixcordSettings() {
 export default wrapTab(KernixcordSettings, "Kernixcord Settings");
 
 export function isEquicordDonor(userId: string): boolean {
-    if (!GuildMemberStore || !userId) return false;
+    if (!userId) return false;
     try {
         const donorBadges = BadgeAPI.getEquicordDonorBadges(userId);
-        return GuildMemberStore.getMember(GUILD_ID, userId)?.roles.includes(DONOR_ROLE_ID) || !!donorBadges;
+        return !!donorBadges;
     } catch (e) {
         console.warn("[Kernixcord] Error checking Equicord donor status:", e);
         return false;
@@ -343,10 +343,10 @@ export function isEquicordDonor(userId: string): boolean {
 }
 
 export function isVencordDonor(userId: string): boolean {
-    if (!GuildMemberStore || !userId) return false;
+    if (!userId) return false;
     try {
         const donorBadges = BadgeAPI.getDonorBadges(userId);
-        return GuildMemberStore.getMember(VC_GUILD_ID, userId)?.roles.includes(VC_DONOR_ROLE_ID) || !!donorBadges;
+        return !!donorBadges;
     } catch (e) {
         console.warn("[Kernixcord] Error checking Vencord donor status:", e);
         return false;
@@ -354,10 +354,10 @@ export function isVencordDonor(userId: string): boolean {
 }
 
 export function isKernixcordDonor(userId: string): boolean {
-    if (!GuildMemberStore || !userId) return false;
+    if (!userId) return false;
     try {
         const donorBadges = BadgeAPI.getKernixcordDonorBadges(userId);
-        return GuildMemberStore.getMember(KERNIXCORD_GUILD_ID, userId)?.roles.includes(KERNIXCORD_DONOR_ROLE_ID) || !!donorBadges?.length;
+        return !!donorBadges?.length;
     } catch (e) {
         console.warn("[Kernixcord] Error checking Kernixcord donor status:", e);
         return false;
