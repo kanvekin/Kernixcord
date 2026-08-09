@@ -36,6 +36,7 @@ import { ensureSafePath } from "./utils/ensureSafePath";
 import { makeLinksOpenExternally } from "./utils/externalLinks";
 
 const RENDERER_CSS_PATH = join(__dirname, "renderer.css");
+const RENDERER_JS_PATH = join(__dirname, "renderer.js");
 
 mkdirSync(THEMES_DIR, { recursive: true });
 
@@ -44,6 +45,15 @@ registerCspIpcHandlers();
 function readCss() {
     return readFile(QUICK_CSS_PATH, "utf-8").catch(() => "");
 }
+
+ipcMain.on(IpcEvents.PRELOAD_GET_RENDERER_JS, event => {
+    try {
+        event.returnValue = readFileSync(RENDERER_JS_PATH, "utf-8");
+    } catch (err) {
+        console.error("[Vencord] Failed to read renderer.js for preload", err);
+        event.returnValue = "";
+    }
+});
 
 async function listThemes(): Promise<UserThemeHeader[]> {
     const files = await readdir(THEMES_DIR).catch(() => []);
