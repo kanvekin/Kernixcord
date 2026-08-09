@@ -258,7 +258,8 @@ export default definePlugin({
     },
 
     getKernixcordDonorBadges(userId: string) {
-        return KernixcordDonorBadges[userId]?.map(badge => ({
+        return KernixcordDonorBadges[userId]?.map((badge, idx) => ({
+            id: `kernixcord_donor_badge_${idx}`,
             iconSrc: badge.badge,
             description: badge.tooltip,
             position: BadgePosition.START,

@@ -165,9 +165,13 @@ function KernixcordSettings() {
 
     const user = UserStore?.getCurrentUser();
 
+    // Check if stores are initialized to prevent crashes on first load
+    const isUserLoaded = user && UserStore;
+    const isGuildMemberStoreLoaded = GuildMemberStore;
+
     return (
         <SettingsTab>
-            {(isEquicordDonor(user?.id) || isVencordDonor(user?.id) || isKernixcordDonor(user?.id)) ? (
+            {(isUserLoaded && isGuildMemberStoreLoaded && (isEquicordDonor(user?.id) || isVencordDonor(user?.id) || isKernixcordDonor(user?.id))) ? (
                 <SpecialCard
                     title="Donations"
                     subtitle="Thank you for donating!"
@@ -300,17 +304,35 @@ function KernixcordSettings() {
 export default wrapTab(KernixcordSettings, "Kernixcord Settings");
 
 export function isEquicordDonor(userId: string): boolean {
-    const donorBadges = BadgeAPI.getEquicordDonorBadges(userId);
-    return GuildMemberStore.getMember(GUILD_ID, userId)?.roles.includes(DONOR_ROLE_ID) || !!donorBadges;
+    if (!GuildMemberStore || !userId) return false;
+    try {
+        const donorBadges = BadgeAPI.getEquicordDonorBadges(userId);
+        return GuildMemberStore.getMember(GUILD_ID, userId)?.roles.includes(DONOR_ROLE_ID) || !!donorBadges;
+    } catch (e) {
+        console.warn("[Kernixcord] Error checking Equicord donor status:", e);
+        return false;
+    }
 }
 
 export function isVencordDonor(userId: string): boolean {
-    const donorBadges = BadgeAPI.getDonorBadges(userId);
-    return GuildMemberStore.getMember(VC_GUILD_ID, userId)?.roles.includes(VC_DONOR_ROLE_ID) || !!donorBadges;
+    if (!GuildMemberStore || !userId) return false;
+    try {
+        const donorBadges = BadgeAPI.getDonorBadges(userId);
+        return GuildMemberStore.getMember(VC_GUILD_ID, userId)?.roles.includes(VC_DONOR_ROLE_ID) || !!donorBadges;
+    } catch (e) {
+        console.warn("[Kernixcord] Error checking Vencord donor status:", e);
+        return false;
+    }
 }
 
 export function isKernixcordDonor(userId: string): boolean {
-    const donorBadges = BadgeAPI.getKernixcordDonorBadges(userId);
-    return GuildMemberStore.getMember(KERNIXCORD_GUILD_ID, userId)?.roles.includes(KERNIXCORD_DONOR_ROLE_ID) || !!donorBadges?.length;
+    if (!GuildMemberStore || !userId) return false;
+    try {
+        const donorBadges = BadgeAPI.getKernixcordDonorBadges(userId);
+        return GuildMemberStore.getMember(KERNIXCORD_GUILD_ID, userId)?.roles.includes(KERNIXCORD_DONOR_ROLE_ID) || !!donorBadges?.length;
+    } catch (e) {
+        console.warn("[Kernixcord] Error checking Kernixcord donor status:", e);
+        return false;
+    }
 }
 
