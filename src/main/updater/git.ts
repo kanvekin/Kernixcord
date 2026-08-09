@@ -82,6 +82,19 @@ async function build() {
 
     const res = await execFile(command, args, opts);
 
+    if (!res.stderr.includes("Build failed")) {
+        // After successful build, re-inject to update Discord with new files
+        console.log("[Kernixcord Updater] Build completed, re-injecting...");
+        try {
+            const injectArgs = isFlatpak ? ["--host", "node", "scripts/runInstaller.mjs", "--", "--install"] : ["scripts/runInstaller.mjs", "--", "--install"];
+            await execFile(isFlatpak ? "flatpak-spawn" : "node", injectArgs, opts);
+            console.log("[Kernixcord Updater] Re-injection completed successfully");
+        } catch (injectErr) {
+            console.error("[Kernixcord Updater] Re-injection failed:", injectErr);
+            // Don't fail the build if injection fails, user can manually inject
+        }
+    }
+
     return !res.stderr.includes("Build failed");
 }
 
