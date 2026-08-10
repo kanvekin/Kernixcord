@@ -7,7 +7,7 @@
 import { exec, spawn } from "child_process";
 import { BrowserWindow, dialog, shell, WebContentsView } from "electron";
 import { existsSync, readdirSync, readFileSync } from "fs";
-import { readdir, readFile, rm } from "fs/promises";
+import { mkdir, readdir, readFile, rm } from "fs/promises";
 import { join } from "path";
 
 // @ts-ignore fuck off
@@ -210,23 +210,25 @@ async function getPluginMeta(path: string, extra: object = {}): Promise<{
 }
 
 async function cloneRepo(link: string, repo: string): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
+        const targetDir = join(__dirname, "..", "src", "userplugins");
+        await mkdir(targetDir, { recursive: true });
         const proc = spawn("git", ["clone", link], {
-            cwd: join(__dirname, "..", "src", "userplugins")
+            cwd: targetDir
         });
         proc.once("close", async () => {
             if (proc.exitCode !== 0) {
-                if (!existsSync(join(__dirname, "..", "src", "userplugins", repo)))
+                if (!existsSync(join(targetDir, repo)))
                     return reject("Failed to clone");
                 const deleteReqDialog = await dialog.showMessageBox({
                     title: "Error",
                     message: "Plugin already exists",
                     type: "error",
-                    detail: `The plugin that you tried to clone already exists at ${join(__dirname, "..", "src", "userplugins")}.\nWould you like to reclone it? Only do this if you want to reinstall or update the plugin.`,
+                    detail: `The plugin that you tried to clone already exists at ${targetDir}.\nWould you like to reclone it? Only do this if you want to reinstall or update the plugin.`,
                     buttons: ["No", "Yes"]
                 });
                 if (deleteReqDialog.response !== 1) return reject("User rejected");
-                await rm(join(__dirname, "..", "src", "userplugins", repo), {
+                await rm(join(targetDir, repo), {
                     recursive: true
                 });
                 await cloneRepo(link, repo);

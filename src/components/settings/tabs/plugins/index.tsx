@@ -240,6 +240,7 @@ export default function PluginSettings() {
                 if (!newPluginsSet?.has(plugin.name)) return false;
                 break;
             case SearchStatus.USER_PLUGINS:
+            case SearchStatus.CUSTOM:
                 if (!PluginMeta[plugin.name]?.userPlugin) return false;
                 break;
             case SearchStatus.API_PLUGINS:
@@ -438,7 +439,7 @@ export default function PluginSettings() {
                             { label: "Show Equicord", value: SearchStatus.EQUICORD },
                             { label: "Show Vencord", value: SearchStatus.VENCORD },
                             { label: "Show Kernixcord", value: SearchStatus.KERNIXCORD },
-                            ...(totalUserPlugins > 0 ? [{ label: "Show Custom", value: SearchStatus.CUSTOM }] : []),
+                            ...(totalUserPlugins > 0 ? [{ label: "Show UserPlugins", value: SearchStatus.USER_PLUGINS }] : []),
                             { label: "Show New", value: SearchStatus.NEW },
                         ]}
                         serialize={String}
