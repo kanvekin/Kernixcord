@@ -39,7 +39,7 @@ Before starting your plugin:
 
 - Join our Discord server.
 - Check existing pull requests to avoid duplicate work.
-- Check the [plugin requests tracker](https://discord.com/channels/1173279886065029291/1419347113745059961) to see if your idea already exists or was rejected.
+- Check the [plugin requests tracker](https://discord.com/channels/1536297527354073123/1536297930800234597) to see if your idea already exists or was rejected.
 - If no request exists, open one and clearly state that you want to work on it yourself.
 - Wait for feedback before starting development, as some ideas may not be accepted or may need adjustments.
 - Familiarize yourself with the plugin rules below.
@@ -67,9 +67,9 @@ If you have any ideas on how to improve Kernixcord itself, or want to propose a 
 
 **Plugins that violate any of these rules will not be accepted.**
 
-## Improving Equicord Itself
+## Improving Kernixcord Itself
 
-If you want to improve Equicord beyond plugins, such as internal features or performance improvements, you are welcome to open a feature request so it can be discussed.
+If you want to improve Kernixcord beyond plugins, such as internal features or performance improvements, you are welcome to open a feature request so it can be discussed.
 
 Bug fixes, refactors, and documentation improvements are also highly appreciated!
 
