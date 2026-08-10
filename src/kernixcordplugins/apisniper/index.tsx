@@ -192,7 +192,7 @@ async function handleSnipedCredential(credential: SnipedCredential) {
         credential.content,
         "---",
         "",
-        "Reported by: TestcordDevs.x2b",
+        "Reported by: Devs.feelslove",
     ].join("\n");
 
     try {

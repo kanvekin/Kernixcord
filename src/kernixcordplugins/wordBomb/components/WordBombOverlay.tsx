@@ -5,9 +5,9 @@
  */
 
 import { sleep } from "@utils/misc";
-import { ComponentDispatch,createRoot, React, ReactDOM, useEffect, useRef, useState } from "@webpack/common";
+import { ComponentDispatch, createRoot, React, ReactDOM, useEffect, useRef, useState } from "@webpack/common";
 
-import { HOMELANDER_MODEL_OPTIONS, LOCAL_PROVIDER_OPTIONS, SURF_MODEL_OPTIONS, SWISHAI_MODEL_OPTIONS, testcordChat } from "../../TestcordAI/aiProvider";
+import { HOMELANDER_MODEL_OPTIONS, LOCAL_PROVIDER_OPTIONS, SURF_MODEL_OPTIONS, SWISHAI_MODEL_OPTIONS, KernixcordChat } from "../../KernixcordAI/aiProvider";
 
 const DICT_URLS = [
     "https://raw.githubusercontent.com/words/an-array-of-french-words/master/index.json",
@@ -22,12 +22,12 @@ let overlayContainer: HTMLDivElement | null = null;
 
 const memStorage: Record<string, string> = {};
 function getSetting(key: string, def: string) {
-    try { if (window.localStorage && window.localStorage.getItem(key) !== null) return window.localStorage.getItem(key)!; } catch {}
+    try { if (window.localStorage && window.localStorage.getItem(key) !== null) return window.localStorage.getItem(key)!; } catch { }
     return memStorage[key] !== undefined ? memStorage[key] : def;
 }
 function setSetting(key: string, val: string) {
     memStorage[key] = val;
-    try { if (window.localStorage) window.localStorage.setItem(key, val); } catch {}
+    try { if (window.localStorage) window.localStorage.setItem(key, val); } catch { }
 }
 
 export async function toggleWordBombOverlay() {
@@ -87,7 +87,7 @@ export function WordBombOverlay() {
     const [lps, setLps] = useState(() => parseFloat(getSetting("wb_lps", "50")));
     const [humanChance, setHumanChance] = useState(() => parseInt(getSetting("wb_humanChance", "0")));
     const [safeMode, setSafeMode] = useState(() => getSetting("wb_safeMode", "true") === "true");
-    const [aiProvider, setAiProvider] = useState(() => getSetting("wb_aiProvider", "testcord"));
+    const [aiProvider, setAiProvider] = useState(() => getSetting("wb_aiProvider", "kernixcord"));
     const [groqModel, setGroqModel] = useState(() => getSetting("wb_groqModel", "llama-3.1-8b-instant"));
     const [homelanderModel, setHomelanderModel] = useState(() => getSetting("wb_homelanderModel", "openai/gpt-5.5"));
     const [swishAiModel, setSwishAiModel] = useState(() => getSetting("wb_swishAiModel", "gpt-5.5"));
@@ -384,7 +384,7 @@ export function WordBombOverlay() {
 
         if (safeMode) {
             setDefinition("Generating AI definition...");
-            testcordChat({
+            KernixcordChat({
                 provider: aiProvider,
                 groqModel,
                 homelanderModel,
