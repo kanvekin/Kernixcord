@@ -210,9 +210,9 @@ async function getPluginMeta(path: string, extra: object = {}): Promise<{
 }
 
 async function cloneRepo(link: string, repo: string): Promise<void> {
-    return new Promise(async (resolve, reject) => {
-        const targetDir = join(__dirname, "..", "src", "userplugins");
-        await mkdir(targetDir, { recursive: true });
+    const targetDir = join(__dirname, "..", "src", "userplugins");
+    await mkdir(targetDir, { recursive: true });
+    return new Promise((resolve, reject) => {
         const proc = spawn("git", ["clone", link], {
             cwd: targetDir
         });
