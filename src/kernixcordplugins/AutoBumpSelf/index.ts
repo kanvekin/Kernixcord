@@ -24,7 +24,7 @@ const settings = definePluginSettings({
         type: OptionType.STRING,
         description: "Channel IDs to auto bump in (comma, space, or newline separated).",
         default: "",
-        placeholder: "123456789012345678, 987654321098765432"
+        placeholder: "249620332925812736"
     }
 });
 

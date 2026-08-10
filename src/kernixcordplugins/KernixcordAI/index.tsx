@@ -15,7 +15,7 @@ import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy } from "@webpack";
 import { ChannelStore, FluxDispatcher, Menu, React, RelationshipStore, RestAPI, useEffect, useMemo, useRef, UserStore, useState } from "@webpack/common";
 import { Devs } from "@utils/constants";
-import { GROQ_MODEL_OPTIONS, PROVIDER_OPTIONS, REIDVERSE_MODEL_OPTIONS, KernixcordChat } from "./aiProvider";
+import { GROQ_MODEL_OPTIONS, PROVIDER_OPTIONS, REIDVERSE_MODEL_OPTIONS, KernixcordChat, POLLINATIONS_MODEL_OPTIONS } from "./aiProvider";
 import { getReidverseKey } from "./groqManager";
 
 // ── Settings ───────────────────────────────────────────────────────────────────
@@ -25,7 +25,7 @@ const settings = definePluginSettings({
         type: OptionType.SELECT,
         description: "AI Provider",
         options: PROVIDER_OPTIONS,
-        default: "reidverse",
+        default: "pollinations",
         restartNeeded: false,
     },
     model: {
@@ -50,6 +50,14 @@ const settings = definePluginSettings({
         default: "",
         restartNeeded: false,
         hidden: () => settings.store.provider !== "groq",
+    },
+    pollinationsModel: {
+        type: OptionType.SELECT,
+        description: "Pollinations model",
+        options: POLLINATIONS_MODEL_OPTIONS,
+        default: "openai",
+        restartNeeded: false,
+        hidden: () => settings.store.provider !== "pollinations",
     },
     systemPrompt: {
         type: OptionType.STRING,
@@ -760,7 +768,7 @@ function KernixcordAINavButton({ selected }: { selected?: boolean; }) {
 
 export default definePlugin({
     name: "KernixcordAI",
-    description: "AI Chat integrated in Discord with Reidverse AI or Groq. Replaces 'Shop' in the DM panel.",
+    description: "AI Chat integrated in Discord with Pollinations AI (free, no key), Reidverse AI, or Groq. Replaces 'Shop' in the DM panel.",
     tags: ["Chat", "Commands", "Utility"],
     authors: [Devs.feelslove],
     settings,
@@ -802,12 +810,8 @@ export default definePlugin({
     ],
 
     start() {
-        // Auto-register with Reidverse AI in the background (no user action needed)
-        getReidverseKey().then(() => {
-            console.log("[KernixcordAI] Reidverse AI key ready");
-        }).catch(e => {
-            console.warn("[KernixcordAI] Reidverse AI auto-register failed:", e?.message ?? e);
-        });
+        // Pollinations is default and requires no setup
+        console.log("[KernixcordAI] Plugin started - using Pollinations AI by default (free, no API key)");
 
         // DOM fallback system if the Webpack patch fails on this Discord version
         const findShopNavItem = (): HTMLElement | null => {

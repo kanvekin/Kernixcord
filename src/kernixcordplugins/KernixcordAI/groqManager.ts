@@ -20,6 +20,7 @@ import { sleep } from "@utils/misc";
 import type { NativeGroqResponse } from "./native";
 
 const REIDVERSE_BASE = "https://reidverse-ai.up.railway.app";
+const POLLINATIONS_BASE = "https://text.pollinations.ai";
 
 // ── Native IPC fetch (bypasses CORS in Electron) ─────────────────────────────
 
@@ -54,6 +55,7 @@ export async function groqFetch(url: string, method: string, headers: Record<str
 
 const DS_REIDVERSE_KEY = "reidverse-ai-api-key";
 const DS_GROQ_KEY = "groq-shared-api-key";
+const DS_POLLINATIONS_KEY = "pollinations-active";
 
 // ── Reidverse AI key management ───────────────────────────────────────────────
 
@@ -216,4 +218,40 @@ export async function groqChat(opts: GroqCallOptions): Promise<string> {
 
     const data = await res.json();
     return data.choices?.[0]?.message?.content?.trim() ?? "(empty response)";
+}
+
+// ── Pollinations AI chat (completely free, no API key) ───────────────────────
+
+export interface PollinationsChatMessage {
+    role: "system" | "user" | "assistant";
+    content: string | any[];
+}
+
+export interface PollinationsChatOptions {
+    messages: PollinationsChatMessage[];
+    model?: string;
+    temperature?: number;
+    seed?: number;
+}
+
+export async function pollinationsChat(opts: PollinationsChatOptions): Promise<string> {
+    const { messages, model = "openai", temperature = 0.7, seed = -1 } = opts;
+
+    // Convert messages to a single prompt for the simple API
+    const prompt = messages.map(m => {
+        const content = typeof m.content === "string" ? m.content : JSON.stringify(m.content);
+        return `${m.role}: ${content}`;
+    }).join("\n");
+
+    const encodedPrompt = encodeURIComponent(prompt);
+    const url = `${POLLINATIONS_BASE}/${encodedPrompt}?model=${model}&temperature=${temperature}&seed=${seed}`;
+
+    const res = await groqFetch(url, "GET", {});
+
+    if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        throw new Error(`Pollinations API ${res.status}: ${body.slice(0, 200)}`);
+    }
+
+    return await res.text();
 }

@@ -459,7 +459,7 @@ function handleKeyDown(e: KeyboardEvent) {
 
 export default definePlugin({
     name: "Fake Accounts",
-    description: "Fake accounts to larp",
+    description: "Fake accounts to kaanseas",
     authors: [Devs.feelslove],
     settings,
 

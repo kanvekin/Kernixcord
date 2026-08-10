@@ -6,7 +6,7 @@
 
 import { Settings } from "@api/Settings";
 
-import { getReidverseKey, groqChat, reidverseChat } from "./groqManager";
+import { getReidverseKey, groqChat, reidverseChat, pollinationsChat } from "./groqManager";
 
 export const REIDVERSE_BASE = "https://reidverse-ai.up.railway.app";
 
@@ -46,7 +46,16 @@ export const GROQ_MODEL_OPTIONS = [
     { label: "Gemma 2 9B", value: "gemma2-9b-it" },
 ] as const;
 
+export const POLLINATIONS_MODEL_OPTIONS = [
+    { label: "OpenAI", value: "openai", default: true },
+    { label: "Mistral", value: "mistral" },
+    { label: "Claude", value: "claude" },
+    { label: "Gemini", value: "gemini" },
+    { label: "DeepSeek", value: "deepseek" },
+] as const;
+
 export const PROVIDER_OPTIONS = [
+    { label: "Pollinations AI (free, no key)", value: "pollinations" },
     { label: "Reidverse AI (free)", value: "reidverse" },
     { label: "Groq (API key)", value: "groq" },
 ] as const;
@@ -85,6 +94,7 @@ interface KernixcordAISettings {
     model?: string;
     groqModel?: string;
     groqApiKey?: string;
+    pollinationsModel?: string;
     temperature?: number;
 }
 
@@ -102,15 +112,16 @@ export async function readProviderResponse(res: Response): Promise<string> {
     }
 }
 
-export function resolveProviderOptions(opts: KernixcordChatOptions): { provider: string; model: string; groqModel: string; groqApiKey: string; temperature?: number; } {
+export function resolveProviderOptions(opts: KernixcordChatOptions): { provider: string; model: string; groqModel: string; groqApiKey: string; pollinationsModel: string; temperature?: number; } {
     const Kernixcord = Settings.plugins.KernixcordAI as KernixcordAISettings | undefined;
     const useKernixcord = !opts.provider || opts.provider === "Kernixcord";
-    const provider = useKernixcord ? Kernixcord?.provider ?? "reidverse" : opts.provider ?? "reidverse";
+    const provider = useKernixcord ? Kernixcord?.provider ?? "pollinations" : opts.provider ?? "pollinations";
     return {
         provider,
-        model: opts.forceModel ?? Kernixcord?.model ?? "sakana-fugu-ultra",
+        model: opts.forceModel ?? Kernixcord?.model ?? "openai",
         groqModel: useKernixcord ? Kernixcord?.groqModel ?? "llama-3.3-70b-versatile" : opts.groqModel ?? "llama-3.3-70b-versatile",
         groqApiKey: useKernixcord ? Kernixcord?.groqApiKey ?? "" : "",
+        pollinationsModel: useKernixcord ? Kernixcord?.pollinationsModel ?? "openai" : "openai",
         temperature: opts.temperature ?? (useKernixcord ? Kernixcord?.temperature : undefined),
     };
 }
@@ -129,16 +140,36 @@ export async function KernixcordChat(opts: KernixcordChatOptions): Promise<strin
         });
     }
 
-    return reidverseChat({
-        messages: opts.messages,
-        model: resolved.model,
-        temperature,
-        maxTokens: opts.maxTokens,
-    });
+    if (resolved.provider === "pollinations") {
+        return pollinationsChat({
+            messages: opts.messages,
+            model: resolved.pollinationsModel,
+            temperature,
+        });
+    }
+
+    // Try Reidverse first, fall back to Pollinations if it fails
+    try {
+        return await reidverseChat({
+            messages: opts.messages,
+            model: resolved.model,
+            temperature,
+            maxTokens: opts.maxTokens,
+        });
+    } catch (reidverseError) {
+        console.log("[KernixcordAI] Reidverse unavailable, falling back to Pollinations");
+
+        // Fallback to Pollinations (free, no API key)
+        return pollinationsChat({
+            messages: opts.messages,
+            model: resolved.pollinationsModel,
+            temperature,
+        });
+    }
 }
 
 export function effectiveProviderRequiresGroqKey(provider?: string): boolean {
     return resolveProviderOptions({ messages: [], provider }).provider === "groq";
 }
 
-export { getReidverseKey, reidverseChat };
+export { getReidverseKey, reidverseChat, pollinationsChat };
