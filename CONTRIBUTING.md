@@ -1,4 +1,5 @@
 # Contributing to Kernixcord
+
 # Introduction
 
 > [!NOTE]
@@ -9,7 +10,7 @@
 
 Kernixcord is a community project and welcomes any kind of contribution from anyone!
 
-We have development documentation for new contributors, which can be found at https://wwww.discord.gg/.
+We have development documentation for new contributors, which can be found at https://discord.gg/paE22n7xPB.
 
 > [!IMPORTANT]
 > All contributions must follow our [Code of Conduct](./CODE_OF_CONDUCT.md).
@@ -49,6 +50,7 @@ Before starting your plugin:
 ## Improve Kernixcord itself
 
 If you have any ideas on how to improve Kernixcord itself, or want to propose a new plugin API, feel free to open a feature request so we can discuss.
+
 ## Plugin Rules
 
 1. No simple slash-command plugins (e.g. `/cat`). If applicable, create a [user-installable Discord app](https://discord.com/developers/docs/change-log#userinstallable-apps-preview) instead.
@@ -73,5 +75,5 @@ Bug fixes, refactors, and documentation improvements are also highly appreciated
 
 ## Helping the Community
 
-We have an open support channel in our [Discord community](https://discord.gg/).
+We have an open support channel in our [Discord community](https://discord.gg/paE22n7xPB).
 Helping out users there is always appreciated! The more, the merrier.

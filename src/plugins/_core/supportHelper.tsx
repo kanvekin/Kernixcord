@@ -388,7 +388,7 @@ export default definePlugin({
                     confirmText: "Go to Kernixcord Support",
                     onConfirm() {
                         clicked = true;
-                        VencordNative.native.openExternal("https://discord.gg/champions");
+                        VencordNative.native.openExternal("https://discord.gg/paE22n7xPB");
                     },
                     cancelText: "Okay continue",
                     onCancel() {

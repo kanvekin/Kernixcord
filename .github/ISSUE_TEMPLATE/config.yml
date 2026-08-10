@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
     - name: Kernixcord Support Server
-      url: https://discord.gg/dikkat
-      about: GitHub Issues are for development, not support! Please use our [support server](https://discord.gg/dikkat) unless you are a Vencord Developer.
+      url: https://discord.gg/paE22n7xPB
+      about: GitHub Issues are for development, not support! Please use our [support server](https://discord.gg/paE22n7xPB) unless you are a Vencord Developer.
     - name: Kernixcord Installer
       url: https://github.com/kanvekin/Kernixe
       about: You can find the Kernixcord Installer here
