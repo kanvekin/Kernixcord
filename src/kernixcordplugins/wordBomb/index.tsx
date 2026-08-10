@@ -6,7 +6,7 @@
 
 import "./styles.css";
 
-import { addHeaderBarButton, HeaderBarButton,removeHeaderBarButton } from "@api/HeaderBar";
+import { addHeaderBarButton, HeaderBarButton, removeHeaderBarButton } from "@api/HeaderBar";
 import definePlugin from "@utils/types";
 import { React } from "@webpack/common";
 import { Devs } from "@utils/constants";
@@ -22,7 +22,7 @@ const TrophyIcon = (props: any) => (
 export default definePlugin({
     name: "WordBomb",
     description: "BombParty/WordBomb assistant with persistent overlay, integrated AI, and alphabet tracking.",
-    tags: ["Fun", "Kernixcord"],
+    tags: ["Fun", "Utility"],
     authors: [Devs.feelslove],
     dependencies: ["HeaderBarAPI"],
 

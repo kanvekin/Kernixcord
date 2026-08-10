@@ -388,7 +388,7 @@ export const translations: TranslationMap = {
     "In progress…": { en: "In progress…", es: "En curso…", ru: "? ????????…", zh: "???…" },
 };
 
-const AutoTranslateKernixcord = definePlugin({
+export default definePlugin({
     name: "AutoTranslateTC",
     description: "Automatic translation for Kernixcord.",
     authors: [Devs.feelslove],
@@ -416,5 +416,3 @@ export function useTranslation() {
         lang: "en",
     };
 }
-
-export default AutoTranslateKernixcord;

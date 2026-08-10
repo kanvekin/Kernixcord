@@ -761,7 +761,7 @@ function KernixcordAINavButton({ selected }: { selected?: boolean; }) {
 export default definePlugin({
     name: "KernixcordAI",
     description: "AI Chat integrated in Discord with Reidverse AI or Groq. Replaces 'Shop' in the DM panel.",
-    tags: ["Chat", "Commands", "Kernixcord"],
+    tags: ["Chat", "Commands", "Utility"],
     authors: [Devs.feelslove],
     settings,
 

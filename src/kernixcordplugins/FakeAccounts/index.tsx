@@ -5,7 +5,7 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalRoot, ModalSize, openModal, RenderModalProps } from "@utils/modal";
+import { ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalRoot, ModalSize, openModal, ModalProps } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy, waitFor } from "@webpack";
 import { Button, Forms, React, RestAPI, TextInput, Toasts } from "@webpack/common";
@@ -207,7 +207,7 @@ export function deactivateFakeSession() {
     });
 }
 
-function FakeAccountModal({ modalProps }: { modalProps: RenderModalProps; }) {
+function FakeAccountModal({ modalProps }: { modalProps: ModalProps; }) {
     const [accounts, setAccounts] = React.useState<FakeAccount[]>(parseFakeAccounts());
     const [userId, setUserId] = React.useState("");
     const [manualUsername, setManualUsername] = React.useState("");
@@ -264,26 +264,26 @@ function FakeAccountModal({ modalProps }: { modalProps: RenderModalProps; }) {
         <ModalRoot {...modalProps} size={ModalSize.MEDIUM}>
 
             {/* ── Header ── */}
-<ModalHeader separator>
-    <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        style={{ marginRight: "8px", flexShrink: 0, color: "var(--interactive-normal)" }}
-    >
-        <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-5.33 0-8 2.67-8 4v1h16v-1c0-1.33-2.67-4-8-4z"/>
-    </svg>
-    <Forms.FormTitle tag="h4" style={{ margin: 0, flex: 1 }}>
-        Fake Accounts
-        {_fakeSessionActive && (
-            <span style={{ color: "var(--status-danger)", fontSize: "12px", marginLeft: "8px" }}>
-                ● Active as {_fakeSessionUser?.username}
-            </span>
-        )}
-    </Forms.FormTitle>
-    <ModalCloseButton onClick={modalProps.onClose} />
-</ModalHeader>
+            <ModalHeader separator>
+                <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    style={{ marginRight: "8px", flexShrink: 0, color: "var(--interactive-normal)" }}
+                >
+                    <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-5.33 0-8 2.67-8 4v1h16v-1c0-1.33-2.67-4-8-4z" />
+                </svg>
+                <Forms.FormTitle tag="h4" style={{ margin: 0, flex: 1 }}>
+                    Fake Accounts
+                    {_fakeSessionActive && (
+                        <span style={{ color: "var(--status-danger)", fontSize: "12px", marginLeft: "8px" }}>
+                            ● Active as {_fakeSessionUser?.username}
+                        </span>
+                    )}
+                </Forms.FormTitle>
+                <ModalCloseButton onClick={modalProps.onClose} />
+            </ModalHeader>
             {/* ── Body ── */}
             <ModalContent>
                 <div style={{ padding: "16px" }}>
