@@ -25,7 +25,7 @@ const settings = definePluginSettings({
         type: OptionType.SELECT,
         description: "AI Provider",
         options: PROVIDER_OPTIONS,
-        default: "pollinations",
+        default: "groq",
         restartNeeded: false,
     },
     model: {

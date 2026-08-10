@@ -199,7 +199,7 @@ const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 export async function groqChat(opts: GroqCallOptions): Promise<string> {
     const { messages, apiKey, model = "llama-3.3-70b-versatile", temperature = 0.7, maxTokens = 1000 } = opts;
     const key = apiKey.trim();
-    if (!key) throw new Error("Missing Groq API key. Add one in KernixcordAI settings.");
+    if (!key) throw new Error("Missing Groq API key. Get a free key at console.groq.com/keys and add it in KernixcordAI settings.");
 
     const res = await groqFetch(GROQ_API_URL, "POST", {
         Authorization: `Bearer ${key}`,

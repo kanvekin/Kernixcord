@@ -55,9 +55,9 @@ export const POLLINATIONS_MODEL_OPTIONS = [
 ] as const;
 
 export const PROVIDER_OPTIONS = [
-    { label: "Pollinations AI (free, no key)", value: "pollinations" },
-    { label: "Reidverse AI (free)", value: "reidverse" },
-    { label: "Groq (API key)", value: "groq" },
+    { label: "Groq (API key, free tier)", value: "groq", default: true },
+    { label: "Reidverse AI (free, currently down)", value: "reidverse" },
+    { label: "Pollinations AI (paid, deprecated)", value: "pollinations" },
 ] as const;
 
 export const LOCAL_PROVIDER_OPTIONS = [
@@ -115,10 +115,10 @@ export async function readProviderResponse(res: Response): Promise<string> {
 export function resolveProviderOptions(opts: KernixcordChatOptions): { provider: string; model: string; groqModel: string; groqApiKey: string; pollinationsModel: string; temperature?: number; } {
     const Kernixcord = Settings.plugins.KernixcordAI as KernixcordAISettings | undefined;
     const useKernixcord = !opts.provider || opts.provider === "Kernixcord";
-    const provider = useKernixcord ? Kernixcord?.provider ?? "pollinations" : opts.provider ?? "pollinations";
+    const provider = useKernixcord ? Kernixcord?.provider ?? "groq" : opts.provider ?? "groq";
     return {
         provider,
-        model: opts.forceModel ?? Kernixcord?.model ?? "openai",
+        model: opts.forceModel ?? Kernixcord?.model ?? "llama-3.3-70b-versatile",
         groqModel: useKernixcord ? Kernixcord?.groqModel ?? "llama-3.3-70b-versatile" : opts.groqModel ?? "llama-3.3-70b-versatile",
         groqApiKey: useKernixcord ? Kernixcord?.groqApiKey ?? "" : "",
         pollinationsModel: useKernixcord ? Kernixcord?.pollinationsModel ?? "openai" : "openai",
