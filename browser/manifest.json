@@ -34,7 +34,7 @@
             "js": [
                 "dist/Equicord.js"
             ],
-            "all_frames": true,
+            "all_frames": false,
             "world": "MAIN"
         }
     ],

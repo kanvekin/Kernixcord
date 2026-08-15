@@ -16,4 +16,54 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-export const { localStorage } = window;
+const memoryStorage: Record<string, string> = {};
+
+const safeLocalStorage = {
+    getItem(key: string): string | null {
+        try {
+            return window.localStorage?.getItem(key) ?? memoryStorage[key] ?? null;
+        } catch {
+            return memoryStorage[key] ?? null;
+        }
+    },
+    setItem(key: string, value: string): void {
+        try {
+            window.localStorage?.setItem(key, value);
+        } catch {
+            // Fall back to memory storage
+        }
+        memoryStorage[key] = value;
+    },
+    removeItem(key: string): void {
+        try {
+            window.localStorage?.removeItem(key);
+        } catch {
+            // Fall back to memory storage
+        }
+        delete memoryStorage[key];
+    },
+    clear(): void {
+        try {
+            window.localStorage?.clear();
+        } catch {
+            // Fall back to memory storage
+        }
+        Object.keys(memoryStorage).forEach(key => delete memoryStorage[key]);
+    },
+    get length(): number {
+        try {
+            return window.localStorage?.length ?? Object.keys(memoryStorage).length;
+        } catch {
+            return Object.keys(memoryStorage).length;
+        }
+    },
+    key(index: number): string | null {
+        try {
+            return window.localStorage?.key(index) ?? Object.keys(memoryStorage)[index] ?? null;
+        } catch {
+            return Object.keys(memoryStorage)[index] ?? null;
+        }
+    }
+};
+
+export const localStorage = safeLocalStorage;
