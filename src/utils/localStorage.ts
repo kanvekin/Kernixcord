@@ -66,4 +66,25 @@ const safeLocalStorage = {
     }
 };
 
-export const localStorage = safeLocalStorage;
+// Support for direct property access (e.g., localStorage.Vencord_settingsDirty)
+const localStorageProxy = new Proxy(safeLocalStorage, {
+    get(target, prop: string) {
+        if (prop in target) {
+            return (target as any)[prop];
+        }
+        return target.getItem(prop) ?? null;
+    },
+    set(target, prop: string, value: any) {
+        target.setItem(prop, String(value));
+        return true;
+    },
+    deleteProperty(target, prop: string) {
+        target.removeItem(prop);
+        return true;
+    },
+    has(target, prop: string) {
+        return prop in target || target.getItem(prop) !== null;
+    }
+});
+
+export const localStorage = localStorageProxy as Storage;
