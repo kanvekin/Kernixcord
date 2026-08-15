@@ -127,7 +127,7 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
         />
     ) : isKernixcordPlugin ? (
         <img
-            src="https://raw.githubusercontent.com/UygunUmitcan/depo/refs/heads/main/privcord_icon.png"
+            src="https://raw.githubusercontent.com/kanvekin/Kernixcord/refs/heads/main/browser/icon.png"
             alt="Kernixcord"
             title="Kernixcord Plugin"
             style={{
