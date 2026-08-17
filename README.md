@@ -1,6 +1,6 @@
 # [<img src="./browser/icon.png" width="40" align="left" alt="Kernixcord">](https://github.com/kanvekin/Kernixcord) Kernixcord
 
-[![Privbop]](https://github.com/kanvekin/Privbop)
+[![Kernixe]](https://github.com/kanvekin/Kernixe)
 [![Tests](https://github.com/kanvekin/Kernixcord/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/kanvekin/Kernixcord/actions/workflows/test.yml)
 [![Discord](https://img.shields.io/discord/1173279886065029291.svg?color=768AD4&label=Discord&logo=discord&logoColor=white)](https://discord.gg/paE22n7xPB)
 
