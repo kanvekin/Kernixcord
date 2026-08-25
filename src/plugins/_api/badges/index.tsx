@@ -8,6 +8,7 @@ import "./fixDiscordBadgePadding.css";
 
 import { _getBadges, BadgePosition, BadgeUserArgs, ProfileBadge } from "@api/Badges";
 import ErrorBoundary from "@components/ErrorBoundary";
+import { CopyIcon, LinkIcon } from "@components/Icons";
 import { openContributorModal } from "@components/settings/tabs";
 import { isEquicordDonor, isKernixcordDonor } from "@components/settings/tabs/vencord";
 import { Devs } from "@utils/constants";
@@ -122,10 +123,20 @@ export function BadgeContextMenu({ badge }: { badge: Omit<ProfileBadge, "id"> & 
     return (
         <Menu.Menu navId="vc-badge-context" onClose={ContextMenuApi.closeContextMenu} aria-label="Badge Options">
             {badge.description && (
-                <Menu.MenuItem id="vc-badge-copy-name" label="Copy Badge Name" action={() => copyWithToast(badge.description!)} />
+                <Menu.MenuItem
+                    id="vc-badge-copy-name"
+                    label="Copy Badge Name"
+                    action={() => copyWithToast(badge.description!)}
+                    leadingAccessory={{ type: "icon", icon: CopyIcon }}
+                />
             )}
             {badge.iconSrc && (
-                <Menu.MenuItem id="vc-badge-copy-link" label="Copy Badge Image Link" action={() => copyWithToast(badge.iconSrc!)} />
+                <Menu.MenuItem
+                    id="vc-badge-copy-link"
+                    label="Copy Badge Image Link"
+                    action={() => copyWithToast(badge.iconSrc!)}
+                    leadingAccessory={{ type: "icon", icon: LinkIcon }}
+                />
             )}
         </Menu.Menu>
     );

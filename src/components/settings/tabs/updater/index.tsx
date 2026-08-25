@@ -51,7 +51,7 @@ function EquibopSection() {
                 <HeadingSecondary>Privbop & Kernixcord</HeadingSecondary>
                 <Paragraph>Privbop and Kernixcord are two separate things. This updater is for Kernixcord.</Paragraph>
                 <Paragraph className={Margins.top8}>
-                    You receive separate popups for Privbop updates. You can also manually update by installing the <Link href="https://github.com/kanvekin/Privbopl">latest version</Link>.
+                    You receive separate popups for Privbop updates. You can also manually update by installing the <Link href="https://github.com/kanvekin/Kernixe">latest version</Link>.
                 </Paragraph>
             </Card>
 
@@ -90,21 +90,24 @@ function Updater() {
             <Paragraph className={Margins.bottom20}>
                 Control how Kernixcord keeps itself up to date. You can choose to update automatically in the background or be notified when new updates are available.
             </Paragraph>
-            <FormSwitch
-                title="Automatically update"
-                description="Automatically update Kernixcord without confirmation prompt"
-                value={settings.autoUpdate}
-                onChange={(v: boolean) => settings.autoUpdate = v}
-                hideBorder
-            />
-            <FormSwitch
-                value={settings.autoUpdateNotification}
-                onChange={(v: boolean) => settings.autoUpdateNotification = v}
-                title="Get notified when an automatic update completes"
-                description="Shows a notification when Kernixcord automatically updates"
-                disabled={!settings.autoUpdate}
-                hideBorder
-            />
+
+            <div className="vc-settings-switches">
+                <FormSwitch
+                    title="Automatically update"
+                    description="When enabled, Kernixcord will automatically download and install updates in the background without asking for confirmation. You'll need to restart Discord to apply the changes."
+                    value={settings.autoUpdate}
+                    onChange={(v: boolean) => settings.autoUpdate = v}
+                    hideBorder
+                />
+                <FormSwitch
+                    title="Get notified when an automatic update completes"
+                    description="Receive a notification when Kernixcord finishes downloading an update in the background, so you know when to restart Discord."
+                    value={settings.autoUpdateNotification}
+                    onChange={(v: boolean) => settings.autoUpdateNotification = v}
+                    disabled={!settings.autoUpdate}
+                    hideBorder
+                />
+            </div>
 
             <Divider className={Margins.top20} />
 
