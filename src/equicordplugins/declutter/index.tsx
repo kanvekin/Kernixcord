@@ -12,8 +12,8 @@ import { Divider } from "@components/Divider";
 import { HeadingSecondary } from "@components/Heading";
 import { Notice } from "@components/Notice";
 import decor from "@plugins/decor";
+import { Devs, EquicordDevs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
-import { Devs, EquicordDevs } from "@utils/index";
 import definePlugin, { OptionType } from "@utils/types";
 
 migratePluginSetting("Declutter", "removeShopAboveDms", "removeShopAboveDM");
@@ -325,12 +325,12 @@ export default definePlugin({
                     predicate: () => settings.store.removeShopAboveDms,
                 },
                 {
-                    match: /\.QUEST_HOME\},"quests"\)/,
+                    match: /\.QUEST_HOME\)\},"quests"\)/,
                     replace: "$&&&undefined",
                     predicate: () => settings.store.removeQuestsAboveDms,
                 },
                 {
-                    match: /\.APPLICATION_LIBRARY\},"library"\)/,
+                    match: /\.APPLICATION_LIBRARY\)\},"library"\)/,
                     replace: "$&&&undefined",
                     predicate: () => settings.store.removeLibraryAboveDms,
                 },
