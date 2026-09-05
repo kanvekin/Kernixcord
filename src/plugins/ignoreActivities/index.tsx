@@ -256,7 +256,7 @@ export default definePlugin({
             }
         },
         {
-            find: "#{intl::SETTINGS_GAMES_TOGGLE_OVERLAY}",
+            find: "#{intl::SETTINGS_GAMES_NO_GAMES_HEADER}",
             replacement: {
                 match: /(\i)&&!\i\|\|\i\?null(?<=(\i)\.verified&&.+?)/,
                 replace: "$self.renderToggleGameActivityButton($2,$1),$&"

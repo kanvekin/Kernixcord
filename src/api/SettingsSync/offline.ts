@@ -112,7 +112,7 @@ export async function exportSettings({ syncDataStore = true, type = "all", minif
 
     if (syncDataStore) {
         try {
-            dataStore = await DataStore.entries();
+            dataStore = (await Promise.all((await DataStore.keys<IDBValidKey>()).map(async (key): Promise<[IDBValidKey, unknown] | undefined> => { try { return [key, await DataStore.get<unknown>(key)]; } catch (error) { logger.warn(`Skipping unreadable DataStore record ${String(key)}:`, error); return undefined; } }))).filter((entry): entry is [IDBValidKey, unknown] => entry !== undefined);
         } catch (err) {
             logger.error("Failed to read DataStore entries:", err);
 
