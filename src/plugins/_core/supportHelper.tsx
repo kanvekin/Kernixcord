@@ -565,7 +565,7 @@ export default definePlugin({
             <Card variant="warning" className={Margins.top8} defaultPadding>
                 Please do not private message Kernixcord & Equicord & Vencord plugin developers for support!
                 <br />
-                Instead, use the support channel: {Parser.parse("https://discord.com/channels/1173279886065029291/1297590739911573585")}
+                Instead, use the support channel: {Parser.parse("https://discord.com/channels/1536297527354073123/1536297754526097408")}
                 {!ChannelStore.getChannel(SUPPORT_CHANNEL_ID) && " (Click the link to join)"}
             </Card>
         );
