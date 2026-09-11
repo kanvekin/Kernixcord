@@ -94,8 +94,6 @@ if (!IS_VANILLA) {
             const isMainWindow = title === "Discord" || title === "Discord Canary" || title.includes("Discord");
             options.webPreferences.preload = join(__dirname, "preload.js");
             options.webPreferences.sandbox = false;
-            // work around discord unloading when in background
-            options.webPreferences.backgroundThrottling = false;
 
             if (mainWindowFrameless && isMainWindow) {
                 options.frame = false;
