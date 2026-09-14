@@ -136,6 +136,7 @@ export default definePlugin({
     async start() {
         const NativeBadges: ProfileBadge[] = [
             {
+                id: "_discord_staff_",
                 description: "Discord Staff",
                 iconSrc: "https://cdn.discordapp.com/badge-icons/5e74e9b61934fc1f67c65515d1f7e60d.png",
                 position: BadgePosition.END,
@@ -143,6 +144,7 @@ export default definePlugin({
                 link: "https://discord.com/company"
             },
             {
+                id: "_partnered_server_owner_",
                 description: "Partnered Server Owner",
                 iconSrc: "https://cdn.discordapp.com/badge-icons/3f9748e53446a137a052f3454e2de41e.png",
                 position: BadgePosition.END,
@@ -150,6 +152,7 @@ export default definePlugin({
                 link: "https://discord.com/partners"
             },
             {
+                id: "_early_supporter_",
                 description: "Early Supporter",
                 iconSrc: "https://cdn.discordapp.com/badge-icons/7060786766c9c840eb3019e725d2b358.png",
                 position: BadgePosition.END,
@@ -157,6 +160,7 @@ export default definePlugin({
                 link: "https://discord.com/settings/premium"
             },
             {
+                id: "_active_developer_",
                 description: "Active Developer",
                 iconSrc: "https://cdn.discordapp.com/badge-icons/6bdc42827a38498929a4920da12695d9.png",
                 position: BadgePosition.END,
@@ -164,6 +168,7 @@ export default definePlugin({
                 link: "https://support-dev.discord.com/hc/en-us/articles/10113997751447"
             },
             {
+                id: "_early_verified_bot_developer_",
                 description: "Early Verified Bot Developer",
                 iconSrc: "https://cdn.discordapp.com/badge-icons/6df5892e0f35b051f8b61eace34f4967.png",
                 position: BadgePosition.END,
@@ -171,6 +176,7 @@ export default definePlugin({
                 link: "https://discord.com/settings/premium"
             },
             {
+                id: "_moderator_programs_alumni_",
                 description: "Moderator Programs Alumni",
                 iconSrc: "https://cdn.discordapp.com/badge-icons/fee1624003e2fee35cb398e125dc479b.png",
                 position: BadgePosition.END,
@@ -178,6 +184,7 @@ export default definePlugin({
                 link: "https://discord.com/settings/premium"
             },
             {
+                id: "_discord_bug_hunter_",
                 description: "Discord Bug Hunter",
                 iconSrc: "https://cdn.discordapp.com/badge-icons/2717692c7dca7289b35297368a940dd0.png",
                 position: BadgePosition.END,
@@ -185,6 +192,7 @@ export default definePlugin({
                 link: "https://discord.com/settings/premium"
             },
             {
+                id: "_discord_bug_hunter_",
                 description: "Discord Bug Hunter",
                 iconSrc: "https://cdn.discordapp.com/badge-icons/848f79194d4be5ff5f81505cbd0ce1e6.png",
                 position: BadgePosition.END,
@@ -195,6 +203,7 @@ export default definePlugin({
             // shout out krystalskullofficial
             // Nino missed some badges
             {
+                id: "_hypesquad_events_",
                 description: "HypeSquad Events",
                 iconSrc: "https://cdn.discordapp.com/badge-icons/bf01d1073931f921909045f3a39fd264.png",
                 position: BadgePosition.END,
@@ -202,6 +211,7 @@ export default definePlugin({
                 link: "https://support.discord.com/hc/en-us/articles/360035962891-Profile-Badges-101#h_01GM67K5EJ16ZHYZQ5MPRW3JT3"
             },
             {
+                id: "_hypesquad_bravery_",
                 description: "HypeSquad Bravery",
                 iconSrc: "https://cdn.discordapp.com/badge-icons/8a88d63823d8a71cd5e390baa45efa02.png",
                 position: BadgePosition.END,
@@ -209,6 +219,7 @@ export default definePlugin({
                 link: "https://discord.com/settings/hypesquad-online"
             },
             {
+                id: "_hypesquad_briliance_",
                 description: "HypeSquad Briliance",
                 iconSrc: "https://cdn.discordapp.com/badge-icons/011940fd013da3f7fb926e4a1cd2e618.png",
                 position: BadgePosition.END,
@@ -216,6 +227,7 @@ export default definePlugin({
                 link: "https://discord.com/settings/hypesquad-online"
             },
             {
+                id: "_hypesquad_balance_",
                 description: "HypeSquad Balance",
                 iconSrc: "https://cdn.discordapp.com/badge-icons/3aa41de486fa12454c3761e8e223442e.png",
                 position: BadgePosition.END,
@@ -223,6 +235,7 @@ export default definePlugin({
                 link: "https://discord.com/settings/hypesquad-online"
             },
             {
+                id: "_discord_quests_",
                 description: "Discord Quests",
                 iconSrc: "https://cdn.discordapp.com/badge-icons/7d9ae358c8c5e118768335dbe68b4fb8.png",
                 position: BadgePosition.END,
@@ -230,6 +243,7 @@ export default definePlugin({
                 link: "https://discord.com/discovery/quests"
             },
             {
+                id: "_discord_nitro_",
                 description: "Discord Nitro",
                 iconSrc: "https://cdn.discordapp.com/badge-icons/2ba85e8026a8614b640c2837bcdfe21b.png",
                 position: BadgePosition.END,
@@ -237,6 +251,7 @@ export default definePlugin({
                 link: "https://discord.com/settings/premium"
             },
             {
+                id: "_server_booster_",
                 description: "Server Booster",
                 iconSrc: "https://cdn.discordapp.com/badge-icons/ec92202290b48d0879b7413d2dde3bab.png",
                 position: BadgePosition.END,
@@ -244,6 +259,7 @@ export default definePlugin({
                 link: "https://discord.com/settings/premium"
             },
             {
+                id: "_supports_commands_",
                 description: "Supports Commands",
                 iconSrc: "https://cdn.discordapp.com/badge-icons/6f9e37f9029ff57aef81db857890005e.png",
                 position: BadgePosition.END,
@@ -253,6 +269,7 @@ export default definePlugin({
 
             // these badges dont have a link because they literally dont link anywhere
             {
+                id: "_premium_app_",
                 description: "Premium App",
                 iconSrc: "https://cdn.discordapp.com/badge-icons/d2010c413a8da2208b7e4f35bd8cd4ac.png",
                 position: BadgePosition.END,
@@ -260,6 +277,7 @@ export default definePlugin({
                 link: ""
             },
             {
+                id: "_uses_automod_",
                 description: "Uses Automod",
                 iconSrc: "https://cdn.discordapp.com/badge-icons/f2459b691ac7453ed6039bbcfaccbfcd.png",
                 position: BadgePosition.END,
@@ -267,6 +285,7 @@ export default definePlugin({
                 link: ""
             },
             {
+                id: "_legacy_username_",
                 description: "Legacy Username",
                 iconSrc: "https://cdn.discordapp.com/badge-icons/6de6d34650760ba5551a79732e98ed60.png",
                 position: BadgePosition.END,
@@ -276,6 +295,7 @@ export default definePlugin({
 
             // Im linking to a dicord video about lootboxs incase someone doesnt know the context behind this badge
             {
+                id: "_a_clown__for_a_limited_time_",
                 description: "A clown, for a limited time",
                 iconSrc: "https://discord.com/assets/971cfe4aa5c0582000ea.svg",
                 position: BadgePosition.END,

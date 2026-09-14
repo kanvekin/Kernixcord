@@ -50,6 +50,7 @@ const EquicordContributorBadge: ProfileBadge = {
 };
 
 const KernixcordContributorBadge: ProfileBadge = {
+    id: "kernixcord_contributor_badge",
     description: "Kernixcord Contributor",
     iconSrc: KERNIXCORD_CONTRIBUTOR_BADGE,
     position: BadgePosition.START,
@@ -64,6 +65,7 @@ const KernixcordContributorBadge: ProfileBadge = {
 };
 
 const EquicordDonorBadge: ProfileBadge = {
+    id: "equicord_donor_badge",
     description: "Equicord Donor",
     iconSrc: EQUICORD_DONOR_BADGE,
     position: BadgePosition.START,
@@ -76,6 +78,7 @@ const EquicordDonorBadge: ProfileBadge = {
 };
 
 const KernixcordDonorBadge: ProfileBadge = {
+    id: "kernixcord_donor_badge",
     description: "Kernixcord Donor",
     iconSrc: KERNIXCORD_DONOR_BADGE,
     position: BadgePosition.START,
