@@ -116,7 +116,7 @@ export default definePlugin({
             try {
                 if (!hasCrashedOnce) {
                     hasCrashedOnce = true;
-                    maybePromptToUpdate("Uh oh, Discord has just crashed... but good news, there is a Equicord update available that might fix this issue! Would you like to update now?", true);
+                    maybePromptToUpdate("Uh oh, Discord has just crashed... but good news, there is a Kernixcord update available that might fix this issue! Would you like to update now?", true);
                 }
             } catch { }
 
