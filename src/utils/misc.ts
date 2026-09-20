@@ -118,13 +118,15 @@ export function isEquicordGuild(id: string | null | undefined, isGuildId: boolea
     return channel.guild_id === GUILD_ID;
 }
 
-export function isSupportChannel(channelId: string | null | undefined): boolean {
+export function isSupportChannel(channelId: string | null | undefined, includeVencord: boolean = false): boolean {
     if (!channelId) return false;
+    if (includeVencord) return SUPPORT_CHANNEL_IDS.includes(channelId);
     return channelId === SUPPORT_CHANNEL_ID;
 }
 
-export function isKnownIssuesCategory(channelId: string | null | undefined): boolean {
+export function isKnownIssuesCategory(channelId: string | null | undefined, includeVencord: boolean = false): boolean {
     if (!channelId) return false;
+    if (includeVencord) return KNOWN_ISSUES_CHANNEL_IDS.includes(channelId);
     return channelId === KNOWN_ISSUES_CHANNEL_ID;
 }
 

@@ -23,13 +23,13 @@ export const GUILD_ID = "1173279886065029291";
 export const DONOR_ROLE_ID = "1173316879083896912";
 export const CONTRIB_ROLE_ID = "1222677964760682556";
 export const EQUICORD_TEAM = "1173520023239786538";
-export const EQUICORD_HELPERS = "1326406112144265257";
+export const EQUICORD_HELPERS = "1509542478905213088";
 export const VENCORD_CONTRIB_ROLE_ID = "1173343399470964856";
 export const EQUIBOT_USER_ID = "1243063117852835941";
 export const KNOWN_ISSUES_CHANNEL_ID = "1466558228379992266";
 
 export const VC_SUPPORT_CHANNEL_ID = "1026515880080842772";
-export const VC_GUILD_ID = "1015060230222131221";
+export const VC_GUILD_ID = "1536297527354073123";
 export const VENBOT_USER_ID = "1017176847865352332";
 export const VC_DONOR_ROLE_ID = "1042507929485586532";
 export const VC_CONTRIB_ROLE_ID = "1026534353167208489";
@@ -567,7 +567,7 @@ export const Devs = /* #__PURE__*/ Object.freeze({
     },
     nyx: {
         name: "verticalsync.",
-        id: 1207087393929171095n
+        id: 1280505961546649633n
     },
     nekohaxx: {
         name: "nekohaxx",
@@ -705,6 +705,10 @@ export const Devs = /* #__PURE__*/ Object.freeze({
     Davri: {
         name: "Davri",
         id: 457579346282938368n
+    },
+    Kaede: {
+        name: "Kaede",
+        id: 1492642701320126504n
     }
 } satisfies Record<string, Dev>);
 
@@ -712,6 +716,10 @@ export const EquicordDevs = Object.freeze({
     nobody: {
         name: "nobody",
         id: 0n
+    },
+    heart_menace: {
+        name: "heart_menace",
+        id: 281162701303185408n
     },
     thororen: {
         name: "thororen",
@@ -722,8 +730,8 @@ export const EquicordDevs = Object.freeze({
         id: 353229259482857475n
     },
     nyx: {
-        name: "verticalsync",
-        id: 1207087393929171095n
+        name: "verticalsync.",
+        id: 1280505961546649633n
     },
     Cortex: {
         name: "Cortex",
@@ -1453,6 +1461,10 @@ export const EquicordDevs = Object.freeze({
     penguinwokrs: {
         name: "penguinwokrs",
         id: 385266832136863746n
+    },
+        Kurt: {
+        name: "Kurt",
+        id: 112222963276750848n
     },
     karam: {
         name: "karam",
