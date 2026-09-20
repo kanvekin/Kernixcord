@@ -11,7 +11,7 @@ import { isPluginEnabled } from "@api/PluginManager";
 import { definePluginSettings, migratePluginToSettings, Settings } from "@api/Settings";
 import { ShieldIcon, WarningIcon } from "@components/Icons";
 import customRPC from "@plugins/customRPC";
-import { Devs, EquicordDevs, GUILD_ID, SUPPORT_CHANNEL_ID, SUPPORT_CHANNEL_IDS, VC_SUPPORT_CHANNEL_IDS } from "@utils/constants";
+import { Devs, EquicordDevs, GUILD_ID, SUPPORT_CHANNEL_ID, SUPPORT_CHANNEL_ID, VC_SUPPORT_CHANNEL_ID } from "@utils/constants";
 import { isAnyPluginDev } from "@utils/misc";
 import definePlugin, { OptionType } from "@utils/types";
 import { StandingState } from "@vencord/discord-types/enums";
@@ -378,12 +378,12 @@ export default definePlugin({
     },
     flux: {
         async CHANNEL_SELECT({ channelId }) {
-            const isSupportChannel = SUPPORT_CHANNEL_IDS.includes(channelId);
+            const isSupportChannel = SUPPORT_CHANNEL_ID.includes(channelId);
             if (!isSupportChannel) return;
 
             const selfId = UserStore.getCurrentUser()?.id;
             if (!selfId || isAnyPluginDev(selfId)) return;
-            if (VC_SUPPORT_CHANNEL_IDS.includes(channelId) && !clicked) {
+            if (VC_SUPPORT_CHANNEL_ID.includes(channelId) && !clicked) {
                 return Alerts.show({
                     title: "Vencord Support Channel Warning",
                     body: "Before asking for help. Check updates and if this issue is actually caused by Equicord!",

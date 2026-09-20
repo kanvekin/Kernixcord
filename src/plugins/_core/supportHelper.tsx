@@ -30,7 +30,7 @@ import { openSettingsTabModal, UpdaterTab } from "@components/settings";
 import { platformName } from "@equicordplugins/equicordHelper/utils";
 import customIdle from "@plugins/customIdle";
 import { gitHash, gitHashShort } from "@shared/vencordUserAgent";
-import { CONTRIB_ROLE_ID, Devs, DONOR_ROLE_ID, EQUICORD_TEAM, GUILD_ID, SUPPORT_CHANNEL_ID, SUPPORT_CHANNEL_IDS, VC_CONTRIB_ROLE_ID, VC_DONOR_ROLE_ID, VC_GUILD_ID, VC_REGULAR_ROLE_ID, VENCORD_CONTRIB_ROLE_ID } from "@utils/constants";
+import { CONTRIB_ROLE_ID, Devs, DONOR_ROLE_ID, EQUICORD_TEAM, GUILD_ID, SUPPORT_CHANNEL_ID, SUPPORT_CHANNEL_ID, VC_CONTRIB_ROLE_ID, VC_DONOR_ROLE_ID, VC_GUILD_ID, VC_REGULAR_ROLE_ID, VENCORD_CONTRIB_ROLE_ID } from "@utils/constants";
 import { sendMessage } from "@utils/discord";
 import { Logger } from "@utils/Logger";
 import { Margins } from "@utils/margins";
@@ -364,14 +364,14 @@ export default definePlugin({
 
     flux: {
         async CHANNEL_SELECT({ channelId }) {
-            const isSupportChannel = SUPPORT_CHANNEL_IDS.includes(channelId);
+            const isSupportChannel = SUPPORT_CHANNEL_ID.includes(channelId);
             if (!isSupportChannel) return;
 
             const selfId = UserStore.getCurrentUser()?.id;
             if (!selfId || isAnyPluginDev(selfId)) return;
 
             let clicked = false;
-            if (SUPPORT_CHANNEL_IDS.includes(channelId) && Vencord.Plugins.isPluginEnabled("VCSupport") && !clicked) {
+            if (SUPPORT_CHANNEL_ID.includes(channelId) && Vencord.Plugins.isPluginEnabled("VCSupport") && !clicked) {
                 return Alerts.show({
                     title: "You are entering the support channel!",
                     body: <div>

@@ -26,7 +26,7 @@ import { HeadingSecondary } from "@components/Heading";
 import { Paragraph } from "@components/Paragraph";
 import { Span } from "@components/Span";
 import { TooltipContainer } from "@components/TooltipContainer";
-import { Devs, EquicordDevs, SUPPORT_CHANNEL_IDS } from "@utils/constants";
+import { Devs, EquicordDevs, SUPPORT_CHANNEL_ID } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
@@ -417,7 +417,7 @@ function modifyIncomingMessage(message: Message) {
 const TEXT_REPLACE_RULES_EXEMPT_CHANNEL_IDS = [
     "1102784112584040479", // Vencord's Text Replace Rules Channel
     "1419347113745059961", // Equicord's Requests Channel
-    ...SUPPORT_CHANNEL_IDS
+    ...SUPPORT_CHANNEL_ID
 ];
 
 export default definePlugin({
