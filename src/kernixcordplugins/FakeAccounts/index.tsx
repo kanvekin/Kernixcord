@@ -8,8 +8,10 @@ import { definePluginSettings } from "@api/Settings";
 import { ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalRoot, ModalSize, openModal, ModalProps } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy, waitFor } from "@webpack";
-import { Button, Forms, React, RestAPI, TextInput, Toasts } from "@webpack/common";
+import { Button, Forms, React, RestAPI, TextInput, Toasts, PresenceStore, UserProfileStore } from "@webpack/common";
 import { Devs } from "@utils/constants";
+
+const CUSTOM_STATUS_TYPE = 4;
 
 const UserStore = findByPropsLazy("getCurrentUser", "getUser");
 const GuildStore = findByPropsLazy("getGuilds", "getGuildCount");
@@ -18,7 +20,6 @@ const ChannelStore = findByPropsLazy("getSortedPrivateChannels", "getMutablePriv
 const RelationshipStore = findByPropsLazy("getRelationshipType", "getFriendCount");
 const AuthStore = findByPropsLazy("getId", "getToken");
 const TabBar = findByPropsLazy("Header", "Item", "Separator", "Panel");
-const RestAPI = findByPropsLazy("get", "post", "put", "patch", "del");
 
 let UserClass: any = null;
 
@@ -47,16 +48,57 @@ const settings = definePluginSettings({
     }
 });
 
+interface FakeAccountProfile {
+    bio: string;
+    pronouns: string;
+    themeColors: number[] | null;
+}
+
+interface FakeAccountClan {
+    identity_guild_id?: string;
+    identity_enabled?: boolean;
+    tag?: string;
+    badge?: string;
+}
+
+interface FakeAccountCustomStatus {
+    text: string;
+    emojiId?: string;
+    emojiName?: string;
+}
+
 interface FakeAccount {
     id: string;
     username: string;
     discriminator: string;
     avatar: string | null;
     globalName: string | null;
+    banner?: string | null;
+    bannerColor?: string | null;
+    accentColor?: number | null;
+    clan?: FakeAccountClan | null;
+    premiumType?: number | null;
+    premiumSince?: string | null;
+    profile?: FakeAccountProfile;
+    status?: string;
+    customStatus?: FakeAccountCustomStatus | null;
+}
+
+function normalizeAccount(acc: FakeAccount): FakeAccount {
+    return {
+        ...acc,
+        profile: {
+            bio: acc.profile?.bio ?? "",
+            pronouns: acc.profile?.pronouns ?? "",
+            themeColors: acc.profile?.themeColors ?? null,
+        },
+        customStatus: acc.customStatus ?? null,
+        clan: acc.clan ?? null,
+    };
 }
 
 function parseFakeAccounts(): FakeAccount[] {
-    try { return JSON.parse(settings.store.fakeAccounts); }
+    try { return JSON.parse(settings.store.fakeAccounts).map(normalizeAccount); }
     catch { return []; }
 }
 
@@ -70,6 +112,135 @@ function parseAvatar(input: string): string | null {
     if (match) return match[1];
     if (/^[a-f0-9_]{32,}$/i.test(input)) return input;
     return null;
+}
+
+function getStoredCustomStatus(acc: FakeAccount) {
+    if (!acc.customStatus?.text && !acc.customStatus?.emojiName && !acc.customStatus?.emojiId) return null;
+    const emoji = acc.customStatus.emojiId
+        ? { id: acc.customStatus.emojiId, name: acc.customStatus.emojiName ?? "" }
+        : acc.customStatus.emojiName
+            ? { name: acc.customStatus.emojiName }
+            : undefined;
+    return {
+        type: CUSTOM_STATUS_TYPE,
+        state: acc.customStatus.text ?? "",
+        emoji,
+    };
+}
+
+function extractPresenceData(userId: string) {
+    const status = PresenceStore.getStatus(userId) || undefined;
+    const customActivity = (PresenceStore.getActivities(userId) ?? []).find(a => a.type === CUSTOM_STATUS_TYPE);
+    const customStatus = customActivity
+        ? {
+            text: customActivity.state ?? "",
+            emojiId: customActivity.emoji?.id,
+            emojiName: customActivity.emoji?.name,
+        }
+        : null;
+    return { status, customStatus };
+}
+
+function accountFromProfileBody(body: any): FakeAccount {
+    const user = body.user ?? body;
+    const userProfile = body.user_profile ?? {};
+    const { status, customStatus } = extractPresenceData(user.id);
+
+    return normalizeAccount({
+        id: user.id,
+        username: user.username,
+        discriminator: user.discriminator ?? "0",
+        avatar: user.avatar ?? null,
+        globalName: user.global_name ?? user.globalName ?? user.username,
+        banner: user.banner ?? null,
+        bannerColor: user.banner_color ?? user.bannerColor ?? null,
+        accentColor: user.accent_color ?? user.accentColor ?? null,
+        clan: user.clan ?? user.primary_guild ?? user.primaryGuild ?? null,
+        premiumType: body.premium_type ?? user.premium_type ?? null,
+        premiumSince: body.premium_since ?? null,
+        profile: {
+            bio: userProfile.bio ?? user.bio ?? "",
+            pronouns: userProfile.pronouns ?? "",
+            themeColors: userProfile.theme_colors ?? userProfile.themeColors ?? null,
+        },
+        status,
+        customStatus,
+    });
+}
+
+function isFakeProfileRequest(url: string | undefined, userId: string) {
+    if (!url) return false;
+    return url === `/users/${userId}/profile`
+        || url.startsWith(`/users/${userId}/profile?`)
+        || url === "/users/@me/profile"
+        || url.startsWith("/users/@me/profile?");
+}
+
+function buildProfileResponse(acc: FakeAccount, fakeUser: any) {
+    return {
+        body: {
+            user: {
+                ...fakeUser,
+                banner: acc.banner ?? null,
+                banner_color: acc.bannerColor ?? null,
+                accent_color: acc.accentColor ?? null,
+                bio: acc.profile?.bio ?? "",
+                clan: acc.clan ?? null,
+                primary_guild: acc.clan ?? null,
+            },
+            user_profile: {
+                bio: acc.profile?.bio ?? "",
+                pronouns: acc.profile?.pronouns ?? "",
+                theme_colors: acc.profile?.themeColors ?? null,
+            },
+            badges: [],
+            guild_badges: [],
+            connected_accounts: [],
+            mutual_guilds: [],
+            premium_since: acc.premiumSince ?? null,
+            premium_type: acc.premiumType ?? null,
+            premium_guild_since: null,
+        }
+    };
+}
+
+function buildStoredUserProfile(acc: FakeAccount, fakeUser: any) {
+    return {
+        userId: acc.id,
+        user: fakeUser,
+        bio: acc.profile?.bio ?? "",
+        pronouns: acc.profile?.pronouns ?? "",
+        themeColors: acc.profile?.themeColors ?? null,
+        banner: acc.banner ?? null,
+        bannerColor: acc.bannerColor ?? null,
+        accentColor: acc.accentColor ?? null,
+        premiumType: acc.premiumType ?? null,
+        premiumSince: acc.premiumSince ?? null,
+        badges: [],
+        connectedAccounts: [],
+        guildId: undefined,
+    };
+}
+
+function getStatusColor(status?: string) {
+    switch (status) {
+        case "online": return "var(--status-positive)";
+        case "idle": return "var(--status-warning)";
+        case "dnd": return "var(--status-danger)";
+        default: return "var(--status-offline)";
+    }
+}
+
+function getAvatarUrl(acc: FakeAccount, size = 40) {
+    if (acc.avatar) return `https://cdn.discordapp.com/avatars/${acc.id}/${acc.avatar}.webp?size=${size}`;
+    return `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(acc.id) % 6n)}.png`;
+}
+
+function getBannerUrl(acc: FakeAccount) {
+    if (acc.banner) return `https://cdn.discordapp.com/banners/${acc.id}/${acc.banner}.webp?size=300`;
+    if (acc.bannerColor) return acc.bannerColor;
+    if (acc.accentColor != null) return `#${acc.accentColor.toString(16).padStart(6, "0")}`;
+    return "var(--background-secondary-alt)";
 }
 
 const _originals: Record<string, any> = {};
@@ -87,6 +258,11 @@ function buildUserObject(acc: FakeAccount): any {
         discriminator: acc.discriminator ?? "0",
         avatar: acc.avatar ?? null,
         global_name: acc.globalName ?? acc.username,
+        banner: acc.banner ?? null,
+        banner_color: acc.bannerColor ?? null,
+        accent_color: acc.accentColor ?? null,
+        bio: acc.profile?.bio ?? "",
+        clan: acc.clan ?? null,
         verified: true,
         email: "fake@fake.com",
         has_bounced_email: false,
@@ -95,7 +271,7 @@ function buildUserObject(acc: FakeAccount): any {
         mfa_enabled: false,
         mobile: false,
         desktop: true,
-        premium_type: null,
+        premium_type: acc.premiumType ?? null,
         flags: 0,
         public_flags: 0,
         purchased_flags: 0,
@@ -103,7 +279,7 @@ function buildUserObject(acc: FakeAccount): any {
         phone: null,
         nsfw_allowed: true,
         personal_connection_id: null,
-        primary_guild: null,
+        primary_guild: acc.clan ?? null,
     });
 }
 
@@ -167,25 +343,32 @@ export function activateFakeSession(acc: FakeAccount) {
     _originals.getRelationshipType = RelationshipStore.getRelationshipType.bind(RelationshipStore);
     RelationshipStore.getRelationshipType = () => 0;
 
+    _originals.getUserProfile = UserProfileStore.getUserProfile.bind(UserProfileStore);
+    UserProfileStore.getUserProfile = function (userId: string) {
+        if (userId === acc.id) return buildStoredUserProfile(acc, fakeUser);
+        return _originals.getUserProfile.call(this, userId);
+    };
+
+    _originals.getStatus = PresenceStore.getStatus.bind(PresenceStore);
+    PresenceStore.getStatus = function (userId: string) {
+        if (userId === acc.id && acc.status) return acc.status;
+        return _originals.getStatus.call(this, userId);
+    };
+
+    _originals.getActivities = PresenceStore.getActivities.bind(PresenceStore);
+    PresenceStore.getActivities = function (userId: string) {
+        if (userId === acc.id) {
+            const customStatus = getStoredCustomStatus(acc);
+            const otherActivities = (_originals.getActivities.call(this, userId) ?? []).filter(a => a.type !== CUSTOM_STATUS_TYPE);
+            return customStatus ? [customStatus, ...otherActivities] : otherActivities;
+        }
+        return _originals.getActivities.call(this, userId);
+    };
+
     _originals.restGet = RestAPI.get.bind(RestAPI);
-    RestAPI.get = async function(req: any, ...args: any[]) {
-        if (req.url === `/users/${acc.id}/profile` || req.url === `/users/${acc.id}/profile?with_mutual_guilds=true&with_mutual_friends_count=true`) {
-            return {
-                body: {
-                    user: fakeUser,
-                    user_profile: {
-                        bio: "",
-                        theme_colors: null,
-                        pronouns: ""
-                    },
-                    badges: [],
-                    connected_accounts: [],
-                    mutual_guilds: [],
-                    premium_since: null,
-                    premium_type: null,
-                    premium_guild_since: null
-                }
-            };
+    RestAPI.get = async function (req: any, ...args: any[]) {
+        if (isFakeProfileRequest(req.url, acc.id)) {
+            return buildProfileResponse(acc, fakeUser);
         }
         return _originals.restGet.call(this, req, ...args);
     };
@@ -218,6 +401,9 @@ export function deactivateFakeSession() {
     restoreOn(RelationshipStore, "getFriendIDs");
     restoreOn(RelationshipStore, "getMutableRelationships");
     restoreOn(RelationshipStore, "getRelationshipType");
+    restoreOn(UserProfileStore, "getUserProfile");
+    restoreOn(PresenceStore, "getStatus");
+    restoreOn(PresenceStore, "getActivities");
 
     if (_originals.restGet) {
         RestAPI.get = _originals.restGet;
@@ -257,17 +443,17 @@ function FakeAccountModal({ modalProps }: { modalProps: ModalProps; }) {
         }
         setLoading(true);
         try {
-            const res = await RestAPI.get({ url: `/users/${userId.trim()}` });
-            const u = res.body;
-            updateAccounts([...accounts, {
-                id: u.id,
-                username: u.username,
-                discriminator: u.discriminator ?? "0",
-                avatar: u.avatar ?? null,
-                globalName: u.global_name ?? u.username,
-            }]);
+            const res = await RestAPI.get({
+                url: `/users/${userId.trim()}/profile`,
+                query: {
+                    with_mutual_guilds: true,
+                    with_mutual_friends_count: true,
+                }
+            });
+            const account = accountFromProfileBody(res.body);
+            updateAccounts([...accounts, account]);
             setUserId("");
-            Toasts.show({ message: `Added ${u.username}!`, id: "fa-add", type: Toasts.Type.SUCCESS, options: { position: Toasts.Position.BOTTOM } });
+            Toasts.show({ message: `Added ${account.username}!`, id: "fa-add", type: Toasts.Type.SUCCESS, options: { position: Toasts.Position.BOTTOM } });
         } catch {
             Toasts.show({ message: "Failed to fetch user. Check the ID.", id: "fa-fail", type: Toasts.Type.FAILURE, options: { position: Toasts.Position.BOTTOM } });
         }
@@ -277,13 +463,14 @@ function FakeAccountModal({ modalProps }: { modalProps: ModalProps; }) {
     const addManual = () => {
         if (!manualUsername.trim()) return;
         const id = (BigInt(Date.now()) - 1420070400000n).toString().slice(0, 18);
-        updateAccounts([...accounts, {
+        updateAccounts([...accounts, normalizeAccount({
             id,
             username: manualUsername.trim(),
             discriminator: "0",
             avatar: parseAvatar(manualAvatar),
             globalName: manualUsername.trim(),
-        }]);
+            profile: { bio: "", pronouns: "", themeColors: null },
+        })]);
         setManualUsername("");
         setManualAvatar("");
     };
@@ -400,13 +587,13 @@ function FakeAccountModal({ modalProps }: { modalProps: ModalProps; }) {
                         )}
                         {accounts.map(acc => {
                             const isActive = activeId === acc.id;
+                            const statusLabel = acc.status ?? "unknown";
+                            const customStatusText = acc.customStatus?.text || acc.customStatus?.emojiName;
                             return (
                                 <div
                                     key={acc.id}
                                     style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        padding: "10px 14px",
+                                        overflow: "hidden",
                                         backgroundColor: isActive
                                             ? "var(--background-modifier-selected)"
                                             : "var(--background-secondary)",
@@ -414,50 +601,96 @@ function FakeAccountModal({ modalProps }: { modalProps: ModalProps; }) {
                                         border: `1px solid ${isActive
                                             ? "var(--brand-500)"
                                             : "var(--background-modifier-accent)"}`,
-                                        gap: "12px",
                                     }}
                                 >
-                                    <img
-                                        src={acc.avatar
-                                            ? `https://cdn.discordapp.com/avatars/${acc.id}/${acc.avatar}.webp?size=40`
-                                            : `https://cdn.discordapp.com/embed/avatars/${parseInt(acc.id) % 6}.png`
-                                        }
-                                        style={{ width: 36, height: 36, borderRadius: "50%", flexShrink: 0 }}
-                                        onError={(e: any) => { e.target.src = "https://cdn.discordapp.com/embed/avatars/0.png"; }}
+                                    <div
+                                        style={{
+                                            height: 56,
+                                            backgroundImage: acc.banner ? `url(${getBannerUrl(acc)})` : undefined,
+                                            backgroundColor: !acc.banner ? getBannerUrl(acc) : undefined,
+                                            backgroundSize: "cover",
+                                            backgroundPosition: "center",
+                                        }}
                                     />
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                        <div style={{ fontWeight: 600, fontSize: "14px", color: "var(--header-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                            {acc.globalName || acc.username}
+                                    <div style={{ display: "flex", alignItems: "center", padding: "10px 14px 12px", gap: "12px" }}>
+                                        <div style={{ position: "relative", marginTop: -28, flexShrink: 0 }}>
+                                            <img
+                                                src={getAvatarUrl(acc, 48)}
+                                                style={{ width: 48, height: 48, borderRadius: "50%", border: "4px solid var(--background-secondary)" }}
+                                                onError={(e: any) => { e.target.src = "https://cdn.discordapp.com/embed/avatars/0.png"; }}
+                                            />
+                                            {acc.status && (
+                                                <span
+                                                    title={statusLabel}
+                                                    style={{
+                                                        position: "absolute",
+                                                        right: 2,
+                                                        bottom: 2,
+                                                        width: 14,
+                                                        height: 14,
+                                                        borderRadius: "50%",
+                                                        backgroundColor: getStatusColor(acc.status),
+                                                        border: "3px solid var(--background-secondary)",
+                                                    }}
+                                                />
+                                            )}
                                         </div>
-                                        <div style={{ fontSize: "12px", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                            @{acc.username} · {acc.id}
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                                                <div style={{ fontWeight: 600, fontSize: "14px", color: "var(--header-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                    {acc.globalName || acc.username}
+                                                </div>
+                                                {acc.clan?.tag && (
+                                                    <span style={{
+                                                        fontSize: "11px",
+                                                        fontWeight: 700,
+                                                        color: "var(--text-muted)",
+                                                        backgroundColor: "var(--background-modifier-accent)",
+                                                        borderRadius: "4px",
+                                                        padding: "2px 6px",
+                                                        flexShrink: 0,
+                                                    }}>
+                                                        {acc.clan.tag}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div style={{ fontSize: "12px", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                @{acc.username} · {acc.id}
+                                            </div>
+                                            {(acc.profile?.pronouns || customStatusText) && (
+                                                <div style={{ fontSize: "12px", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: "2px" }}>
+                                                    {acc.profile?.pronouns && <span>{acc.profile.pronouns}</span>}
+                                                    {acc.profile?.pronouns && customStatusText && <span> · </span>}
+                                                    {customStatusText && <span>{customStatusText}</span>}
+                                                </div>
+                                            )}
                                         </div>
+                                        <Button
+                                            size={Button.Sizes.SMALL}
+                                            color={isActive ? Button.Colors.RED : Button.Colors.BRAND}
+                                            onClick={() => {
+                                                if (isActive) {
+                                                    deactivateFakeSession();
+                                                    setActiveId(null);
+                                                } else {
+                                                    activateFakeSession(acc);
+                                                    setActiveId(acc.id);
+                                                }
+                                            }}
+                                        >
+                                            {isActive ? "Exit" : "Switch"}
+                                        </Button>
+                                        <Button
+                                            size={Button.Sizes.SMALL}
+                                            color={Button.Colors.RED}
+                                            onClick={() => {
+                                                if (isActive) { deactivateFakeSession(); setActiveId(null); }
+                                                updateAccounts(accounts.filter(a => a.id !== acc.id));
+                                            }}
+                                        >
+                                            Remove
+                                        </Button>
                                     </div>
-                                    <Button
-                                        size={Button.Sizes.SMALL}
-                                        color={isActive ? Button.Colors.RED : Button.Colors.BRAND}
-                                        onClick={() => {
-                                            if (isActive) {
-                                                deactivateFakeSession();
-                                                setActiveId(null);
-                                            } else {
-                                                activateFakeSession(acc);
-                                                setActiveId(acc.id);
-                                            }
-                                        }}
-                                    >
-                                        {isActive ? "Exit" : "Switch"}
-                                    </Button>
-                                    <Button
-                                        size={Button.Sizes.SMALL}
-                                        color={Button.Colors.RED}
-                                        onClick={() => {
-                                            if (isActive) { deactivateFakeSession(); setActiveId(null); }
-                                            updateAccounts(accounts.filter(a => a.id !== acc.id));
-                                        }}
-                                    >
-                                        Remove
-                                    </Button>
                                 </div>
                             );
                         })}

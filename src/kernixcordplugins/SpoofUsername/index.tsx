@@ -59,13 +59,13 @@ function SpoofModal({ modalProps }: { modalProps: ModalProps }) {
                 <ModalCloseButton onClick={modalProps.onClose} />
             </ModalHeader>
             <ModalContent style={{ paddingBottom: "16px" }}>
-                <Forms.FormItem title="Fake Username" style={{ marginBottom: 20 }}>
-                    <TextInput
-                        value={name}
-                        onChange={setName}
-                        placeholder="Enter fake username (leave blank to reset)"
-                    />
-                </Forms.FormItem>
+                <Forms.FormTitle tag="h5">Fake Username</Forms.FormTitle>
+                <TextInput
+                    value={name}
+                    onChange={setName}
+                    placeholder="Enter fake username (leave blank to reset)"
+                    style={{ marginBottom: 20 }}
+                />
                 <Button
                     onClick={() => {
                         settings.store.spoofedUsername = name;

@@ -3,16 +3,15 @@
  * Equicord / Vencord UserPlugin
  */
 
-import { addChatBarButton, ChatBarButton, removeChatBarButton } from "@api/ChatButtons";
+import { ChatBarButton, type ChatBarButtonFactory } from "@api/ChatButtons";
 import { openModal } from "@utils/modal";
 import { Devs } from "@utils/constants";
-import definePlugin from "@utils/types";
+import definePlugin, { type IconComponent } from "@utils/types";
 import type { Channel } from "@vencord/discord-types";
 import {
     ChannelStore,
     FluxDispatcher,
     UserStore,
-    useEffect,
     useState
 } from "@webpack/common";
 
@@ -232,23 +231,27 @@ function FakeMessageModal({ channelId, onClose }: { channelId: string; onClose: 
     );
 }
 
-const SahteMesajChatBarButton: ChatBarButton = ({ channel }) => {
-    return (
-        <ChatBarButton
-            tooltip="Fake Message"
-            onClick={() => {
-                openModal((props) => (
-                    <FakeMessageModal
-                        channelId={(channel as Channel).id}
-                        onClose={props.onClose}
-                    />
-                ));
-            }}
-        >
-            ✔
-        </ChatBarButton>
-    );
-};
+const FakeMessageIcon: IconComponent = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z" />
+    </svg>
+);
+
+const SahteMesajChatBarButton: ChatBarButtonFactory = ({ channel }) => (
+    <ChatBarButton
+        tooltip="Fake Message"
+        onClick={() => {
+            openModal((props) => (
+                <FakeMessageModal
+                    channelId={channel.id}
+                    onClose={props.onClose}
+                />
+            ));
+        }}
+    >
+        <FakeMessageIcon />
+    </ChatBarButton>
+);
 
 export default definePlugin({
     name: "Fake Message",
@@ -259,11 +262,8 @@ export default definePlugin({
 
     authors: [Devs.feelslove],
 
-    start() {
-        addChatBarButton("SahteMesaj", SahteMesajChatBarButton);
-    },
-
-    stop() {
-        removeChatBarButton("SahteMesaj");
+    chatBarButton: {
+        icon: FakeMessageIcon,
+        render: SahteMesajChatBarButton
     }
 });
