@@ -18,6 +18,7 @@ const ChannelStore = findByPropsLazy("getSortedPrivateChannels", "getMutablePriv
 const RelationshipStore = findByPropsLazy("getRelationshipType", "getFriendCount");
 const AuthStore = findByPropsLazy("getId", "getToken");
 const TabBar = findByPropsLazy("Header", "Item", "Separator", "Panel");
+const RestAPI = findByPropsLazy("get", "post", "put", "patch", "del");
 
 let UserClass: any = null;
 
@@ -166,6 +167,29 @@ export function activateFakeSession(acc: FakeAccount) {
     _originals.getRelationshipType = RelationshipStore.getRelationshipType.bind(RelationshipStore);
     RelationshipStore.getRelationshipType = () => 0;
 
+    _originals.restGet = RestAPI.get.bind(RestAPI);
+    RestAPI.get = async function(req: any, ...args: any[]) {
+        if (req.url === `/users/${acc.id}/profile` || req.url === `/users/${acc.id}/profile?with_mutual_guilds=true&with_mutual_friends_count=true`) {
+            return {
+                body: {
+                    user: fakeUser,
+                    user_profile: {
+                        bio: "",
+                        theme_colors: null,
+                        pronouns: ""
+                    },
+                    badges: [],
+                    connected_accounts: [],
+                    mutual_guilds: [],
+                    premium_since: null,
+                    premium_type: null,
+                    premium_guild_since: null
+                }
+            };
+        }
+        return _originals.restGet.call(this, req, ...args);
+    };
+
     Toasts.show({
         message: `Switched to ${acc.username}`,
         id: "fakeaccount-switch",
@@ -194,6 +218,10 @@ export function deactivateFakeSession() {
     restoreOn(RelationshipStore, "getFriendIDs");
     restoreOn(RelationshipStore, "getMutableRelationships");
     restoreOn(RelationshipStore, "getRelationshipType");
+
+    if (_originals.restGet) {
+        RestAPI.get = _originals.restGet;
+    }
 
     Object.keys(_originals).forEach(k => delete _originals[k]);
     _fakeSessionActive = false;
