@@ -61,27 +61,43 @@ export default definePlugin({
 
     patches: [
         {
-            // Patch channel list permission check to show all channels
+            // Patch getGuildPermissions to return admin permissions when enabled
+            find: "getGuildPermissions(",
+            replacement: {
+                match: /getGuildPermissions\((\w+)\){/,
+                replace: "getGuildPermissions($1){try{if($self.isServerEnabled($1))return 8n}catch(e){console.error('[FakeAdmin]',e)}return $&"
+            }
+        },
+        {
+            // Patch computePermissions to include admin when enabled
+            find: "computePermissions",
+            replacement: {
+                match: /computePermissions\((\w+)\){/,
+                replace: "computePermissions($1){try{if($self.isServerEnabled($1))return 8n}catch(e){console.error('[FakeAdmin]',e)}return $&"
+            }
+        },
+        {
+            // Patch can function for permission checks
+            find: "can(",
+            replacement: {
+                match: /can\((\w+),\w+\){/,
+                replace: "can($1,userId){try{if($self.isServerEnabled(userId))return true}catch(e){console.error('[FakeAdmin]',e)}return $&"
+            }
+        },
+        {
+            // Patch channel visibility check
             find: "canAccessChannel",
             replacement: {
                 match: /canAccessChannel\(\i,\i\){/,
-                replace: "canAccessChannel(channel,userId){try{if($self.isServerEnabled(channel?.guild_id))return true}catch(e){}return $&"
+                replace: "canAccessChannel(channel,userId){try{if($self.isServerEnabled(channel?.guild_id))return true}catch(e){console.error('[FakeAdmin]',e)}return $&"
             }
         },
         {
-            // Patch guild settings permission check
+            // Patch guild settings access
             find: "canAccessGuildSettings",
             replacement: {
                 match: /canAccessGuildSettings\(\i\){/,
-                replace: "canAccessGuildSettings(guild){try{if($self.isServerEnabled(guild?.id))return true}catch(e){}return $&"
-            }
-        },
-        {
-            // Patch channel settings permission check
-            find: "canAccessChannelSettings",
-            replacement: {
-                match: /canAccessChannelSettings\(\i\){/,
-                replace: "canAccessChannelSettings(channel){try{if($self.isServerEnabled(channel?.guild_id))return true}catch(e){}return $&"
+                replace: "canAccessGuildSettings(guild){try{if($self.isServerEnabled(guild?.id))return true}catch(e){console.error('[FakeAdmin]',e)}return $&"
             }
         }
     ],
