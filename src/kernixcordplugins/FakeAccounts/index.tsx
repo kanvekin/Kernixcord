@@ -544,8 +544,14 @@ export function activateFakeSession(acc: FakeAccount) {
                     action = { ...action, user: fakeUser };
                 }
                 // Also intercept USER_PROFILE_MODAL_OPEN to force it to use fake user ID
-                if (action?.type === "USER_PROFILE_MODAL_OPEN") {
-                    action = { ...action, userId: acc.id };
+                // Only intercept if it's trying to open the current user's profile
+                if (action?.type === "USER_PROFILE_MODAL_OPEN" && action?.userId) {
+                    try {
+                        const currentUser = UserStore.getCurrentUser();
+                        if (currentUser && action.userId === currentUser.id) {
+                            action = { ...action, userId: acc.id };
+                        }
+                    } catch { /* ignore */ }
                 }
             }
         } catch (e) {

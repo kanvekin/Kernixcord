@@ -68,56 +68,29 @@ export default definePlugin({
             find: "getGuildPermissions(",
             replacement: {
                 match: /getGuildPermissions\((\w+)\){/,
-                replace: "getGuildPermissions($1){return $self.patchPermissions($1,arguments.callee.caller.apply(this,arguments));"
-            }
-        },
-        {
-            // Patch can function to return true for admin permissions when enabled
-            find: "can(",
-            replacement: {
-                match: /can\((\w+),\w+\){/,
-                replace: "can($1,userId){return $self.patchCan($1,userId,arguments.callee.caller.apply(this,arguments));"
-            }
-        },
-        {
-            // Patch permission checks in channel settings
-            find: "MANAGE_CHANNELS",
-            replacement: {
-                match: /MANAGE_CHANNELS:\(\i,\i\)=>\i/,
-                replace: "MANAGE_CHANNELS:(guildId,channelId)=>$self.hasFakePermission(guildId)||$&"
-            }
-        },
-        {
-            // Patch permission checks in server settings
-            find: "MANAGE_GUILD",
-            replacement: {
-                match: /MANAGE_GUILD:\(\i\)=>\i/,
-                replace: "MANAGE_GUILD:(guildId)=>$self.hasFakePermission(guildId)||$&"
+                replace: "getGuildPermissions($1){try{return $self.patchPermissions($1,arguments.callee.caller.apply(this,arguments));}catch(e){console.error('[FakeAdmin] patchPermissions error:',e);return arguments.callee.caller.apply(this,arguments);}"
             }
         }
     ],
 
     patchPermissions(guildId: string, originalPermissions: bigint): bigint {
-        if (isServerEnabled(guildId)) {
-            return originalPermissions | BigInt(ADMINISTRATOR);
+        try {
+            if (guildId && isServerEnabled(guildId)) {
+                return originalPermissions | BigInt(ADMINISTRATOR);
+            }
+        } catch (e) {
+            console.error("[FakeAdmin] Error in patchPermissions:", e);
         }
         return originalPermissions;
     },
 
-    patchCan(permission: bigint, userId: string, originalResult: boolean): boolean {
-        // Get current guild from context if possible
-        const member = GuildMemberStore.getMember(userId);
-        if (member && isServerEnabled(member.guildId)) {
-            // If it's an admin permission, return true
-            if ((permission & BigInt(ADMINISTRATOR)) === BigInt(ADMINISTRATOR)) {
-                return true;
-            }
-        }
-        return originalResult;
-    },
-
     hasFakePermission(guildId: string): boolean {
-        return isServerEnabled(guildId);
+        try {
+            return isServerEnabled(guildId);
+        } catch (e) {
+            console.error("[FakeAdmin] Error in hasFakePermission:", e);
+            return false;
+        }
     },
 
     contextMenus: {
