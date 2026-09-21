@@ -7,11 +7,7 @@
 import { definePluginSettings } from "@api/Settings";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { findByPropsLazy } from "@webpack";
 import { Menu, Toasts } from "@webpack/common";
-
-const PermissionStore = findByPropsLazy("getGuildPermissions");
-const GuildMemberStore = findByPropsLazy("getMember");
 
 export const settings = definePluginSettings({
     enabledServers: {
@@ -28,6 +24,7 @@ function getEnabledServers(): Set<string> {
 }
 
 function isServerEnabled(guildId: string): boolean {
+    if (!guildId) return false;
     return getEnabledServers().has(guildId);
 }
 
@@ -37,7 +34,7 @@ function toggleServer(guildId: string) {
         enabled.delete(guildId);
         Toasts.show({
             message: "Fake admin disabled for this server",
-            id: "dev-feelslove-off",
+            id: "fakeadmin-off",
             type: Toasts.Type.SUCCESS,
             options: { position: Toasts.Position.BOTTOM }
         });
@@ -45,7 +42,7 @@ function toggleServer(guildId: string) {
         enabled.add(guildId);
         Toasts.show({
             message: "Fake admin enabled for this server",
-            id: "dev-feelslove-on",
+            id: "fakeadmin-on",
             type: Toasts.Type.SUCCESS,
             options: { position: Toasts.Position.BOTTOM }
         });
@@ -64,34 +61,30 @@ export default definePlugin({
 
     patches: [
         {
-            // Patch getGuildPermissions to include ADMINISTRATOR when enabled
-            find: "getGuildPermissions(",
+            // Patch channel list permission check to show all channels
+            find: "canAccessChannel",
             replacement: {
-                match: /getGuildPermissions\((\w+)\){/,
-                replace: "getGuildPermissions($1){try{return $self.patchPermissions($1,arguments.callee.caller.apply(this,arguments));}catch(e){console.error('[FakeAdmin] patchPermissions error:',e);return arguments.callee.caller.apply(this,arguments);}"
+                match: /canAccessChannel\(\i,\i\){/,
+                replace: "canAccessChannel(channel,userId){try{if($self.isServerEnabled(channel?.guild_id))return true}catch(e){}return $&"
+            }
+        },
+        {
+            // Patch guild settings permission check
+            find: "canAccessGuildSettings",
+            replacement: {
+                match: /canAccessGuildSettings\(\i\){/,
+                replace: "canAccessGuildSettings(guild){try{if($self.isServerEnabled(guild?.id))return true}catch(e){}return $&"
+            }
+        },
+        {
+            // Patch channel settings permission check
+            find: "canAccessChannelSettings",
+            replacement: {
+                match: /canAccessChannelSettings\(\i\){/,
+                replace: "canAccessChannelSettings(channel){try{if($self.isServerEnabled(channel?.guild_id))return true}catch(e){}return $&"
             }
         }
     ],
-
-    patchPermissions(guildId: string, originalPermissions: bigint): bigint {
-        try {
-            if (guildId && isServerEnabled(guildId)) {
-                return originalPermissions | BigInt(ADMINISTRATOR);
-            }
-        } catch (e) {
-            console.error("[FakeAdmin] Error in patchPermissions:", e);
-        }
-        return originalPermissions;
-    },
-
-    hasFakePermission(guildId: string): boolean {
-        try {
-            return isServerEnabled(guildId);
-        } catch (e) {
-            console.error("[FakeAdmin] Error in hasFakePermission:", e);
-            return false;
-        }
-    },
 
     contextMenus: {
         "guild-context"(children: any[], { guild }: any) {
@@ -100,7 +93,7 @@ export default definePlugin({
             children.push(
                 <Menu.MenuSeparator />,
                 <Menu.MenuCheckboxItem
-                    id="dev-feelslove-toggle"
+                    id="fakeadmin-toggle"
                     label="Fake Admin"
                     checked={isServerEnabled(guild.id)}
                     action={() => toggleServer(guild.id)}
@@ -113,7 +106,7 @@ export default definePlugin({
             children.push(
                 <Menu.MenuSeparator />,
                 <Menu.MenuCheckboxItem
-                    id="dev-feelslove-toggle-header"
+                    id="fakeadmin-toggle-header"
                     label="Fake Admin"
                     checked={isServerEnabled(guild.id)}
                     action={() => toggleServer(guild.id)}
