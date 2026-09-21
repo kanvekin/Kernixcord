@@ -8,7 +8,7 @@ import { definePluginSettings } from "@api/Settings";
 import { ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalRoot, ModalSize, openModal, ModalProps } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy, waitFor } from "@webpack";
-import { Button, Forms, React, RestAPI, Toasts, PresenceStore, UserProfileStore } from "@webpack/common";
+import { Button, Forms, React, RestAPI, TextInput, Toasts, PresenceStore, UserProfileStore } from "@webpack/common";
 import { Devs } from "@utils/constants";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -17,12 +17,12 @@ const CUSTOM_STATUS_TYPE = 4;
 
 // ─── Lazy stores ──────────────────────────────────────────────────────────────
 
-const UserStore        = findByPropsLazy("getCurrentUser", "getUser");
-const GuildStore       = findByPropsLazy("getGuilds", "getGuildCount");
-const GuildFolderStore = findByPropsLazy("getGuildsTree", "getFlattenedGuildIds");
-const ChannelStore     = findByPropsLazy("getSortedPrivateChannels", "getMutablePrivateChannels");
-const RelationshipStore= findByPropsLazy("getRelationshipType", "getFriendCount");
-const AuthStore        = findByPropsLazy("getId", "getToken");
+const UserStore         = findByPropsLazy("getCurrentUser", "getUser");
+const GuildStore        = findByPropsLazy("getGuilds", "getGuildCount");
+const GuildFolderStore  = findByPropsLazy("getGuildsTree", "getFlattenedGuildIds");
+const ChannelStore      = findByPropsLazy("getSortedPrivateChannels", "getMutablePrivateChannels");
+const RelationshipStore = findByPropsLazy("getRelationshipType", "getFriendCount");
+const AuthStore         = findByPropsLazy("getId", "getToken");
 
 // ─── UserClass (resolved async by webpack) ───────────────────────────────────
 
@@ -45,8 +45,8 @@ function getGuildsTreeClass() {
 
 // ─── Settings ─────────────────────────────────────────────────────────────────
 //
-// accountIds  : user-editable CSV  (e.g. "123,456,789")
-// cachedData  : JSON blob we write ourselves — NOT user-edited
+// accountIds : user-editable CSV  (e.g. "123,456,789")
+// cachedData : JSON blob we write ourselves — NOT user-edited
 
 const settings = definePluginSettings({
     accountIds: {
@@ -101,6 +101,44 @@ interface FakeAccount {
     customStatus?: FakeAccountCustomStatus | null;
 }
 
+// ─── Safe helpers ─────────────────────────────────────────────────────────────
+
+/** BigInt tabanlı default avatar indexi — geçersiz ID'de crash vermez */
+function safeDefaultAvatarIndex(id: string): number {
+    try {
+        if (!/^\d+$/.test(id)) return 0;
+        return Number(BigInt(id) % 6n);
+    } catch {
+        return 0;
+    }
+}
+
+function getAvatarUrl(acc: FakeAccount, size = 48): string {
+    if (acc.avatar) return `https://cdn.discordapp.com/avatars/${acc.id}/${acc.avatar}.webp?size=${size}`;
+    return `https://cdn.discordapp.com/embed/avatars/${safeDefaultAvatarIndex(acc.id)}.png`;
+}
+
+function getBannerBackground(acc: FakeAccount): React.CSSProperties {
+    if (acc.banner)
+        return { backgroundImage: `url(https://cdn.discordapp.com/banners/${acc.id}/${acc.banner}.webp?size=300)`, backgroundSize: "cover", backgroundPosition: "center" };
+    if (acc.bannerColor)
+        return { backgroundColor: acc.bannerColor };
+    if (acc.accentColor != null) {
+        try { return { backgroundColor: `#${acc.accentColor.toString(16).padStart(6, "0")}` }; }
+        catch { /* fall through */ }
+    }
+    return { backgroundColor: "var(--background-secondary-alt)" };
+}
+
+function getStatusColor(status?: string) {
+    switch (status) {
+        case "online": return "var(--status-positive)";
+        case "idle":   return "var(--status-warning)";
+        case "dnd":    return "var(--status-danger)";
+        default:       return "var(--status-offline)";
+    }
+}
+
 // ─── Cache helpers ────────────────────────────────────────────────────────────
 
 function loadCache(): Record<string, FakeAccount> {
@@ -109,14 +147,24 @@ function loadCache(): Record<string, FakeAccount> {
 }
 
 function saveCache(cache: Record<string, FakeAccount>) {
-    settings.store.cachedData = JSON.stringify(cache);
+    try { settings.store.cachedData = JSON.stringify(cache); }
+    catch { /* silently ignore */ }
 }
 
 function getIdsFromSettings(): string[] {
-    return settings.store.accountIds
+    return (settings.store.accountIds ?? "")
         .split(",")
         .map(s => s.trim())
         .filter(s => /^\d{17,20}$/.test(s));
+}
+
+function addIdToSettings(id: string) {
+    const current = getIdsFromSettings();
+    if (current.includes(id)) return;
+    const raw = settings.store.accountIds ?? "";
+    settings.store.accountIds = raw.trim()
+        ? raw.trim() + "," + id
+        : id;
 }
 
 // ─── Normalize ────────────────────────────────────────────────────────────────
@@ -125,8 +173,8 @@ function normalizeAccount(acc: FakeAccount): FakeAccount {
     return {
         ...acc,
         profile: {
-            bio:         acc.profile?.bio        ?? "",
-            pronouns:    acc.profile?.pronouns   ?? "",
+            bio:         acc.profile?.bio         ?? "",
+            pronouns:    acc.profile?.pronouns    ?? "",
             themeColors: acc.profile?.themeColors ?? null,
         },
         customStatus: acc.customStatus ?? null,
@@ -146,25 +194,29 @@ async function fetchAccount(id: string): Promise<FakeAccount | null> {
         const user        = body.user ?? body;
         const userProfile = body.user_profile ?? {};
 
-        // Presence from real store (best-effort)
-        const status       = PresenceStore.getStatus(user.id) || undefined;
-        const customAct    = (PresenceStore.getActivities(user.id) ?? []).find((a: any) => a.type === CUSTOM_STATUS_TYPE);
-        const customStatus = customAct
-            ? { text: customAct.state ?? "", emojiId: customAct.emoji?.id, emojiName: customAct.emoji?.name }
-            : null;
+        // Presence from real store (best-effort, non-fatal)
+        let status: string | undefined;
+        let customStatus: FakeAccountCustomStatus | null = null;
+        try {
+            status = PresenceStore.getStatus(user.id) || undefined;
+            const customAct = (PresenceStore.getActivities(user.id) ?? []).find((a: any) => a.type === CUSTOM_STATUS_TYPE);
+            customStatus = customAct
+                ? { text: customAct.state ?? "", emojiId: customAct.emoji?.id, emojiName: customAct.emoji?.name }
+                : null;
+        } catch { /* presence not critical */ }
 
         return normalizeAccount({
-            id:          user.id,
-            username:    user.username,
+            id:            user.id,
+            username:      user.username,
             discriminator: user.discriminator ?? "0",
-            avatar:      user.avatar      ?? null,
-            globalName:  user.global_name ?? user.globalName ?? user.username,
-            banner:      user.banner      ?? null,
-            bannerColor: user.banner_color ?? user.bannerColor ?? null,
-            accentColor: user.accent_color ?? user.accentColor ?? null,
-            clan:        user.clan ?? user.primary_guild ?? null,
-            premiumType: body.premium_type ?? user.premium_type ?? null,
-            premiumSince:body.premium_since ?? null,
+            avatar:        user.avatar        ?? null,
+            globalName:    user.global_name   ?? user.globalName ?? user.username,
+            banner:        user.banner        ?? null,
+            bannerColor:   user.banner_color  ?? user.bannerColor  ?? null,
+            accentColor:   user.accent_color  ?? user.accentColor  ?? null,
+            clan:          user.clan ?? user.primary_guild ?? null,
+            premiumType:   body.premium_type  ?? user.premium_type ?? null,
+            premiumSince:  body.premium_since ?? null,
             profile: {
                 bio:         userProfile.bio        ?? user.bio ?? "",
                 pronouns:    userProfile.pronouns   ?? "",
@@ -181,6 +233,7 @@ async function fetchAccount(id: string): Promise<FakeAccount | null> {
 // ─── Sync: fetch all IDs from settings, update cache ─────────────────────────
 
 let _syncInProgress = false;
+const _onSyncCallbacks = new Set<() => void>();
 
 export async function syncAccounts() {
     if (_syncInProgress) return;
@@ -202,22 +255,14 @@ export async function syncAccounts() {
     for (const id of ids) {
         if (!cache[id]) {
             const acc = await fetchAccount(id);
-            if (acc) {
-                cache[id] = acc;
-                changed   = true;
-            }
+            if (acc) { cache[id] = acc; changed = true; }
         }
     }
 
     if (changed) saveCache(cache);
     _syncInProgress = false;
-
-    // Notify open modals to re-render
-    _onSyncCallbacks.forEach(cb => cb());
+    _onSyncCallbacks.forEach(cb => { try { cb(); } catch { /* */ } });
 }
-
-// Simple pub-sub so the modal can refresh after sync
-const _onSyncCallbacks = new Set<() => void>();
 
 export function getCachedAccounts(): FakeAccount[] {
     const cache = loadCache();
@@ -236,35 +281,40 @@ let _fakeSessionUser:   FakeAccount | null = null;
 
 function buildUserObject(acc: FakeAccount): any | null {
     if (!UserClass) return null;
-    return new UserClass({
-        id:                   acc.id,
-        username:             acc.username,
-        discriminator:        acc.discriminator ?? "0",
-        avatar:               acc.avatar       ?? null,
-        global_name:          acc.globalName   ?? acc.username,
-        banner:               acc.banner       ?? null,
-        banner_color:         acc.bannerColor  ?? null,
-        accent_color:         acc.accentColor  ?? null,
-        bio:                  acc.profile?.bio ?? "",
-        clan:                 acc.clan         ?? null,
-        primary_guild:        acc.clan         ?? null,
-        verified:             true,
-        email:                "fake@fake.com",
-        has_bounced_email:    false,
-        bot:                  false,
-        system:               false,
-        mfa_enabled:          false,
-        mobile:               false,
-        desktop:              true,
-        premium_type:         acc.premiumType  ?? null,
-        flags:                0,
-        public_flags:         0,
-        purchased_flags:      0,
-        premium_usage_flags:  0,
-        phone:                null,
-        nsfw_allowed:         true,
-        personal_connection_id: null,
-    });
+    try {
+        return new UserClass({
+            id:                    acc.id,
+            username:              acc.username,
+            discriminator:         acc.discriminator ?? "0",
+            avatar:                acc.avatar       ?? null,
+            global_name:           acc.globalName   ?? acc.username,
+            banner:                acc.banner       ?? null,
+            banner_color:          acc.bannerColor  ?? null,
+            accent_color:          acc.accentColor  ?? null,
+            bio:                   acc.profile?.bio ?? "",
+            clan:                  acc.clan         ?? null,
+            primary_guild:         acc.clan         ?? null,
+            verified:              true,
+            email:                 "fake@fake.com",
+            has_bounced_email:     false,
+            bot:                   false,
+            system:                false,
+            mfa_enabled:           false,
+            mobile:                false,
+            desktop:               true,
+            premium_type:          acc.premiumType  ?? null,
+            flags:                 0,
+            public_flags:          0,
+            purchased_flags:       0,
+            premium_usage_flags:   0,
+            phone:                 null,
+            nsfw_allowed:          true,
+            personal_connection_id:null,
+        });
+    } catch (e) {
+        console.error("[FakeAccounts] buildUserObject failed:", e);
+        return null;
+    }
 }
 
 // ─── Profile / presence builders ─────────────────────────────────────────────
@@ -283,25 +333,29 @@ function buildProfileResponse(acc: FakeAccount, fakeUser: any) {
     return {
         body: {
             user: {
-                ...fakeUser,
-                banner:       acc.banner      ?? null,
-                banner_color: acc.bannerColor ?? null,
-                accent_color: acc.accentColor ?? null,
+                id:           acc.id,
+                username:     acc.username,
+                discriminator:acc.discriminator ?? "0",
+                avatar:       acc.avatar       ?? null,
+                global_name:  acc.globalName   ?? acc.username,
+                banner:       acc.banner       ?? null,
+                banner_color: acc.bannerColor  ?? null,
+                accent_color: acc.accentColor  ?? null,
                 bio:          acc.profile?.bio ?? "",
-                clan:         acc.clan        ?? null,
-                primary_guild:acc.clan        ?? null,
+                clan:         acc.clan         ?? null,
+                primary_guild:acc.clan         ?? null,
             },
             user_profile: {
-                bio:          acc.profile?.bio        ?? "",
-                pronouns:     acc.profile?.pronouns   ?? "",
+                bio:          acc.profile?.bio         ?? "",
+                pronouns:     acc.profile?.pronouns    ?? "",
                 theme_colors: acc.profile?.themeColors ?? null,
             },
             badges:              [],
             guild_badges:        [],
             connected_accounts:  [],
             mutual_guilds:       [],
-            premium_since:       acc.premiumSince  ?? null,
-            premium_type:        acc.premiumType   ?? null,
+            premium_since:       acc.premiumSince ?? null,
+            premium_type:        acc.premiumType  ?? null,
             premium_guild_since: null,
         }
     };
@@ -311,8 +365,8 @@ function buildStoredUserProfile(acc: FakeAccount, fakeUser: any) {
     return {
         userId:            acc.id,
         user:              fakeUser,
-        bio:               acc.profile?.bio        ?? "",
-        pronouns:          acc.profile?.pronouns   ?? "",
+        bio:               acc.profile?.bio         ?? "",
+        pronouns:          acc.profile?.pronouns    ?? "",
         themeColors:       acc.profile?.themeColors ?? null,
         banner:            acc.banner      ?? null,
         bannerColor:       acc.bannerColor ?? null,
@@ -339,18 +393,13 @@ export function activateFakeSession(acc: FakeAccount) {
     if (_fakeSessionActive) deactivateFakeSession();
 
     if (!UserClass) {
-        // UserClass henüz webpack'ten gelmedi — kısa bir retry
         let tries = 0;
         const t = setInterval(() => {
             tries++;
             if (UserClass) { clearInterval(t); activateFakeSession(acc); }
             else if (tries >= 15) {
                 clearInterval(t);
-                Toasts.show({
-                    message: "FakeAccounts: UserClass unavailable, try again.",
-                    id: "fa-noclass", type: Toasts.Type.FAILURE,
-                    options: { position: Toasts.Position.BOTTOM }
-                });
+                Toasts.show({ message: "FakeAccounts: UserClass unavailable, try again.", id: "fa-noclass", type: Toasts.Type.FAILURE, options: { position: Toasts.Position.BOTTOM } });
             }
         }, 200);
         return;
@@ -358,11 +407,7 @@ export function activateFakeSession(acc: FakeAccount) {
 
     const fakeUser = buildUserObject(acc);
     if (!fakeUser) {
-        Toasts.show({
-            message: "FakeAccounts: failed to build user object.",
-            id: "fa-noobj", type: Toasts.Type.FAILURE,
-            options: { position: Toasts.Position.BOTTOM }
-        });
+        Toasts.show({ message: "FakeAccounts: failed to build user object.", id: "fa-noobj", type: Toasts.Type.FAILURE, options: { position: Toasts.Position.BOTTOM } });
         return;
     }
 
@@ -371,17 +416,17 @@ export function activateFakeSession(acc: FakeAccount) {
 
     const GuildsTreeClass = getGuildsTreeClass();
 
-    // — UserStore
+    // UserStore — kendi profil tıklaması dahil her getCurrentUser çağrısı fakeUser döner
     _originals.getCurrentUser = UserStore.getCurrentUser.bind(UserStore);
     UserStore.getCurrentUser  = () => fakeUser;
 
-    // — AuthStore (ID)
+    // AuthStore (ID)
     _originals.getId = AuthStore.getId.bind(AuthStore);
     AuthStore.getId  = () => acc.id;
 
-    // — GuildFolderStore → empty guilds
+    // GuildFolderStore → boş sunucu listesi
     _originals.getGuildsTree = GuildFolderStore.getGuildsTree.bind(GuildFolderStore);
-    if (GuildsTreeClass) GuildFolderStore.getGuildsTree = () => new GuildsTreeClass();
+    if (GuildsTreeClass) GuildFolderStore.getGuildsTree = () => { try { return new GuildsTreeClass(); } catch { return _originals.getGuildsTree(); } };
 
     _originals.getFlattenedGuildIds = GuildFolderStore.getFlattenedGuildIds.bind(GuildFolderStore);
     GuildFolderStore.getFlattenedGuildIds = () => [];
@@ -392,18 +437,18 @@ export function activateFakeSession(acc: FakeAccount) {
     _originals.getGuildFolders = GuildFolderStore.getGuildFolders.bind(GuildFolderStore);
     GuildFolderStore.getGuildFolders = () => [];
 
-    // — GuildStore
+    // GuildStore
     _originals.getGuildCount = GuildStore.getGuildCount.bind(GuildStore);
     GuildStore.getGuildCount = () => 0;
 
-    // — ChannelStore → empty DMs
+    // ChannelStore → boş DM listesi
     _originals.getSortedPrivateChannels = ChannelStore.getSortedPrivateChannels.bind(ChannelStore);
     ChannelStore.getSortedPrivateChannels = () => [];
 
     _originals.getMutablePrivateChannels = ChannelStore.getMutablePrivateChannels.bind(ChannelStore);
     ChannelStore.getMutablePrivateChannels = () => ({});
 
-    // — RelationshipStore → empty friends
+    // RelationshipStore → boş arkadaş listesi
     _originals.getFriendCount = RelationshipStore.getFriendCount.bind(RelationshipStore);
     RelationshipStore.getFriendCount = () => 0;
 
@@ -416,49 +461,58 @@ export function activateFakeSession(acc: FakeAccount) {
     _originals.getRelationshipType = RelationshipStore.getRelationshipType.bind(RelationshipStore);
     RelationshipStore.getRelationshipType = () => 0;
 
-    // — UserProfileStore (BadgesSelector ile de uyumlu — o üstüne hook kuruyor)
+    // UserProfileStore — profil modalı bu üzerinden çalışıyor
+    // Sol alt profil tıklaması da buraya gelir: güvenli bir şekilde handle et
     _originals.getUserProfile = UserProfileStore.getUserProfile.bind(UserProfileStore);
     UserProfileStore.getUserProfile = function (userId: string) {
-        if (userId === acc.id) return buildStoredUserProfile(acc, fakeUser);
-        return _originals.getUserProfile.call(this, userId);
+        try {
+            if (userId === acc.id) return buildStoredUserProfile(acc, fakeUser);
+            return _originals.getUserProfile.call(this, userId);
+        } catch {
+            return null;
+        }
     };
 
-    // — PresenceStore
+    // PresenceStore
     _originals.getStatus = PresenceStore.getStatus.bind(PresenceStore);
     PresenceStore.getStatus = function (userId: string) {
-        if (userId === acc.id && acc.status) return acc.status;
-        return _originals.getStatus.call(this, userId);
+        try {
+            if (userId === acc.id && acc.status) return acc.status;
+            return _originals.getStatus.call(this, userId);
+        } catch { return "offline"; }
     };
 
     _originals.getActivities = PresenceStore.getActivities.bind(PresenceStore);
     PresenceStore.getActivities = function (userId: string) {
-        if (userId === acc.id) {
-            const cs = getStoredCustomStatus(acc);
-            const rest = (_originals.getActivities.call(this, userId) ?? []).filter((a: any) => a.type !== CUSTOM_STATUS_TYPE);
-            return cs ? [cs, ...rest] : rest;
-        }
-        return _originals.getActivities.call(this, userId);
+        try {
+            if (userId === acc.id) {
+                const cs   = getStoredCustomStatus(acc);
+                const rest = (_originals.getActivities.call(this, userId) ?? []).filter((a: any) => a.type !== CUSTOM_STATUS_TYPE);
+                return cs ? [cs, ...rest] : rest;
+            }
+            return _originals.getActivities.call(this, userId);
+        } catch { return []; }
     };
 
-    // — RestAPI.get → intercept profile requests
+    // RestAPI.get — profil endpoint'ini intercept et
     _originals.restGet = RestAPI.get.bind(RestAPI);
     RestAPI.get = async function (req: any, ...args: any[]) {
-        if (isFakeProfileRequest(req?.url, acc.id)) return buildProfileResponse(acc, fakeUser);
-        return _originals.restGet.call(this, req, ...args);
+        try {
+            if (isFakeProfileRequest(req?.url, acc.id)) return buildProfileResponse(acc, fakeUser);
+            return _originals.restGet.call(this, req, ...args);
+        } catch (e) {
+            return _originals.restGet.call(this, req, ...args);
+        }
     };
 
-    Toasts.show({
-        message: `Switched to ${acc.globalName ?? acc.username}`,
-        id: "fa-switch", type: Toasts.Type.SUCCESS,
-        options: { position: Toasts.Position.BOTTOM }
-    });
+    Toasts.show({ message: `Switched to ${acc.globalName ?? acc.username}`, id: "fa-switch", type: Toasts.Type.SUCCESS, options: { position: Toasts.Position.BOTTOM } });
 }
 
 export function deactivateFakeSession() {
     if (!_fakeSessionActive) return;
 
     const restore = (store: any, key: string) => {
-        if (_originals[key]) store[key] = _originals[key];
+        try { if (_originals[key]) store[key] = _originals[key]; } catch { /* */ }
     };
 
     restore(UserStore,         "getCurrentUser");
@@ -477,43 +531,13 @@ export function deactivateFakeSession() {
     restore(UserProfileStore,  "getUserProfile");
     restore(PresenceStore,     "getStatus");
     restore(PresenceStore,     "getActivities");
-    if (_originals.restGet) RestAPI.get = _originals.restGet;
+    if (_originals.restGet) { try { RestAPI.get = _originals.restGet; } catch { /* */ } }
 
     Object.keys(_originals).forEach(k => delete _originals[k]);
     _fakeSessionActive = false;
     _fakeSessionUser   = null;
 
-    Toasts.show({
-        message: "Switched back to real account",
-        id: "fa-restore", type: Toasts.Type.SUCCESS,
-        options: { position: Toasts.Position.BOTTOM }
-    });
-}
-
-// ─── UI helpers ───────────────────────────────────────────────────────────────
-
-function getStatusColor(status?: string) {
-    switch (status) {
-        case "online": return "var(--status-positive)";
-        case "idle":   return "var(--status-warning)";
-        case "dnd":    return "var(--status-danger)";
-        default:       return "var(--status-offline)";
-    }
-}
-
-function getAvatarUrl(acc: FakeAccount, size = 48) {
-    if (acc.avatar) return `https://cdn.discordapp.com/avatars/${acc.id}/${acc.avatar}.webp?size=${size}`;
-    return `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(acc.id) % 6n)}.png`;
-}
-
-function getBannerBackground(acc: FakeAccount): React.CSSProperties {
-    if (acc.banner)
-        return { backgroundImage: `url(https://cdn.discordapp.com/banners/${acc.id}/${acc.banner}.webp?size=300)`, backgroundSize: "cover", backgroundPosition: "center" };
-    if (acc.bannerColor)
-        return { backgroundColor: acc.bannerColor };
-    if (acc.accentColor != null)
-        return { backgroundColor: `#${acc.accentColor.toString(16).padStart(6, "0")}` };
-    return { backgroundColor: "var(--background-secondary-alt)" };
+    Toasts.show({ message: "Switched back to real account", id: "fa-restore", type: Toasts.Type.SUCCESS, options: { position: Toasts.Position.BOTTOM } });
 }
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
@@ -522,6 +546,8 @@ function FakeAccountModal({ modalProps }: { modalProps: ModalProps; }) {
     const [accounts, setAccounts] = React.useState<FakeAccount[]>(getCachedAccounts);
     const [activeId, setActiveId] = React.useState<string | null>(_fakeSessionUser?.id ?? null);
     const [syncing,  setSyncing]  = React.useState(false);
+    const [addId,    setAddId]    = React.useState("");
+    const [adding,   setAdding]   = React.useState(false);
 
     // Re-render when background sync finishes
     React.useEffect(() => {
@@ -530,10 +556,36 @@ function FakeAccountModal({ modalProps }: { modalProps: ModalProps; }) {
         return () => { _onSyncCallbacks.delete(cb); };
     }, []);
 
+    const handleAdd = async () => {
+        const id = addId.trim();
+        if (!/^\d{17,20}$/.test(id)) {
+            Toasts.show({ message: "Invalid ID format.", id: "fa-badid", type: Toasts.Type.FAILURE, options: { position: Toasts.Position.BOTTOM } });
+            return;
+        }
+        if (getCachedAccounts().some(a => a.id === id)) {
+            Toasts.show({ message: "Already added.", id: "fa-dup", type: Toasts.Type.FAILURE, options: { position: Toasts.Position.BOTTOM } });
+            return;
+        }
+        setAdding(true);
+        const acc = await fetchAccount(id);
+        if (!acc) {
+            Toasts.show({ message: "Could not fetch user. Check the ID.", id: "fa-fetchfail", type: Toasts.Type.FAILURE, options: { position: Toasts.Position.BOTTOM } });
+            setAdding(false);
+            return;
+        }
+        // Add to settings CSV and cache
+        addIdToSettings(id);
+        const cache = loadCache();
+        cache[id] = acc;
+        saveCache(cache);
+        setAccounts(getCachedAccounts());
+        setAddId("");
+        setAdding(false);
+        Toasts.show({ message: `Added ${acc.globalName ?? acc.username}`, id: "fa-added", type: Toasts.Type.SUCCESS, options: { position: Toasts.Position.BOTTOM } });
+    };
+
     const handleRefresh = async () => {
         setSyncing(true);
-
-        // Force re-fetch all IDs (clear cache first)
         const ids   = getIdsFromSettings();
         const fresh: Record<string, FakeAccount> = {};
         for (const id of ids) {
@@ -543,12 +595,20 @@ function FakeAccountModal({ modalProps }: { modalProps: ModalProps; }) {
         saveCache(fresh);
         setAccounts(getCachedAccounts());
         setSyncing(false);
+        Toasts.show({ message: `Refreshed ${Object.keys(fresh).length} account(s)`, id: "fa-refresh", type: Toasts.Type.SUCCESS, options: { position: Toasts.Position.BOTTOM } });
+    };
 
-        Toasts.show({
-            message: `Refreshed ${Object.keys(fresh).length} account(s)`,
-            id: "fa-refresh", type: Toasts.Type.SUCCESS,
-            options: { position: Toasts.Position.BOTTOM }
-        });
+    const handleRemove = (id: string) => {
+        // Remove from settings CSV
+        const newIds = getIdsFromSettings().filter(i => i !== id);
+        settings.store.accountIds = newIds.join(",");
+        // Remove from cache
+        const cache = loadCache();
+        delete cache[id];
+        saveCache(cache);
+        // If active, exit session
+        if (activeId === id) { deactivateFakeSession(); setActiveId(null); }
+        setAccounts(getCachedAccounts());
     };
 
     return (
@@ -575,67 +635,69 @@ function FakeAccountModal({ modalProps }: { modalProps: ModalProps; }) {
             <ModalContent>
                 <div style={{ padding: 16 }}>
 
-                    {/* Top bar */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                        <Forms.FormText style={{ color: "var(--text-muted)", fontSize: 12 }}>
-                            Add IDs in plugin settings → <strong>Account IDs</strong> field (comma-separated)
-                        </Forms.FormText>
-                        <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                            <Button
-                                size={Button.Sizes.SMALL}
-                                color={Button.Colors.PRIMARY}
-                                disabled={syncing}
-                                onClick={handleRefresh}
-                            >
-                                {syncing ? "Refreshing…" : "↺ Refresh"}
-                            </Button>
-                            {_fakeSessionActive && (
-                                <Button
-                                    size={Button.Sizes.SMALL}
-                                    color={Button.Colors.RED}
-                                    onClick={() => { deactivateFakeSession(); setActiveId(null); }}
-                                >
-                                    ✕ Exit Session
-                                </Button>
-                            )}
+                    {/* Add by ID row */}
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
+                        <div style={{ flex: 1 }}>
+                            <TextInput
+                                value={addId}
+                                placeholder="Add by User ID (e.g. 123456789012345678)"
+                                onChange={(v: string) => setAddId(v)}
+                                onKeyDown={(e: React.KeyboardEvent) => { if (e.key === "Enter") handleAdd(); }}
+                            />
                         </div>
+                        <Button
+                            size={Button.Sizes.MEDIUM}
+                            color={Button.Colors.GREEN}
+                            disabled={adding || !addId.trim()}
+                            onClick={handleAdd}
+                        >
+                            {adding ? "Adding…" : "Add"}
+                        </Button>
+                        <Button
+                            size={Button.Sizes.MEDIUM}
+                            color={Button.Colors.PRIMARY}
+                            disabled={syncing}
+                            onClick={handleRefresh}
+                        >
+                            {syncing ? "…" : "↺"}
+                        </Button>
+                        {_fakeSessionActive && (
+                            <Button
+                                size={Button.Sizes.MEDIUM}
+                                color={Button.Colors.RED}
+                                onClick={() => { deactivateFakeSession(); setActiveId(null); }}
+                            >
+                                ✕ Exit
+                            </Button>
+                        )}
                     </div>
 
                     {/* Account list */}
                     {accounts.length === 0
                         ? (
-                            <div style={{
-                                padding: "32px 16px",
-                                textAlign: "center",
-                                color: "var(--text-muted)",
-                                backgroundColor: "var(--background-secondary)",
-                                borderRadius: 8,
-                            }}>
+                            <div style={{ padding: "32px 16px", textAlign: "center", color: "var(--text-muted)", backgroundColor: "var(--background-secondary)", borderRadius: 8 }}>
                                 <div style={{ fontSize: 32, marginBottom: 8 }}>👤</div>
-                                <Forms.FormText>
-                                    No accounts yet. Add user IDs in plugin settings.
-                                </Forms.FormText>
+                                <Forms.FormText>No accounts yet. Enter a User ID above or add IDs in plugin settings.</Forms.FormText>
                             </div>
                         )
                         : (
-                            <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 380, overflowY: "auto" }}>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 340, overflowY: "auto" }}>
                                 {accounts.map(acc => {
-                                    const isActive = activeId === acc.id;
+                                    const isActive         = activeId === acc.id;
                                     const customStatusText = acc.customStatus?.text || acc.customStatus?.emojiName;
                                     return (
                                         <div key={acc.id} style={{
-                                            overflow: "hidden",
-                                            borderRadius: 8,
+                                            overflow: "hidden", borderRadius: 8,
                                             border: `1px solid ${isActive ? "var(--brand-500)" : "var(--background-modifier-accent)"}`,
                                             backgroundColor: isActive ? "var(--background-modifier-selected)" : "var(--background-secondary)",
                                         }}>
-                                            {/* Banner strip */}
+                                            {/* Banner */}
                                             <div style={{ height: 52, ...getBannerBackground(acc) }} />
 
-                                            {/* Content row */}
+                                            {/* Content */}
                                             <div style={{ display: "flex", alignItems: "center", padding: "8px 12px 10px", gap: 12 }}>
 
-                                                {/* Avatar + status dot */}
+                                                {/* Avatar */}
                                                 <div style={{ position: "relative", marginTop: -24, flexShrink: 0 }}>
                                                     <img
                                                         src={getAvatarUrl(acc)}
@@ -676,22 +738,26 @@ function FakeAccountModal({ modalProps }: { modalProps: ModalProps; }) {
                                                     )}
                                                 </div>
 
-                                                {/* Switch / Exit button */}
-                                                <Button
-                                                    size={Button.Sizes.SMALL}
-                                                    color={isActive ? Button.Colors.RED : Button.Colors.BRAND}
-                                                    onClick={() => {
-                                                        if (isActive) {
-                                                            deactivateFakeSession();
-                                                            setActiveId(null);
-                                                        } else {
-                                                            activateFakeSession(acc);
-                                                            setActiveId(acc.id);
-                                                        }
-                                                    }}
-                                                >
-                                                    {isActive ? "Exit" : "Switch"}
-                                                </Button>
+                                                {/* Buttons */}
+                                                <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                                                    <Button
+                                                        size={Button.Sizes.SMALL}
+                                                        color={isActive ? Button.Colors.RED : Button.Colors.BRAND}
+                                                        onClick={() => {
+                                                            if (isActive) { deactivateFakeSession(); setActiveId(null); }
+                                                            else          { activateFakeSession(acc); setActiveId(acc.id); }
+                                                        }}
+                                                    >
+                                                        {isActive ? "Exit" : "Switch"}
+                                                    </Button>
+                                                    <Button
+                                                        size={Button.Sizes.SMALL}
+                                                        color={Button.Colors.RED}
+                                                        onClick={() => handleRemove(acc.id)}
+                                                    >
+                                                        ✕
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </div>
                                     );
@@ -724,7 +790,7 @@ function handleKeyDown(e: KeyboardEvent) {
 
 export default definePlugin({
     name: "Fake Accounts",
-    description: "Impersonate other accounts locally. Add IDs in settings, switch from the panel (Alt+C).",
+    description: "Impersonate other accounts locally. Add IDs in settings or via Alt+C panel.",
     authors: [Devs.feelslove],
     settings,
 
@@ -738,18 +804,17 @@ export default definePlugin({
             }
         },
         {
-            // Intercept the actual switch call in the multi-account switcher
+            // Intercept the switch call; keep analytics, redirect Mx to our handler
             find: "multiAccountUsers",
             replacement: {
-                match: /(\i)\.Mx\((\i)\)/,
-                replace: "$self.handleSwitch($1.Mx.bind($1),$2)"
+                match: /(\w+)\.default\.track\((\w+)\.HAw\.MULTI_ACCOUNT_SWITCH_ATTEMPT[^)]+\),(\w+)\.Mx\((\w+)\)/,
+                replace: "$1.default.track($2.HAw.MULTI_ACCOUNT_SWITCH_ATTEMPT,{location:{section:$2.JJy.USER_PROFILE}}),$self.handleSwitch($3.Mx.bind($3),$4)"
             }
         }
     ],
 
     start() {
         document.addEventListener("keydown", handleKeyDown);
-        // Fetch any IDs that aren't cached yet on startup
         void syncAccounts();
     },
 
@@ -758,33 +823,33 @@ export default definePlugin({
         if (_fakeSessionActive) deactivateFakeSession();
     },
 
-    // Called by the getUsers patch — return id→UserObject map
+    // getUsers() returns an ARRAY — spread fakes into it
     injectFakes(realUsers: any): any {
-        if (!UserClass) return realUsers ?? {};
+        if (!UserClass) return realUsers ?? [];
         const accounts = getCachedAccounts();
-        if (!accounts.length) return realUsers ?? {};
+        if (!accounts.length) return realUsers ?? [];
 
-        const result = { ...(realUsers ?? {}) };
-        for (const acc of accounts) {
-            const u = buildUserObject(acc);
-            if (!u) continue;
-            u.tokenStatus    = 2;   // marks it as a "logged in" slot in the switcher
-            u.pushSyncToken  = null;
-            result[acc.id]   = u;
-        }
-        return result;
+        const fakeObjects = accounts.map(acc => {
+            try {
+                const u = buildUserObject(acc);
+                if (!u) return null;
+                u.tokenStatus   = 2;    // "logged in" slot in switcher
+                u.pushSyncToken = null; // required field shape
+                return u;
+            } catch { return null; }
+        }).filter(Boolean);
+
+        return [...(Array.isArray(realUsers) ? realUsers : []), ...fakeObjects];
     },
 
-    // Called by the Mx patch — route fake IDs to our session handler
+    // Route fake IDs to our session handler
     handleSwitch(originalFn: (id: string) => void, userId: string) {
         const accounts = getCachedAccounts();
         const acc      = accounts.find(a => a.id === userId);
 
         if (acc) {
-            // It's a fake account — activate our local session
             activateFakeSession(acc);
         } else {
-            // Real account — restore any fake session then let Discord switch normally
             if (_fakeSessionActive) deactivateFakeSession();
             originalFn(userId);
         }
