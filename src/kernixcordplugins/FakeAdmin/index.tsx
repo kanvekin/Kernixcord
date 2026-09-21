@@ -57,7 +57,7 @@ function toggleServer(guildId: string) {
 const ADMINISTRATOR = 0x0000000000000008;
 
 export default definePlugin({
-    name: "dev.feelslove",
+    name: "FakeAdmin",
     description: "Show fake admin privileges in servers (visual only - no actual permissions)",
     authors: [Devs.feelslove],
     settings,
@@ -123,7 +123,7 @@ export default definePlugin({
     contextMenus: {
         "guild-context"(children: any[], { guild }: any) {
             if (!guild?.id) return;
-            
+
             children.push(
                 <Menu.MenuSeparator />,
                 <Menu.MenuCheckboxItem
@@ -136,7 +136,7 @@ export default definePlugin({
         },
         "guild-header-popout"(children: any[], { guild }: any) {
             if (!guild?.id) return;
-            
+
             children.push(
                 <Menu.MenuSeparator />,
                 <Menu.MenuCheckboxItem
