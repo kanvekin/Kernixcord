@@ -286,6 +286,27 @@ function buildUserObject(acc: FakeAccount): any {
 export function activateFakeSession(acc: FakeAccount) {
     if (_fakeSessionActive) deactivateFakeSession();
 
+    // UserClass henüz yüklenmemişse kısa bir gecikmeyle tekrar dene
+    if (!UserClass) {
+        let attempts = 0;
+        const retry = setInterval(() => {
+            attempts++;
+            if (UserClass) {
+                clearInterval(retry);
+                activateFakeSession(acc);
+            } else if (attempts >= 10) {
+                clearInterval(retry);
+                Toasts.show({
+                    message: "Failed to build user object (UserClass unavailable). Try again.",
+                    id: "fakeaccount-notready",
+                    type: Toasts.Type.FAILURE,
+                    options: { position: Toasts.Position.BOTTOM }
+                });
+            }
+        }, 300);
+        return;
+    }
+
     const fakeUser = buildUserObject(acc);
     if (!fakeUser) {
         Toasts.show({
@@ -733,10 +754,11 @@ export default definePlugin({
             }
         },
         {
+            // multiAccountUsers switch — userId ile geçiş yapılan yere hook at
             find: "multiAccountUsers",
             replacement: {
-                match: /(\w+)\.default\.track\((\w+)\.HAw\.MULTI_ACCOUNT_SWITCH_ATTEMPT[^)]+\),(\w+)\.Mx\((\w+)\)/,
-                replace: "$1.default.track($2.HAw.MULTI_ACCOUNT_SWITCH_ATTEMPT,{location:{section:$2.JJy.USER_PROFILE}}),$self.handleSwitch($3.Mx.bind($3),$4)"
+                match: /(\i)\.Mx\((\i)\)/,
+                replace: "$self.handleSwitch($1.Mx.bind($1),$2)"
             }
         }
     ],
@@ -750,23 +772,38 @@ export default definePlugin({
         if (_fakeSessionActive) deactivateFakeSession();
     },
 
-    injectFakes(realUsers: any[]): any[] {
+    injectFakes(realUsers: any): any {
         const fakes = parseFakeAccounts();
-        if (!fakes.length || !UserClass) return realUsers ?? [];
-        return [...(realUsers ?? []), ...fakes.map(f => {
+        if (!fakes.length || !UserClass) return realUsers ?? {};
+
+        // getUsers() bir obje map ({id: UserObject}) döndürür, array değil
+        const result = { ...(realUsers ?? {}) };
+        for (const f of fakes) {
             const u = buildUserObject(f);
-            if (!u) return null;
+            if (!u) continue;
             u.tokenStatus = 2;
             u.pushSyncToken = null;
-            return u;
-        }).filter(Boolean)];
+            result[f.id] = u;
+        }
+        return result;
     },
 
     handleSwitch(originalFn: (id: string) => void, userId: string) {
-        const acc = parseFakeAccounts().find(a => a.id === userId);
+        const fakes = parseFakeAccounts();
+        const acc = fakes.find(a => a.id === userId);
         if (acc) {
+            // Fake hesap — kendi session yönetimimizi kullan
             activateFakeSession(acc);
+        } else if (fakes.some(a => _fakeSessionActive && _fakeSessionUser?.id === userId)) {
+            // Zaten aktif olan fake hesaba geçmeye çalışıyor
+            Toasts.show({
+                message: "Already active as this account.",
+                id: "fakeaccount-alreadyactive",
+                type: Toasts.Type.MESSAGE,
+                options: { position: Toasts.Position.BOTTOM }
+            });
         } else {
+            // Gerçek hesap — fake session varsa kapat, sonra normal geçiş
             if (_fakeSessionActive) deactivateFakeSession();
             originalFn(userId);
         }

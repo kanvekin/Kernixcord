@@ -36,8 +36,7 @@ function applySpoof(username: string) {
             user: {
                 ...realUser,
                 username: username.trim(),
-                global_name: username.trim(),
-                globalName: username.trim()
+                // global_name ve globalName (görünen ad) değiştirilmiyor — sadece username spooflanıyor
             }
         });
     } else {
