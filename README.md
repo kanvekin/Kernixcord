@@ -6,7 +6,6 @@
 
 Kernixcord is a fork of [Equicord](https://github.com/Equicord/Equicord), with over 100+ plugins.
 You can join our [Discord server](https://discord.gg/paE22n7xPB) for commits, changes, chatting, or even support.
-
 ### Dependencies
 
 [Git](https://git-scm.com/download) and [Node.JS LTS](https://nodejs.dev/en/) are required.
