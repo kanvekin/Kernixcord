@@ -20,6 +20,8 @@
 import "~plugins";
 import "./fixWeirdAppRegionBug.css";
 
+import nativeTitleBarStyles from "./nativeTitleBar.css?managed";
+
 export * as Api from "./api";
 export * as Plugins from "./api/PluginManager";
 export * as Components from "./components";
@@ -29,22 +31,20 @@ export * as Webpack from "./webpack";
 export * as WebpackPatcher from "./webpack/patchWebpack";
 export { PlainSettings, Settings };
 
-import { coreStyleRootNode, initStyles } from "@api/Styles";
+import { enableStyle, initStyles } from "@api/Styles";
 import { openSettingsTabModal, UpdaterTab } from "@components/settings";
 import { debounce } from "@shared/debounce";
-import { IS_WINDOWS } from "@utils/constants";
-import { createAndAppendStyle } from "@utils/css";
 import { StartAt } from "@utils/types";
 import { SettingsRouter } from "@webpack/common";
 
 import { get as dsGet } from "./api/DataStore";
-import { popNotice, showNotice } from "./api/Notices";
+import { showNotice } from "./api/Notices";
 import { NotificationData, showNotification } from "./api/Notifications";
 import { initPluginManager, PMLogger, startAllPlugins } from "./api/PluginManager";
 import { PlainSettings, Settings, SettingsStore } from "./api/Settings";
 import { areLocalSettingsDirty, getCloudSettings, getCloudSyncDirection, markLocalSettingsDirty, putCloudSettings, shouldCloudSync } from "./api/SettingsSync/cloudSync";
 import { relaunch } from "./utils/native";
-import { checkForUpdates, isOutdated as getIsOutdated, update, UpdateLogger } from "./utils/updater";
+import { checkForUpdates, update, UpdateLogger } from "./utils/updater";
 import { onceReady } from "./webpack";
 import { patches } from "./webpack/patchWebpack";
 
@@ -137,7 +137,6 @@ async function runUpdateCheck() {
 
     try {
         const isOutdated = await checkForUpdates();
-        if (IS_DISCORD_DESKTOP) VencordNative.tray.setUpdateState(isOutdated);
         if (!isOutdated) return;
 
         if (Settings.autoUpdate) {
@@ -192,7 +191,7 @@ function initTrayIpc() {
             await update();
             relaunch();
         } catch (err) {
-            UpdateLogger.error("Failed to repair Equicord", err);
+            UpdateLogger.error("Failed to repair Kernixcord", err);
         }
     });
 
@@ -214,7 +213,6 @@ async function init() {
     startAllPlugins(StartAt.WebpackReady);
 
     syncSettings();
-    initTrayIpc();
 
     // Log startup time for diagnostics
     const totalTime = performance.now() - startTime;
@@ -254,7 +252,6 @@ init();
 
 document.addEventListener("DOMContentLoaded", () => {
     startAllPlugins(StartAt.DOMContentLoaded);
-
     // Menu loading fix - ensure menu components are ready
     setTimeout(() => {
         // Check if menu components are loaded by accessing the Menu export
