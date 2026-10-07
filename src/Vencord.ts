@@ -167,36 +167,6 @@ async function runUpdateCheck() {
     }
 }
 
-function initTrayIpc() {
-    if (IS_WEB || IS_UPDATER_DISABLED) return;
-
-    VencordNative.tray.onCheckUpdates(async () => {
-        try {
-            const isOutdated = await checkForUpdates();
-            VencordNative.tray.setUpdateState(isOutdated);
-
-            if (isOutdated) {
-                showNotice("An Kernixcord update is available!", "View Update", () => openSettingsTabModal(UpdaterTab!));
-            } else {
-                showNotice("No updates available, you're on the latest version!", "OK", popNotice);
-            }
-        } catch (err) {
-            UpdateLogger.error("Failed to check for updates from tray", err);
-            showNotice("Failed to check for updates, check the console for more info", "OK", popNotice);
-        }
-    });
-
-    VencordNative.tray.onRepair(async () => {
-        try {
-            await update();
-            relaunch();
-        } catch (err) {
-            UpdateLogger.error("Failed to repair Kernixcord", err);
-        }
-    });
-
-    VencordNative.tray.setUpdateState(getIsOutdated);
-}
 
 async function init() {
     // Performance optimizations for faster startup
@@ -270,8 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }, 3000);
 
-    // FIXME
-    if (IS_DISCORD_DESKTOP && Settings.winNativeTitleBar && IS_WINDOWS) {
-        createAndAppendStyle("vencord-native-titlebar-style", coreStyleRootNode).textContent = "[class*=titleBar]{display: none!important}";
+    if (IS_DISCORD_DESKTOP && Settings.nativeTitleBar) {
+        enableStyle(nativeTitleBarStyles);
     }
 }, { once: true });

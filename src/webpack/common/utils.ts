@@ -83,37 +83,91 @@ waitFor("parseTopic", m => Parser = m);
 export let Alerts: t.Alerts;
 waitFor(["show", "close"], m => Alerts = m);
 
+const ToastType = {
+    MESSAGE: "message",
+    SUCCESS: "success",
+    FAILURE: "failure",
+    CUSTOM: "custom",
+    CLIP: "clip",
+    LINK: "link",
+    FORWARD: "forward",
+    BOOKMARK: "bookmark",
+    CLOCK: "clock"
+} as const;
+
+const ToastPosition = {
+    TOP: 0,
+    BOTTOM: 1
+} as const;
+
 export interface ToastData {
-    message: string,
-    id: string,
+    message: string;
+    id?: string;
     /**
      * Toasts.Type
      */
-    type: string,
+    type?: string;
     options?: ToastOptions;
+    [key: string]: any;
 }
 
 export interface ToastOptions {
     /**
      * Toasts.Position
      */
-    position?: number;
-    component?: React.ReactNode,
+    position?: number | "top" | "bottom";
+    component?: React.ReactNode;
     duration?: number;
+    [key: string]: any;
 }
 
-export const Toasts: t.Toasts = mapMangledModuleLazy(".currentToastMap.has(", {
+const ToastsExports: t.Toasts = mapMangledModuleLazy(".currentToastMap.has(", {
     show: filters.byCode(".currentToastMap.has("),
     pop: filters.byCode(".delete(")
 });
 
 export const createToast: t.createToast = findByCodeLazy('variant:"default",icon:', ".duration");
 
+function normalizeOptions(options?: ToastOptions): { position?: any; duration?: number; } | undefined {
+    if (!options) return undefined;
+    let position: any = options.position;
+    if (position === "top") position = 0;
+    else if (position === "bottom") position = 1;
+    return {
+        position,
+        duration: options.duration
+    };
+}
+
+export const Toasts = {
+    Type: ToastType,
+    Position: ToastPosition,
+    genId: () => (Math.random() || Math.random()).toString(36).slice(2),
+
+    show: (data: t.NewToastData | ToastData | any) => {
+        if (data && typeof data === "object" && "message" in data) {
+            const opts = data.options ?? (data.position != null ? { position: data.position } : undefined);
+            ToastsExports.show(createToast({
+                message: data.message,
+                type: data.type,
+                options: normalizeOptions(opts) as any
+            }));
+        } else {
+            ToastsExports.show(data);
+        }
+    },
+    pop: (context?: string) => {
+        ToastsExports.pop(context);
+    },
+    create: (message: string, type: t.ToastType | string = "message", options?: ToastOptions) =>
+        createToast({ message, type: type as t.ToastType, options: normalizeOptions(options) as any }),
+};
+
 /**
  * Show a simple toast. If you need more options, use Toasts.show manually
  */
-export function showToast(message: string, type: t.ToastType = "message", options?: ToastOptions) {
-    Toasts.show(createToast({ message, type, options }));
+export function showToast(message: string, type: t.ToastType | string = "message", options?: ToastOptions) {
+    Toasts.show(createToast({ message, type: type as t.ToastType, options: normalizeOptions(options) as any }));
 }
 
 export const UserUtils = {
@@ -143,8 +197,16 @@ export const ChannelRouter: t.ChannelRouter = mapMangledModuleLazy('"Thread must
     transitionToThread: filters.byCode('"Thread must have a parent ID."')
 });
 
-export const SettingsRouter: t.SettingsRouter = mapMangledModuleLazy('type:"USER_SETTINGS_MODAL_OPEN"', {
+const _SettingsRouter: t.SettingsRouter = mapMangledModuleLazy('type:"USER_SETTINGS_MODAL_OPEN"', {
     openUserSettings: filters.byCode('type:"USER_SETTINGS_MODAL_OPEN"')
+});
+
+export const SettingsRouter: t.SettingsRouter & {
+    open(section?: string, opts?: any, onOpen?: () => void): Promise<void>;
+} = Object.assign(_SettingsRouter, {
+    open(section?: string, opts?: any, onOpen?: () => void) {
+        return _SettingsRouter.openUserSettings(section, opts, onOpen);
+    }
 });
 
 export const PermissionsBits: t.PermissionsBits = findLazy(m => typeof m.ADMINISTRATOR === "bigint");
