@@ -202,13 +202,17 @@ const _SettingsRouter: t.SettingsRouter = mapMangledModuleLazy('type:"USER_SETTI
     openUserSettings: filters.byCode('type:"USER_SETTINGS_MODAL_OPEN"')
 });
 
-export const SettingsRouter: t.SettingsRouter & {
-    open(section?: string, opts?: any, onOpen?: () => void): Promise<void>;
-} = Object.assign(_SettingsRouter, {
-    open(section?: string, opts?: any, onOpen?: () => void) {
-        return _SettingsRouter.openUserSettings(section, opts, onOpen);
+export const SettingsRouter = new Proxy({} as any, {
+    get(target, prop, receiver) {
+        if (prop === "open") {
+            return (section?: string, opts?: any, onOpen?: () => void) =>
+                _SettingsRouter.openUserSettings(section, opts, onOpen);
+        }
+        return Reflect.get(_SettingsRouter, prop, receiver);
     }
-});
+}) as t.SettingsRouter & {
+    open(section?: string, opts?: any, onOpen?: () => void): Promise<void>;
+};
 
 export const PermissionsBits: t.PermissionsBits = findLazy(m => typeof m.ADMINISTRATOR === "bigint");
 
