@@ -14,7 +14,7 @@ import { openUserProfile } from "@utils/discord";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import { ChannelStore, GuildStore, Menu, PresenceStore, React, RestAPI, Toasts, UserStore } from "@webpack/common";
-import type { User } from "discord-types/general";
+import type { User } from "@vencord/discord-types";
 
 import { StalkerSettings } from "./SettingsUI";
 import {

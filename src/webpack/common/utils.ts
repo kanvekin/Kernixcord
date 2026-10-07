@@ -85,6 +85,7 @@ waitFor(["show", "close"], m => Alerts = m);
 
 const ToastType = {
     MESSAGE: "message",
+    DEFAULT: "message",
     SUCCESS: "success",
     FAILURE: "failure",
     CUSTOM: "custom",
