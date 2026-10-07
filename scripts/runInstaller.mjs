@@ -110,6 +110,9 @@ try {
         stdio: "inherit",
         env: {
             ...process.env,
+            KERNIXCORD_USER_DATA_DIR: BASE_DIR,
+            KERNIXCORD_DIRECTORY: join(BASE_DIR, "dist/desktop"),
+            KERNIXCORD_DEV_INSTALL: "1",
             EQUICORD_USER_DATA_DIR: BASE_DIR,
             EQUICORD_DIRECTORY: join(BASE_DIR, "dist/desktop"),
             EQUICORD_DEV_INSTALL: "1"
