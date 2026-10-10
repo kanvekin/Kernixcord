@@ -1017,6 +1017,7 @@ function renderUsername(
 
 const hoveringMessageMap = new Map<string, number>();
 const hoveringRepliesMap = new Map<string, number>();
+let hoverNameRerenderQueued = false;
 
 function handleHoveringMessage(message: any, isHovered: boolean) {
     const messageId = message?.id;
@@ -1045,7 +1046,7 @@ function addHoveringMessage(id: string) {
     hoveringMessageMap.set(id, currentCount + 1);
 
     if (currentCount === 0) {
-        triggerNameRerender();
+        queueHoverNameRerender();
     }
 }
 
@@ -1056,7 +1057,7 @@ function removeHoveringMessage(id: string) {
 
     if (currentCount <= 1) {
         hoveringMessageMap.delete(id);
-        triggerNameRerender();
+        queueHoverNameRerender();
     } else {
         hoveringMessageMap.set(id, currentCount - 1);
     }
@@ -1069,7 +1070,7 @@ function addHoveringReply(id: string) {
     hoveringRepliesMap.set(id, currentCount + 1);
 
     if (currentCount === 0) {
-        triggerNameRerender();
+        queueHoverNameRerender();
     }
 }
 
@@ -1080,7 +1081,7 @@ function removeHoveringReply(id: string) {
 
     if (currentCount <= 1) {
         hoveringRepliesMap.delete(id);
-        triggerNameRerender();
+        queueHoverNameRerender();
     } else {
         hoveringRepliesMap.set(id, currentCount - 1);
     }
@@ -1088,6 +1089,17 @@ function removeHoveringReply(id: string) {
 
 function useNameHoverState() {
     return useState(false);
+}
+
+function queueHoverNameRerender() {
+    if (hoverNameRerenderQueued) return;
+    hoverNameRerenderQueued = true;
+
+    // Wait for name components to restore their settings subscriptions after effect cleanup.
+    queueMicrotask(() => {
+        hoverNameRerenderQueued = false;
+        triggerNameRerender();
+    });
 }
 
 function triggerNameRerender() {
@@ -1500,10 +1512,20 @@ export default definePlugin({
             // Track message hover to animate display name effects.
             // Attach the group ID so every name in a grouped message animates together.
             find: "CUSTOM_GIFT?\"\":",
+            group: true,
             replacement: [
                 {
-                    match: /(hasHovered:\i,isHovered:(\i).{0,2000})(let \i=\i.id===\i,\i=)/,
-                    replace: "$1arguments[0].message.showMeYourNameGroupId=!!arguments[0].groupId?`g-${arguments[0].groupId}`:null;$self.handleHoveringMessage(arguments[0].message,$2);$3",
+                    match: /(handleMouseEnter:(\i),handleMouseLeave:(\i),hasHovered:\i,isHovered:(\i).{0,2000})(let \i=\i.id===\i,\i=)/,
+                    replace: "$1const smynMessageHoverProps={onMouseMove:$2,onMouseLeave:$3};arguments[0].message.showMeYourNameGroupId=!!arguments[0].groupId?`g-${arguments[0].groupId}`:null;$self.handleHoveringMessage(arguments[0].message,$4);$5",
+                },
+                {
+                    // Include fractional message boundaries in the shared animation hover state.
+                    match: /("li",\{id:\i,)/,
+                    replace: "$1...smynMessageHoverProps,",
+                },
+                {
+                    match: /onMouseMove:\i,onMouseLeave:\i,(?=hasThread:)/,
+                    replace: "",
                 },
             ],
         },
