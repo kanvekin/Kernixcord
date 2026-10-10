@@ -129,13 +129,13 @@ const ToastsExports: t.Toasts = mapMangledModuleLazy(".currentToastMap.has(", {
 
 export const createToast: t.createToast = findByCodeLazy('variant:"default",icon:', ".duration");
 
-function normalizeOptions(options?: ToastOptions): { position?: any; duration?: number; } | undefined {
+function normalizeOptions(options?: ToastOptions): t.ToastOptions | undefined {
     if (!options) return undefined;
-    let position: any = options.position;
-    if (position === "top") position = 0;
-    else if (position === "bottom") position = 1;
+    let position = options.position;
+    if (position === "top") position = ToastPosition.TOP;
+    else if (position === "bottom") position = ToastPosition.BOTTOM;
     return {
-        position,
+        position: position as t.ToastOptions["position"],
         duration: options.duration
     };
 }
@@ -145,14 +145,14 @@ export const Toasts = {
     Position: ToastPosition,
     genId: () => (Math.random() || Math.random()).toString(36).slice(2),
 
-    show: (data: t.NewToastData | ToastData | any) => {
+    show: (data: ToastData | t.ToastData | any) => {
         if (data && typeof data === "object" && "message" in data) {
             const opts = data.options ?? (data.position != null ? { position: data.position } : undefined);
-            ToastsExports.show(createToast({
-                message: data.message,
-                type: data.type,
-                options: normalizeOptions(opts) as any
-            }));
+            ToastsExports.show(createToast(
+                data.message,
+                data.type as t.ToastType,
+                normalizeOptions(opts)
+            ));
         } else {
             ToastsExports.show(data);
         }
@@ -161,7 +161,7 @@ export const Toasts = {
         ToastsExports.pop(context);
     },
     create: (message: string, type: t.ToastType | string = "message", options?: ToastOptions) =>
-        createToast({ message, type: type as t.ToastType, options: normalizeOptions(options) as any }),
+        createToast(message, type as t.ToastType, normalizeOptions(options)),
 };
 
 /**
@@ -170,7 +170,7 @@ export const Toasts = {
 export function showToast(message: string, type: t.ToastType = "message", options?: ToastOptions) {
     // FIXME once Discord makes up their mind and stops changing this API every update
     try {
-        Toasts.show(createToast(message, type, options));
+        Toasts.show(createToast(message, type, normalizeOptions(options)));
     } catch {
         // @ts-ignore
         Toasts.show({ text: message, variant: type });
