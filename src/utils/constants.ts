@@ -1503,6 +1503,10 @@ export const EquicordDevs = Object.freeze({
         name: "karam",
         id: 1246787178466508879n
     },
+    rot: {
+        name: "rot",
+        id: 1021210809164111932n
+    },
 } satisfies Record<string, Dev>);
 
 export const KernixcordDevs = Object.freeze({

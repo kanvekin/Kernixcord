@@ -167,13 +167,17 @@ export const Toasts = {
 /**
  * Show a simple toast. If you need more options, use Toasts.show manually
  */
-export function showToast(message: string, type: t.ToastType = "message", options?: ToastOptions) {
+export function showToast(message: string | t.ToastData | ToastData, type: t.ToastType = "message", options?: ToastOptions) {
     // FIXME once Discord makes up their mind and stops changing this API every update
     try {
-        Toasts.show(createToast(message, type, normalizeOptions(options)));
+        if (typeof message === "string") {
+            Toasts.show(createToast(message, type, normalizeOptions(options)));
+        } else {
+            Toasts.show(message);
+        }
     } catch {
         // @ts-ignore
-        Toasts.show({ text: message, variant: type });
+        Toasts.show(typeof message === "string" ? { text: message, variant: type } : message);
     }
 }
 

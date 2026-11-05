@@ -25,6 +25,7 @@ import { dirname, join, resolve } from "path";
 import { fileURLToPath } from "url";
 
 import { BUILD_TIMESTAMP, commonOpts, exists, globPlugins, IS_DEV, IS_REPORTER, IS_COMPANION_TEST, IS_STANDALONE, IS_UPDATER_DISABLED, resolvePluginName, VERSION, commonRendererPlugins, watch, buildOrWatchAll, stringifyValues, IS_ANTI_CRASH_TEST, getMonacoEditorCdnUrl } from "./common.mjs";
+import { getPluginTarget } from "../utils.mjs";
 
 const defines = stringifyValues({
     IS_STANDALONE,
@@ -79,13 +80,16 @@ const globNativesPlugin = {
 
         build.onLoad({ filter, namespace: "import-natives" }, async () => {
             const pluginDirs = ["plugins", "userplugins", "equicordplugins", "kernixcordplugins"];
-            let code = "";
-            let natives = "\n";
             let i = 0;
             /**
              * @type {string[]}
              */
             const watchFiles = [];
+            /**
+             * @type {Map<string, { importCode: string, mod: string }>}
+             */
+            const nativesMap = new Map();
+
             for (const dir of pluginDirs) {
                 const dirPath = join("src", dir);
                 if (!await exists(dirPath)) continue;
@@ -100,14 +104,34 @@ const globNativesPlugin = {
                     if (!(await exists(nativePath)) && !(await exists(indexNativePath)))
                         continue;
 
+                    const target = getPluginTarget(fileName);
+                    if (target && !IS_REPORTER) {
+                        const excluded =
+                            (target === "dev" && !IS_DEV) ||
+                            target === "web" ||
+                            target === "browser" ||
+                            target === "vesktop" ||
+                            target === "equibop";
+
+                        if (excluded) continue;
+                    }
+
                     const pluginName = await resolvePluginName(dirPath, file);
 
                     const mod = `p${i}`;
-                    code += `import * as ${mod} from "./${dir}/${fileName}/native";\n`;
-                    natives += `${JSON.stringify(pluginName)}:${mod},\n`;
+                    const importCode = `import * as ${mod} from "./${dir}/${fileName}/native";\n`;
+                    nativesMap.set(pluginName, { importCode, mod });
                     i++;
                 }
             }
+
+            let code = "";
+            let natives = "\n";
+            for (const [pluginName, { importCode, mod }] of nativesMap) {
+                code += importCode;
+                natives += `${JSON.stringify(pluginName)}:${mod},\n`;
+            }
+
             code += `export default {${natives}};`;
             return {
                 contents: code,

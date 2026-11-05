@@ -12,7 +12,6 @@ import { Margins } from "@utils/margins";
 import definePlugin from "@utils/types";
 import { ProfileEffect, User } from "@vencord/discord-types";
 import { Button, Toasts, UserStore } from "@webpack/common";
-import virtualMerge from "virtual-merge";
 import { Devs } from "@utils/constants";
 
 import style from "./index.css?managed";
@@ -21,6 +20,7 @@ import { BASE_URL, SKU_ID } from "./lib/constants";
 import { useUserAvatarDecoration, useUsersProfileStore } from "./lib/stores/UsersProfileStore";
 import { Nameplate, UserProfile } from "./lib/types";
 import { decode, encode } from "./lib/utils/profile";
+import virtualMerge from "./lib/utils/virtualMerge";
 import { settings } from "./settings";
 import { fakeProfileSection } from "./ui/fakeProfileSection";
 

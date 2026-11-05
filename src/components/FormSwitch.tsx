@@ -41,3 +41,7 @@ export function FormSwitch({ onChange, title, value, description, disabled, clas
         </div>
     );
 }
+
+export function FormSwitchCompat({ note, children, ...restProps }: Record<string, unknown> & { note?: ReactNode; children?: ReactNode; }) {
+    return <FormSwitch title={children ?? ""} description={note} {...(restProps as any)} />;
+}

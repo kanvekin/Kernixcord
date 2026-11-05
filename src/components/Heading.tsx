@@ -27,3 +27,27 @@ export function Heading<T extends HeadingTag = "h5">(props: HeadingProps<T>) {
         </Text>
     );
 }
+
+export function HeadingPrimary({ children, ...restProps }: HeadingProps<"h2">) {
+    return (
+        <Heading tag="h2" {...restProps}>
+            {children}
+        </Heading>
+    );
+}
+
+export function HeadingSecondary({ children, ...restProps }: HeadingProps<"h3">) {
+    return (
+        <Heading tag="h3" {...restProps}>
+            {children}
+        </Heading>
+    );
+}
+
+export function HeadingTertiary({ children, ...restProps }: HeadingProps<"h4">) {
+    return (
+        <Heading tag="h4" {...restProps}>
+            {children}
+        </Heading>
+    );
+}
