@@ -7,7 +7,7 @@
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { FolderIcon, InfoIcon, LinkIcon, PencilIcon, PlusIcon, RemixIcon, TrashIcon } from "@components/Icons";
 import { copyToClipboard } from "@utils/clipboard";
-import { Alerts, Button, FluxDispatcher, Menu, showToast } from "@webpack/common";
+import { Alerts, FluxDispatcher, Menu, showToast } from "@webpack/common";
 
 import { settings } from "../settings";
 import { Gif } from "../types";
@@ -71,7 +71,7 @@ export const addCollectionContextMenuPatch: NavContextMenuPatchCallback = (child
                 leadingAccessory={{ type: "icon", icon: LinkIcon }}
                 action={() => {
                     copyToClipboard(gif.url);
-                    showToast("Image link copied to clipboard", "success");
+                    showToast({ text: "Image link copied to clipboard", variant: "success" });
                 }}
             />
         );
@@ -131,7 +131,7 @@ export function RemoveItemContextMenuItems({ type, nameOrId }: { type: "collecti
                             const gif = getGifById(nameOrId);
                             if (!gif) return;
                             copyToClipboard(gif.url);
-                            showToast("URL copied to clipboard", "success");
+                            showToast({ text: "URL copied to clipboard", variant: "success" });
                         }}
                     />
                     <Menu.MenuItem
@@ -172,7 +172,7 @@ export function RemoveItemContextMenuItems({ type, nameOrId }: { type: "collecti
                         title: "Are you sure?",
                         body: `Do you really want to ${type === "collection" ? "delete this collection" : "remove this item"}?`,
                         confirmText: type === "collection" ? "Delete" : "Remove",
-                        confirmColor: Button.Colors.RED,
+                        confirmColor: "danger",
                         cancelText: "Nevermind",
                         onConfirm: doDelete,
                     });
@@ -198,7 +198,7 @@ export function GifPickerContextMenu({ gif }: { gif: Gif; }) {
                     leadingAccessory={{ type: "icon", icon: LinkIcon }}
                     action={() => {
                         copyToClipboard(gif.url);
-                        showToast("Image link copied to clipboard", "success");
+                        showToast({ text: "Image link copied to clipboard", variant: "success" });
                     }}
                 />
             )}
@@ -220,7 +220,7 @@ export function getGifPickerContextMenuItems(src: string, url: string, height: n
                     leadingAccessory={{ type: "icon", icon: LinkIcon }}
                     action={() => {
                         copyToClipboard(url);
-                        showToast("Image link copied to clipboard", "success");
+                        showToast({ text: "Image link copied to clipboard", variant: "success" });
                     }}
                 />
             )}

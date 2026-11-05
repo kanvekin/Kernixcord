@@ -17,15 +17,17 @@
 */
 
 import { migrateSettingsFromPlugin } from "@api/Settings";
+import { Button } from "@components/Button";
 import { ErrorCard } from "@components/ErrorCard";
-import { HeadingSecondary } from "@components/Heading";
+import { Heading } from "@components/Heading";
 import { Paragraph } from "@components/Paragraph";
 import { Devs, IS_LINUX } from "@utils/constants";
 import { Logger } from "@utils/Logger";
 import { Margins } from "@utils/margins";
+import { classes } from "@utils/misc";
 import { wordsToTitle } from "@utils/text";
 import definePlugin, { ReporterTestable } from "@utils/types";
-import { AuthenticationStore, Button, ChannelStore, GuildMemberStore, SelectedChannelStore, SelectedGuildStore, useMemo, UserStore, VoiceStateStore } from "@webpack/common";
+import { AuthenticationStore, ChannelStore, GuildMemberStore, SelectedChannelStore, SelectedGuildStore, useMemo, UserStore, VoiceStateStore } from "@webpack/common";
 import { ReactElement } from "react";
 
 import { getCurrentVoice, settings } from "./settings";
@@ -245,7 +247,7 @@ export default definePlugin({
                 </Paragraph>
                 {hasEnglishVoices && (
                     <>
-                        <HeadingSecondary className={Margins.top20}>Play Example Sounds</HeadingSecondary>
+                        <Heading className={classes(Margins.top20, Margins.bottom8)}>Play Example Sounds</Heading>
                         <div
                             style={{
                                 display: "grid",

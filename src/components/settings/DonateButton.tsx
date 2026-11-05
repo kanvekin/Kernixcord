@@ -52,7 +52,7 @@ export function InviteButton({
             type="button"
             onClick={async e => {
                 e.preventDefault();
-                openInviteModal("dikkat").catch(() =>
+                openInviteModal("krnx").catch(() =>
                     showToast("Invalid or expired invite"),
                 );
             }}

@@ -22,7 +22,7 @@ import { Card } from "@components/Card";
 import { Divider } from "@components/Divider";
 import { Flex } from "@components/Flex";
 import { FormSwitch } from "@components/FormSwitch";
-import { Heading, HeadingSecondary } from "@components/Heading";
+import { Heading } from "@components/Heading";
 import { Link } from "@components/Link";
 import { Paragraph } from "@components/Paragraph";
 import { SettingsTab, wrapTab } from "@components/settings/tabs/BaseTab";
@@ -48,8 +48,8 @@ function EquibopSection() {
     return (
         <Flex className={Margins.bottom20} flexDirection="column" gap="1em">
             <Card variant="brand">
-                <HeadingSecondary>Privbop & Kernixcord</HeadingSecondary>
-                <Paragraph>Privbop and Kernixcord are two separate things. This updater is for Kernixcord.</Paragraph>
+                <Heading tag="h3" className={Margins.bottom8}>Kernixe & Kernixcord</Heading>
+                <Paragraph>Kernixe and Kernixcord are two separate things. This updater is for Kernixcord.</Paragraph>
                 <Paragraph className={Margins.top8}>
                     You receive separate popups for Privbop updates. You can also manually update by installing the <Link href="https://github.com/kanvekin/Kernixe">latest version</Link>.
                 </Paragraph>
@@ -57,10 +57,10 @@ function EquibopSection() {
 
             {isEquibopOutdated && (
                 <Card variant="warning">
-                    <HeadingSecondary>Privbop Outdated</HeadingSecondary>
+                    <Heading tag="h3" className={Margins.bottom8}>Kernixe Outdated</Heading>
                     <Flex flexDirection="column" gap="0.5em">
-                        <Paragraph>Your version of Privbop is outdated!</Paragraph>
-                        <Button variant="link" onClick={() => VesktopNative.app.openUpdater()}>Open Privbop Updater</Button>
+                        <Paragraph>Your version of Kernixe is outdated!</Paragraph>
+                        <Button variant="link" onClick={() => VesktopNative.app.openUpdater()}>Open Kernixe Updater</Button>
                     </Flex>
                 </Card>
             )}

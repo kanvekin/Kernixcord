@@ -25,6 +25,7 @@ import { BaseText } from "@components/BaseText";
 import { Button } from "@components/Button";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { Flex } from "@components/Flex";
+import { Heading } from "@components/Heading";
 import { Paragraph } from "@components/Paragraph";
 import { debounce } from "@shared/debounce";
 import { gitRemote } from "@shared/vencordUserAgent";
@@ -34,9 +35,8 @@ import { Margins } from "@utils/margins";
 import { classes, isObjectEmpty } from "@utils/misc";
 import { OptionType, Plugin, PluginTag } from "@utils/types";
 import { RenderModalProps, User } from "@vencord/discord-types";
-import { ToastPosition } from "@vencord/discord-types/enums";
 import { findComponentByCodeLazy, findCssClassesLazy } from "@webpack";
-import { Clickable, FluxDispatcher, Modal, openModal, React, showToast,Text, Tooltip, useEffect, useMemo, UserStore, UserSummaryItem, UserUtils, useState } from "@webpack/common";
+import { Clickable, FluxDispatcher, Modal, openModal, React, showToast, Tooltip, useEffect, useMemo, UserStore, UserSummaryItem, UserUtils, useState } from "@webpack/common";
 import { Constructor } from "type-fest";
 
 import { PluginMeta } from "~plugins";
@@ -207,7 +207,7 @@ export default function PluginModal({ plugin, onRestartNeeded, onClose, transiti
             )}
             <div className={"vc-settings-modal-content"}>
                 <section>
-                    <Text variant="heading-lg/semibold" className={classes(Margins.top8, Margins.bottom8)}>Authors</Text>
+                    <Heading tag="h3" className={classes(Margins.top8, Margins.bottom8)}>Authors</Heading>
                     <div style={{ width: "fit-content" }}>
                         <ErrorBoundary noop>
                             <UserSummaryItem
@@ -246,9 +246,8 @@ export default function PluginModal({ plugin, onRestartNeeded, onClose, transiti
                             <Tooltip text="Reset to default settings" shouldShow={!isObjectEmpty(pluginSettings)}>
                                 {({ onMouseEnter, onMouseLeave }) => (
                                     <Button
-                                        className={cl("disable-warning")}
+                                        variant="dangerPrimary"
                                         size="small"
-                                        variant="primary"
                                         onClick={handleResetClick}
                                         onMouseEnter={onMouseEnter}
                                         onMouseLeave={onMouseLeave}
@@ -326,9 +325,11 @@ function resetSettings(plugin: Plugin, onRestartNeeded?: (pluginName: string) =>
         onRestartNeeded?.(plugin.name);
     }
 
-    showToast(`Settings for ${pluginName} have been reset.`, "success", {
-            position: ToastPosition.TOP
-        });
+    showToast({
+        text: `Settings for ${pluginName} have been reset.`,
+        variant: "success",
+        position: "top"
+    });
 }
 
 export function openWarningModal(plugin?: Plugin | null, onRestartNeeded?: (pluginName: string) => void, isPlugin = true, enabledPlugins?: number | null, reset?: () => void) {

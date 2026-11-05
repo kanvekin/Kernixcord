@@ -8,14 +8,15 @@ import "./styles.css";
 
 import { DataStore } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
+import { Button } from "@components/Button";
 import { Flex } from "@components/Flex";
-import { HeadingTertiary } from "@components/Heading";
+import { Heading } from "@components/Heading";
 import { DeleteIcon } from "@components/Icons";
 import { EquicordDevs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { useForceUpdater } from "@utils/react";
 import definePlugin, { OptionType } from "@utils/types";
-import { Button, TextInput, useState } from "@webpack/common";
+import { TextInput, useState } from "@webpack/common";
 
 const cl = classNameFactory("vc-content-warning-");
 
@@ -102,8 +103,7 @@ function FlaggedInput({ index, forceUpdate }) {
 
         <Button
             onClick={removeSelf}
-            look={Button.Looks.FILLED}
-            size={Button.Sizes.SMALL}
+            size="small"
             style={{
                 padding: 0,
                 color: "var(--primary-400)",
@@ -130,7 +130,7 @@ function FlaggedWords() {
 
     return (
         <>
-            <HeadingTertiary>Flagged Words</HeadingTertiary>
+            <Heading tag="h4">Flagged Words</Heading>
             {inputs}
         </>
     );

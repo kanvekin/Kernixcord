@@ -25,7 +25,7 @@ import { Button } from "@components/Button";
 import { Card } from "@components/Card";
 import { Divider } from "@components/Divider";
 import ErrorBoundary from "@components/ErrorBoundary";
-import { HeadingTertiary } from "@components/Heading";
+import { Heading } from "@components/Heading";
 import { Paragraph } from "@components/Paragraph";
 import { SettingsTab } from "@components/settings";
 import { debounce } from "@shared/debounce";
@@ -36,10 +36,10 @@ import { Logger } from "@utils/Logger";
 import { Margins } from "@utils/margins";
 import { classes } from "@utils/misc";
 import { PluginTarget } from "@utils/pluginTargets";
+import { promptToRestart } from "@utils/promptToRestart";
 import { useAwaiter, useCleanupEffect, useIntersection } from "@utils/react";
 import { PluginTag, PluginTags } from "@utils/types";
-import { ToastPosition } from "@vencord/discord-types/enums";
-import { Alerts, ConfirmModal, lodash, openModal, Parser, React, SearchableSelect, Select, showToast,TextInput, Tooltip, useCallback, useMemo, useRef, useState } from "@webpack/common";
+import { Alerts, lodash, Parser, React, SearchableSelect, Select, showToast, TextInput, Tooltip, useCallback, useMemo, useRef, useState } from "@webpack/common";
 import { JSX } from "react";
 
 import Plugins, { ExcludedPlugins, PluginMeta } from "~plugins";
@@ -53,9 +53,11 @@ export const cl = classNameFactory("vc-plugins-");
 export const logger = new Logger("PluginSettings", "#a6d189");
 
 function showErrorToast(message: string) {
-    showToast(message, "failure", {
-            position: ToastPosition.BOTTOM
-        });
+    showToast({
+        text: message,
+        variant: "critical",
+        position: "bottom"
+    });
 }
 
 function ReloadRequiredCard({ required, enabledPlugins, openWarningModal, resetCheckAndDo }) {
@@ -63,7 +65,7 @@ function ReloadRequiredCard({ required, enabledPlugins, openWarningModal, resetC
         <Card className={classes(cl("info-card"), required && "vc-warning-card")}>
             {required ? (
                 <>
-                    <HeadingTertiary>Restart required!</HeadingTertiary>
+                    <Heading tag="h4">Restart required!</Heading>
                     <Paragraph className={cl("dep-text")}>
                         Restart now to apply new plugins and their settings
                     </Paragraph>
@@ -73,16 +75,16 @@ function ReloadRequiredCard({ required, enabledPlugins, openWarningModal, resetC
                 </>
             ) : (
                 <>
-                    <HeadingTertiary>Plugin Management</HeadingTertiary>
+                    <Heading tag="h4">Plugin Management</Heading>
                     <Paragraph>Press the cog wheel or info icon to get more info on a plugin</Paragraph>
                     <Paragraph>Plugins with a cog wheel have settings you can modify!</Paragraph>
                 </>
             )}
             {enabledPlugins.length > 0 && !required && (
                 <Button
-                    variant="secondary"
+                    variant="dangerPrimary"
                     size="small"
-                    className={"vc-plugins-disable-warning vc-modal-align-reset"}
+                    className={"vc-modal-align-reset"}
                     onClick={() => {
                         return openWarningModal(null, undefined, false, enabledPlugins.length, resetCheckAndDo);
                     }}
@@ -158,29 +160,20 @@ export default function PluginSettings() {
             const displayed = pluginNames.slice(0, maxDisplay);
             const remainingCount = pluginNames.length - displayed.length;
 
-            openModal(props => (
-                <ConfirmModal
-                    {...props}
-                    title="Restart required"
-                    confirmText="Restart now"
-                    cancelText="Later!"
-                    variant="primary"
-                    onConfirm={() => location.reload()}
-                >
-                    <>
-                        <p>The following plugins require a restart:</p>
-                        <div>
-                            {displayed.map((s, i) => (
-                                <React.Fragment key={i}>
-                                    {i > 0 && ", "}
-                                    {Parser.parse("`" + s + "`")}
-                                </React.Fragment>
-                            ))}
-                            {remainingCount > 0 && <span> and {remainingCount} more</span>}
-                        </div>
-                    </>
-                </ConfirmModal>
-            ));
+            promptToRestart("reload", {
+                children: <>
+                    <p>The following plugins require a restart:</p>
+                    <div>
+                        {displayed.map((s, i) => (
+                            <React.Fragment key={i}>
+                                {i > 0 && ", "}
+                                {Parser.parse("`" + s + "`")}
+                            </React.Fragment>
+                        ))}
+                        {remainingCount > 0 && <span> and {remainingCount} more</span>}
+                    </div>
+                </>
+            });
         };
     }, []);
 
@@ -412,9 +405,9 @@ export default function PluginSettings() {
                 <UIElementsButton />
             </div>
 
-            <HeadingTertiary className={classes(Margins.top20, Margins.bottom8)}>
+            <Heading tag="h4" className={classes(Margins.top20, Margins.bottom8)}>
                 Filters
-            </HeadingTertiary>
+            </Heading>
 
             <ErrorBoundary noop>
                 <TextInput
@@ -448,7 +441,7 @@ export default function PluginSettings() {
                 </div>
             </ErrorBoundary>
 
-            <HeadingTertiary className={Margins.top20}>Plugins</HeadingTertiary>
+            <Heading tag="h4" className={Margins.top20}>Plugins</Heading>
 
             {plugins.length || requiredPlugins.length
                 ? (
@@ -469,9 +462,9 @@ export default function PluginSettings() {
 
             <Divider className={Margins.top20} />
 
-            <HeadingTertiary className={classes(Margins.top20, Margins.bottom8)}>
+            <Heading tag="h4" className={classes(Margins.top20, Margins.bottom8)}>
                 Required Plugins
-            </HeadingTertiary>
+            </Heading>
 
             <div className={cl("grid")}>
                 {requiredPlugins.length

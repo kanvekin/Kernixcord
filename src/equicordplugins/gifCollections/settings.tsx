@@ -6,11 +6,13 @@
 
 import { DataStore } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
+import { BaseText } from "@components/BaseText";
+import { Button } from "@components/Button";
 import { Divider } from "@components/Divider";
 import { Heading } from "@components/Heading";
 import { Paragraph } from "@components/Paragraph";
 import { OptionType } from "@utils/types";
-import { Alerts, Button, useState } from "@webpack/common";
+import { Alerts, useState } from "@webpack/common";
 
 import { DATA_COLLECTION_NAME, getCollections, refreshCacheCollection } from "./utils/collectionManager";
 import { cl } from "./utils/misc";
@@ -87,7 +89,7 @@ export const settings = definePluginSettings({
                     title: "Are you sure?",
                     body: "Importing collections will overwrite your current collections.",
                     confirmText: "Import",
-                    confirmColor: Button.Colors.RED,
+                    confirmColor: "danger",
                     cancelText: "Nevermind",
                     onConfirm: () => uploadGifCollections(),
                 }) : uploadGifCollections()}>
@@ -111,7 +113,7 @@ export const settings = definePluginSettings({
                     title: "Are you sure?",
                     body: "Resetting collections will remove all your collections.",
                     confirmText: "Reset",
-                    confirmColor: Button.Colors.RED,
+                    confirmColor: "danger",
                     cancelText: "Nevermind",
                     onConfirm: async () => {
                         await DataStore.set(DATA_COLLECTION_NAME, []);
@@ -128,7 +130,7 @@ function RadioOption({ name, value, checked, onChange, label }: { name: string; 
         <div className={cl("sort-option")}>
             <label className={cl("sort-label")}>
                 <input type="radio" name={name} value={value} checked={checked} onChange={onChange} className={cl("sort-input")} />
-                {label}
+                <BaseText className={cl("sort-text")} tag="div" size="sm">{label}</BaseText>
             </label>
         </div>
     );

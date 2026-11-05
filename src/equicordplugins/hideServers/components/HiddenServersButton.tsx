@@ -6,9 +6,11 @@
 
 import "./style.css";
 
+import { EyeSlashIcon } from "@components/Icons";
+import { ServerListItem } from "@components/ServerListItem";
 import { HiddenServersStore } from "@equicordplugins/hideServers/HiddenServersStore";
 import { classNameFactory } from "@utils/css";
-import { Button, GuildStore, useStateFromStores } from "@webpack/common";
+import { GuildStore, useStateFromStores } from "@webpack/common";
 
 import { openHiddenServersModal } from "./HiddenServersMenu";
 
@@ -18,20 +20,18 @@ function HiddenServersButton() {
     const hiddenGuilds = useStateFromStores([HiddenServersStore], () => HiddenServersStore.hiddenGuilds, undefined, (old, newer) => old.size === newer.size);
     // if youve left a server dont show it in the count
     const actuallyHidden = Array.from(hiddenGuilds).filter(x => GuildStore.getGuild(x)).length;
-    return (
-        <div className={cl("button-wrapper")}>
-            {actuallyHidden > 0 ? (
-                <Button
-                    className={cl("button")}
-                    look={Button.Looks.FILLED}
-                    size={Button.Sizes.MIN}
-                    onClick={() => openHiddenServersModal()}
-                >
-                    {actuallyHidden} Hidden
-                </Button>
-            ) : null}
-        </div >
-    );
+
+    return actuallyHidden > 0 ? (
+        <ServerListItem
+            id={cl("container")}
+            icon={EyeSlashIcon}
+            tooltip="Hidden Servers"
+            badge={{
+                count: actuallyHidden
+            }}
+            onClick={() => openHiddenServersModal()}
+        />
+    ) : (null);
 }
 
 export default () => { return <HiddenServersButton />; };

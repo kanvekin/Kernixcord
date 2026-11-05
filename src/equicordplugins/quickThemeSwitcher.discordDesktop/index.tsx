@@ -5,7 +5,8 @@
  */
 
 import { definePluginSettings, Settings, SettingsStore } from "@api/Settings";
-import { HeadingSecondary } from "@components/Heading";
+import { Heading } from "@components/Heading";
+import { Margins } from "@components/margins";
 import { Paragraph } from "@components/Paragraph";
 import { debounce } from "@shared/debounce";
 import { Devs, IS_MAC } from "@utils/constants";
@@ -51,7 +52,7 @@ const refreshThemeList = async (silent = false) => {
         const diff = themeList.length - oldCount;
         const action = diff > 0 ? "Added" : "Removed";
         const count = Math.abs(diff);
-        showToast(`${action} ${count} theme${count > 1 ? "s" : ""}`, "success");
+        showToast({ text: `${action} ${count} theme${count > 1 ? "s" : ""}`, variant: "success" });
     }
 };
 
@@ -186,7 +187,7 @@ function toggleCurrentTheme(enable: boolean) {
 
 async function reloadThemes() {
     await refreshThemeList(true);
-    showToast(`Reloaded ${themeList.length} themes`, "success");
+    showToast({ text: `Reloaded ${themeList.length} themes`, variant: "success" });
 }
 
 async function watchForLocalThemeChanges() {
@@ -204,7 +205,7 @@ async function watchForLocalThemeChanges() {
         if (settings.store.showNotifications) {
             const action = diff > 0 ? "Added" : "Removed";
             const count = Math.abs(diff);
-            showToast(`${action} ${count} local theme${count > 1 ? "s" : ""}`, "success");
+            showToast({ text: `${action} ${count} local theme${count > 1 ? "s" : ""}`, variant: "success" });
         }
     }
 
@@ -250,7 +251,7 @@ export default definePlugin({
     startAt: StartAt.DOMContentLoaded,
     settingsAboutComponent: () => (
         <>
-            <HeadingSecondary>Bindings</HeadingSecondary>
+            <Heading tag="h3" className={Margins.bottom8}>Bindings</Heading>
             <Paragraph>
                 Use Ctrl/Cmd+Shift+Arrows to navigate (Left/Right: cycle themes, Up: enable, Down: disable).
                 <br />

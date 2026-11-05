@@ -300,7 +300,7 @@ function DevBuildConfirmModal(props: RenderModalProps) {
                     Either <Link href="https://equicord.org/download">switch to an official build</Link> or figure your issue out yourself.
                 </Paragraph>
 
-                <Text variant="text-md/bold" className={Margins.top8}>You will be banned from receiving support if you ignore this rule.</Text>
+                <Paragraph size="md" weight="bold" className={Margins.top8}>You will be banned from receiving support if you ignore this rule.</Paragraph>
             </div>
         </ConfirmModal>
     );
@@ -471,12 +471,12 @@ export default definePlugin({
                     onClick={async () => {
                         try {
                             if (await forceUpdate())
-                                showToast("Success! Restarting...", "success");
+                                showToast({ text: "Success! Restarting...", variant: "success" });
                             else
-                                showToast("Already up to date!");
+                                showToast({ text: "Already up to date!" });
                         } catch (e) {
                             new Logger(this.name).error("Error while updating:", e);
-                            showToast("Failed to update :(", "failure");
+                            showToast({ text: "Failed to update :(", variant: "critical" });
                         }
                     }}
                 >
@@ -505,10 +505,10 @@ export default definePlugin({
                             } else if (pluginList && typeof pluginList === "object" && pluginList.uploadFile) {
                                 try {
                                     await uploadPluginListFile(props.channel.id, pluginList.fileContent, pluginList.filename);
-                                    showToast("Plugin list uploaded successfully!", "success");
+                                    showToast({ text: "Plugin list uploaded successfully!", variant: "success" });
                                 } catch (e) {
                                     new Logger("SupportHelper").error("Failed to upload plugin list:", e);
-                                    showToast("Failed to upload plugin list", "failure");
+                                    showToast({ text: "Failed to upload plugin list", variant: "critical" });
                                 }
                             }
                         }}

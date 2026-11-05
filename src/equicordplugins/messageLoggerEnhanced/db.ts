@@ -261,6 +261,8 @@ export async function clearMessagesIDB(toast = true) {
 
     const deleted = await new Promise<boolean>(resolve => {
         db.close();
+        // @ts-expect-error
+        db = undefined;
         const req = indexedDB.deleteDatabase(DB_NAME);
         req.onsuccess = () => resolve(true);
         req.onerror = () => resolve(false);
@@ -273,7 +275,7 @@ export async function clearMessagesIDB(toast = true) {
 
     if (!toast) return;
 
-    showToast("Cleared message log database and cache.", "message");
+    showToast({ text: "Cleared message log database and cache." });
 }
 
 // faster than db.clear on large dbs

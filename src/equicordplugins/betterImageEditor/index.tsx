@@ -7,13 +7,14 @@
 import "./style.css";
 
 import { definePluginSettings } from "@api/Settings";
+import { Button } from "@components/Button";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { EquicordDevs } from "@utils/constants";
 import { Logger } from "@utils/Logger";
 import { classes, pluralise } from "@utils/misc";
 import definePlugin, { OptionType } from "@utils/types";
 import { chooseFile, saveFile } from "@utils/web";
-import { Alerts, Button, React, showToast, useCallback, useEffect, useRef, useState } from "@webpack/common";
+import { Alerts, React, showToast, useCallback, useEffect, useRef, useState } from "@webpack/common";
 
 import { cl, croppedLabel, Shelf } from "./components/Shelf";
 import { add, clear, CropState, currentApplied, Entry, exportAll, forget, forgetCrops, getFile, getThumbs, Group, importAll, Kind, previousApplied, readIndex, recordApplied, saveCrop, toDataUrl, togglePin, touch } from "./library";
@@ -76,18 +77,18 @@ const settings = definePluginSettings({
         description: "Drop every remembered crop and open each picture the way Discord would.",
         component: () => (
             <Button
-                color={Button.Colors.PRIMARY}
+                variant="secondary"
                 onClick={() => Alerts.show({
                     title: "Forget every remembered crop?",
                     body: "Your pictures stay. Each one opens unframed from now on, until you crop it again.",
-                    confirmColor: Button.Colors.RED,
+                    confirmColor: "danger",
                     confirmText: "Forget",
                     cancelText: "Cancel",
                     onConfirm: () => forgetCrops()
-                        .then(count => showToast(
-                            count ? `Forgot the framing on ${pluralise(count, "picture")}` : "Nothing was framed",
-                            "success"
-                        ))
+                        .then(count => showToast({
+                            text: count ? `Forgot the framing on ${pluralise(count, "picture")}` : "Nothing was framed",
+                            variant: "success"
+                        }))
                         .catch(err => logger.error("could not forget the remembered crops", err))
                 })}
             >
@@ -110,8 +111,8 @@ const settings = definePluginSettings({
         description: "Carry your pictures, and how each one is framed, to another device.",
         component: () => (
             <div className={cl("buttons")}>
-                <Button color={Button.Colors.PRIMARY} onClick={exportLibrary}>Export to a file</Button>
-                <Button color={Button.Colors.PRIMARY} onClick={importLibrary}>Import from a file</Button>
+                <Button variant="secondary" onClick={exportLibrary}>Export to a file</Button>
+                <Button variant="secondary" onClick={importLibrary}>Import from a file</Button>
             </div>
         )
     },
@@ -120,11 +121,11 @@ const settings = definePluginSettings({
         description: "Throw away every picture you have saved.",
         component: () => (
             <Button
-                color={Button.Colors.PRIMARY}
+                variant="secondary"
                 onClick={() => Alerts.show({
                     title: "Clear saved pictures?",
                     body: "Every picture you have saved here goes, along with the crop remembered for each one. Discord's own archive and your current avatar and banner are not touched.",
-                    confirmColor: Button.Colors.RED,
+                    confirmColor: "danger",
                     confirmText: "Clear",
                     cancelText: "Cancel",
                     onConfirm: () => clear().catch(err => logger.error("could not clear the library", err))
@@ -165,7 +166,7 @@ async function exportLibrary() {
         else saveFile(new File([data], FILENAME, { type: "application/json" }));
     } catch (err) {
         logger.error("could not export the library", err);
-        showToast("Could not export your pictures", "failure");
+        showToast({ text: "Could not export your pictures", variant: "critical" });
     }
 }
 
@@ -184,13 +185,13 @@ async function importLibrary() {
         if (!json) return;
 
         const added = await importAll(json, settings.store.librarySize);
-        showToast(
-            added ? `Added ${pluralise(added, "picture")}` : "Nothing new in that file",
-            "success"
-        );
+        showToast({
+            text: added ? `Added ${pluralise(added, "picture")}` : "Nothing new in that file",
+            variant: "success"
+        });
     } catch (err) {
         logger.error("could not import the library", err);
-        showToast("Could not read that file", "failure");
+        showToast({ text: "Could not read that file", variant: "critical" });
     }
 }
 
@@ -248,7 +249,7 @@ function useForget(bump: () => void) {
         Alerts.show({
             title: "Remove this picture?",
             body: `${entry.name} goes from your saved pictures, along with the crop remembered for it.`,
-            confirmColor: Button.Colors.RED,
+            confirmColor: "danger",
             confirmText: "Remove",
             cancelText: "Cancel",
             onConfirm: run
@@ -324,7 +325,7 @@ function PickerShelf({ kind, open, complete, maxSize }: {
 
     const onPick = useCallback(async (entry: Entry) => {
         const blob = await getFile(entry.id);
-        if (!blob) return showToast("That picture is missing", "failure");
+        if (!blob) return showToast({ text: "That picture is missing", variant: "critical" });
 
         const file = new File([blob], entry.name, { type: blob.type });
         await touch(entry.id);
@@ -344,7 +345,7 @@ function PickerShelf({ kind, open, complete, maxSize }: {
     }, [bump]);
 
     const accept = useCallback(async (file: File) => {
-        if (maxSize && file.size > maxSize) return showToast("That picture is too big for Discord", "failure");
+        if (maxSize && file.size > maxSize) return showToast({ text: "That picture is too big for Discord", variant: "critical" });
 
         try {
             const entry = await add(file, kind, "original", settings.store.librarySize);
@@ -352,7 +353,7 @@ function PickerShelf({ kind, open, complete, maxSize }: {
             await hand(entry.id, file, settings.store.rememberCrop ? entry.crop ?? null : null);
         } catch (err) {
             logger.error("could not take that picture", err);
-            showToast("Could not use that picture", "failure");
+            showToast({ text: "Could not use that picture", variant: "critical" });
         }
     }, [kind, hand, bump, maxSize]);
 
@@ -432,7 +433,7 @@ function EditorShelf({ Original, ownProps }: { Original: React.ComponentType<Edi
             await show(entry.id, file, settings.store.rememberCrop ? entry.crop ?? null : null);
         } catch (err) {
             logger.error("could not take that picture", err);
-            showToast("Could not use that picture", "failure");
+            showToast({ text: "Could not use that picture", variant: "critical" });
         }
     }, [kind, show, bump, setGroup]);
 
@@ -440,7 +441,7 @@ function EditorShelf({ Original, ownProps }: { Original: React.ComponentType<Edi
 
     const onPick = useCallback(async (entry: Entry) => {
         const blob = await getFile(entry.id);
-        if (!blob) return showToast("That picture is missing", "failure");
+        if (!blob) return showToast({ text: "That picture is missing", variant: "critical" });
 
         await touch(entry.id);
         bump();
@@ -464,7 +465,7 @@ function EditorShelf({ Original, ownProps }: { Original: React.ComponentType<Edi
         };
         const run = () => save().catch(err => {
             logger.error("could not keep the cropped copy", err);
-            showToast("Could not keep the cropped copy", "failure");
+            showToast({ text: "Could not keep the cropped copy", variant: "critical" });
         });
 
         if (!settings.store.askBeforeSavingCropped) return void run();
@@ -578,8 +579,8 @@ export default definePlugin({
             find: '"SET_IMAGE_ZOOM_RATIO"',
             replacement: [
                 {
-                    match: /\{default:\(\)=>(\i)\}/,
-                    replace: "{default:()=>$self.wrapEditor($1)}"
+                    match: /(?<=\i\.\i\((\i),)\{\},\{default:/,
+                    replace: "{default:()=>$self.wrapEditor($1.Editor)},{Editor:"
                 },
                 {
                     match: /(?<=#{intl::AVATAR_UPLOAD_EDIT_MEDIA}\),)size:"md",actionBarInput:/,

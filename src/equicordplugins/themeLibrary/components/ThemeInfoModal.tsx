@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { Button } from "@components/Button";
 import { CodeBlock } from "@components/CodeBlock";
 import { Heading } from "@components/Heading";
 import { Heart } from "@components/Heart";
@@ -15,7 +16,7 @@ import { openInviteModal } from "@utils/discord";
 import { Margins } from "@utils/margins";
 import type { PluginNative } from "@utils/types";
 import { findComponentByCodeLazy } from "@webpack";
-import { Button, Modal, openModal, Parser, React, showToast } from "@webpack/common";
+import { Modal, openModal, Parser, React, showToast } from "@webpack/common";
 
 import { logger } from "./ThemeTab";
 
@@ -25,10 +26,10 @@ const UserSummaryItem = findComponentByCodeLazy("defaultRenderUser", "showDefaul
 async function downloadTheme(theme: Theme) {
     try {
         await Native.downloadTheme(theme);
-        showToast(`Downloaded ${theme.name}!`, "success");
+        showToast({ text: `Downloaded ${theme.name}!`, variant: "success" });
     } catch (err: unknown) {
         logger.error(err);
-        showToast(`Failed to download ${theme.name}! (check console)`, "failure");
+        showToast({ text: `Failed to download ${theme.name}! (check console)`, variant: "critical" });
     }
 }
 
@@ -160,13 +161,12 @@ export const ThemeInfoModal: React.FC<ThemeInfoModalProps> = ({ author, theme, .
                             )}
                             <Paragraph>
                                 <Button
-                                    color={Button.Colors.BRAND}
-                                    look={Button.Looks.FILLED}
+                                    variant="primary"
                                     className={Margins.top8}
                                     onClick={async e => {
                                         e.preventDefault();
                                         const useInvite = guild ? guild.invite_link?.split("discord.gg/")[1] : invite;
-                                        useInvite != null && openInviteModal(useInvite).catch(() => showToast("Invalid or expired invite!", "failure"));
+                                        useInvite != null && openInviteModal(useInvite).catch(() => showToast({ text: "Invalid or expired invite!", variant: "critical" }));
                                     }}
                                 >
                                     Join Discord Server
@@ -194,7 +194,7 @@ export const ThemeInfoModal: React.FC<ThemeInfoModalProps> = ({ author, theme, .
                                             variant: "primary",
                                             onClick: () => {
                                                 copyToClipboard(themeContent);
-                                                showToast("Copied to Clipboard", "success");
+                                                showToast({ text: "Copied to Clipboard", variant: "success" });
                                             }
                                         }
                                     ]}

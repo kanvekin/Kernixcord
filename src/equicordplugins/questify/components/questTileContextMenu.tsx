@@ -11,7 +11,7 @@ import type { ReactNode } from "react";
 
 import { addIgnoredQuest, questIsIgnored, removeIgnoredQuest } from "../settings/ignoredQuests";
 import { rerenderQuests } from "../settings/rerender";
-import { canAutoCompleteQuest, enrollAndStartQuestAutoComplete, ensureQuestEnrolled, getQuestAutoCompleteEntry, stopQuestAutoComplete } from "../utils/completion";
+import { canAutoCompleteQuest, enrollAndLaunchQuestActivity, enrollAndStartQuestAutoComplete, ensureQuestEnrolled, getQuestActivityApplicationId, getQuestAutoCompleteEntry, isQuestEnrollmentCompatible, stopQuestAutoComplete } from "../utils/completion";
 import { getQuestStatus, QuestStatus, refreshQuest } from "../utils/questState";
 import { q } from "../utils/ui";
 
@@ -30,17 +30,28 @@ export function QuestTileContextMenu(
     const isEnrolled = Boolean(quest.userStatus?.enrolledAt);
     const isAutoCompleting = getQuestAutoCompleteEntry(quest) != null;
     const canStartAutoComplete = !isClaimedMenu && canAutoCompleteQuest(quest);
-    const canEnroll = !isClaimedMenu && !isEnrolled && !quest.userStatus?.completedAt && getQuestStatus(quest, []) === QuestStatus.Unclaimed;
-    const taskType = Object.values(quest.config.taskConfigV2?.tasks ?? {})[0]?.type;
+    const canEnroll = !isClaimedMenu && !isEnrolled && !quest.userStatus?.completedAt
+        && getQuestStatus(quest, []) === QuestStatus.Unclaimed && isQuestEnrollmentCompatible(quest);
+    const canLaunchActivity = getQuestActivityApplicationId(quest) !== null && (isEnrolled || canEnroll);
 
     children.unshift((
         <Menu.MenuGroup>
+            {canLaunchActivity && (
+                <Menu.MenuItem
+                    id={q("launch-activity")}
+                    label="Launch Activity"
+                    action={async () => {
+                        await enrollAndLaunchQuestActivity(quest);
+                        rerenderQuests();
+                    }}
+                />
+            )}
             {canEnroll && (
                 <Menu.MenuItem
                     id={q("enroll-in-quest")}
                     label="Enroll in Quest"
                     action={async () => {
-                        if ((await ensureQuestEnrolled(quest, { analytics: { taskType }, method: "native" })).type === "success") {
+                        if ((await ensureQuestEnrolled(quest)).type === "success") {
                             rerenderQuests();
                         }
                     }}
@@ -64,7 +75,7 @@ export function QuestTileContextMenu(
                     id={q("start-auto-complete")}
                     label="Start Auto-Complete"
                     action={async () => {
-                        if (await enrollAndStartQuestAutoComplete(quest, { taskType })) {
+                        if (await enrollAndStartQuestAutoComplete(quest)) {
                             rerenderQuests();
                         }
                     }}

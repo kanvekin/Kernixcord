@@ -8,7 +8,7 @@ import "./style.css";
 
 import { definePluginSettings, useSettings } from "@api/Settings";
 import { Divider } from "@components/Divider";
-import { Heading, HeadingPrimary } from "@components/Heading";
+import { Heading } from "@components/Heading";
 import { Link } from "@components/Link";
 import { Paragraph } from "@components/Paragraph";
 import { Devs, EquicordDevs } from "@utils/constants";
@@ -45,7 +45,7 @@ const format = (date: Date, formatTemplate: string): string => {
     const sameElseFormat = settings.store?.formats?.sameElseFormat || timeFormats.sameElseFormat.default;
 
     return mmt.format(formatTemplate)
-        .replace("calendar", () => mmt.calendar(null, {
+        .replace("calendar", () => mmt.calendar(undefined, {
             sameDay: sameDayFormat,
             lastDay: lastDayFormat,
             lastWeek: lastWeekFormat,
@@ -130,7 +130,7 @@ export default definePlugin({
     settings,
     settingsAboutComponent: () => (
         <div className={"vc-cmt-info-card"}>
-            <HeadingPrimary>How to use:</HeadingPrimary>
+            <Heading tag="h2" className={Margins.bottom20}>How to use:</Heading>
             <Paragraph>
                 <Link href="https://momentjs.com/docs/#/displaying/format/">Moment.js formatting documentation</Link>
                 <div className={Margins.top8}>
@@ -164,7 +164,7 @@ export default definePlugin({
             ]
         },
         {
-            find: ".MINUTE],[45*",
+            find: ".full,ariaHidden:!0",
             replacement: {
                 // Tooltips for timestamp markdown (e.g. <t:1234567890>)
                 match: /(__unsupportedReactNodeAsText:)\i.full/,

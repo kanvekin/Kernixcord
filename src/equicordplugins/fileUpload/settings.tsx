@@ -10,12 +10,15 @@ import { SettingsSection } from "@components/settings/tabs/plugins/components/Co
 import { Switch } from "@components/Switch";
 import { classNameFactory } from "@utils/css";
 import { useForceUpdater } from "@utils/react";
-import { OptionType } from "@utils/types";
+import { OptionType, PluginNative } from "@utils/types";
 import { React, Select, showToast, TextArea, TextInput } from "@webpack/common";
 
-import { CORS_PROXY } from "./constants";
 import { fallbackServiceOrder, serviceLabels, ServiceType } from "./types";
 import { parseShareXConfig } from "./utils/sharex";
+
+const Native = IS_WEB
+    ? null
+    : VencordNative.pluginHelpers.FileUpload as PluginNative<typeof import("./native")>;
 
 const defaultFallbackOrder = fallbackServiceOrder.join(",");
 const cl = classNameFactory("vc-file-upload-settings-");
@@ -27,7 +30,7 @@ const serviceOptions = [
     { label: "Encrypting.host", value: ServiceType.ENCRYPTINGHOST },
     { label: "S3-Compatible", value: ServiceType.S3 },
     { label: "Catbox.moe", value: ServiceType.CATBOX },
-    ...(IS_DISCORD_DESKTOP ? [{ label: "0x0.st", value: ServiceType.ZEROX0 }] : []),
+    ...(IS_WEB ? [] : [{ label: "0x0.st", value: ServiceType.ZEROX0 }]),
     { label: "Litterbox", value: ServiceType.LITTERBOX },
     { label: "GoFile", value: ServiceType.GOFILE },
     { label: "tmpfiles.org", value: ServiceType.TMPFILES },
@@ -48,8 +51,8 @@ const litterboxOptions = [
 ];
 
 const embedProxyOptions = [
-    { label: "CORS Proxy", value: "cors", default: true },
-    { label: "discord.nfp.is", value: "nfp" }
+    { label: "CORS Proxy", value: "cors" },
+    { label: "discord.nfp.is", value: "nfp", default: true }
 ];
 
 const encryptingHostUrlStyleOptions = [
@@ -57,6 +60,18 @@ const encryptingHostUrlStyleOptions = [
     { label: "Param", value: "param" },
     { label: "Fake Link", value: "fakelink" },
     { label: "Embed", value: "embed" }
+];
+
+const webdavServerTypeOptions = [
+    { label: "Nextcloud", value: "nextcloud", default: true },
+    { label: "ownCloud", value: "owncloud" },
+    { label: "Generic WebDAV", value: "generic" }
+];
+
+const webdavShareTypeOptions = [
+    { label: "Share Page", value: "share-page", default: true },
+    { label: "Direct Download", value: "direct-download" },
+    { label: "Markdown Link", value: "markdown" }
 ];
 
 export const settings = definePluginSettings({
@@ -288,13 +303,13 @@ export const settings = definePluginSettings({
         type: OptionType.SELECT,
         description: "Embed helper service to wrap uploaded video links.",
         options: embedProxyOptions,
-        default: "cors",
+        default: "nfp",
         hidden: true
     },
     corsProxyUrl: {
         type: OptionType.STRING,
-        description: "CORS proxy URL used for browser uploads",
-        default: CORS_PROXY,
+        description: "Optional CORS proxy URL used for browser uploads",
+        default: "",
         hidden: true
     },
     apngToGif: {
@@ -347,22 +362,14 @@ export const settings = definePluginSettings({
     webdavServerType: {
         type: OptionType.SELECT,
         description: "WebDAV server type",
-        options: [
-            { label: "Nextcloud", value: "nextcloud", default: true },
-            { label: "ownCloud", value: "owncloud" },
-            { label: "Generic WebDAV", value: "generic" }
-        ],
+        options: webdavServerTypeOptions,
         default: "nextcloud",
         hidden: true
     },
     webdavShareType: {
         type: OptionType.SELECT,
         description: "WebDAV share link format",
-        options: [
-            { label: "Share Page", value: "share-page", default: true },
-            { label: "Direct Download", value: "direct-download" },
-            { label: "Markdown Link", value: "markdown" }
-        ],
+        options: webdavShareTypeOptions,
         default: "share-page",
         hidden: true
     },
@@ -526,10 +533,10 @@ export function SettingsComponent() {
     const validateShareXConfig = () => {
         try {
             parseShareXConfig(settings.store.sharexConfig || "");
-            showToast("ShareX config is valid", "success");
+            showToast({ text: "ShareX config is valid", variant: "success" });
         } catch (error) {
             const message = error instanceof Error ? error.message : "Invalid ShareX config";
-            showToast(message, "failure");
+            showToast({ text: message, variant: "critical" });
         }
     };
 
@@ -548,10 +555,10 @@ export function SettingsComponent() {
                 const parsed = parseShareXConfig(content);
                 settings.store.sharexConfig = JSON.stringify(parsed, null, 2);
                 update();
-                showToast("Imported ShareX config", "success");
+                showToast({ text: "Imported ShareX config", variant: "success" });
             } catch (error) {
                 const message = error instanceof Error ? error.message : "Failed to import ShareX config";
-                showToast(message, "failure");
+                showToast({ text: message, variant: "critical" });
             }
         };
         reader.readAsText(file);
@@ -865,11 +872,7 @@ export function SettingsComponent() {
                     />
                     <SettingsSection id="server-type" name="Server Type" description="Select your WebDAV server type. Nextcloud and ownCloud will create a public share link. Generic returns the raw file URL.">
                         <Select
-                            options={[
-                                { label: "Nextcloud", value: "nextcloud", default: true },
-                                { label: "ownCloud", value: "owncloud" },
-                                { label: "Generic WebDAV", value: "generic" }
-                            ]}
+                            options={webdavServerTypeOptions}
                             isSelected={v => v === settings.store.webdavServerType}
                             select={v => {
                                 settings.store.webdavServerType = v;
@@ -882,11 +885,7 @@ export function SettingsComponent() {
                     {settings.store.webdavServerType !== "generic" && (
                         <SettingsSection id="share-link-format" name="Share Link Format" description="How to return the public share link. Share Page links to a web page; Direct Download links straight to the file; Markdown Link wraps the share page in a clickable filename.">
                             <Select
-                                options={[
-                                    { label: "Share Page", value: "share-page", default: true },
-                                    { label: "Direct Download", value: "direct-download" },
-                                    { label: "Markdown Link", value: "markdown" }
-                                ]}
+                                options={webdavShareTypeOptions}
                                 isSelected={v => v === settings.store.webdavShareType}
                                 select={v => {
                                     settings.store.webdavShareType = v;
@@ -1018,15 +1017,11 @@ export function SettingsComponent() {
             <SettingGroup name="Network" description="Configure browser upload proxying and timeouts.">
                 <SettingTextInput
                     name="CORS Proxy URL"
-                    description="CORS proxy used for web uploads. Leave empty to use the default proxy."
+                    description="Optional CORS proxy for uploads that can't go through the desktop app. The proxy sees every file and token sent through it, so only use one you trust. Leave empty to upload directly."
                     value={settings.store.corsProxyUrl || ""}
                     onChange={v => settings.store.corsProxyUrl = v}
                     placeholder="https://your-cors-proxy.example.com"
                 />
-
-                <SettingsSection id="default-cors-proxy-source" name="Default CORS Proxy Source" description="Source code for the default CORS proxy">
-                    <a href="https://codeberg.org/key/corsproxy" target="_blank" rel="noreferrer">codeberg.org/key/corsproxy</a>
-                </SettingsSection>
 
                 <SettingsSection id="upload-timeout" name="Upload Timeout" description="Maximum time to wait per upload attempt before switching to fallback">
                     <Select
@@ -1046,6 +1041,20 @@ export function SettingsComponent() {
                         placeholder="Select timeout"
                     />
                 </SettingsSection>
+
+                {Native && (
+                    <SettingsSection id="approved-servers" name="Approved Servers" description="S3 and WebDAV servers you allowed FileUpload to upload to. Resetting will ask again on the next upload.">
+                        <Button
+                            size="small"
+                            onClick={async () => {
+                                await Native.clearApprovedOrigins();
+                                showToast({ text: "Approved servers reset" });
+                            }}
+                        >
+                            Reset Approved Servers
+                        </Button>
+                    </SettingsSection>
+                )}
             </SettingGroup>
 
             <FallbackOrderSettings />

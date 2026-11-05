@@ -22,7 +22,8 @@ import { definePluginSettings } from "@api/Settings";
 import { Button } from "@components/Button";
 import { ExpandableSection } from "@components/ExpandableCard";
 import { Flex } from "@components/Flex";
-import { HeadingSecondary } from "@components/Heading";
+import { Heading } from "@components/Heading";
+import { Margins } from "@components/margins";
 import { Paragraph } from "@components/Paragraph";
 import { Span } from "@components/Span";
 import { TooltipContainer } from "@components/TooltipContainer";
@@ -30,8 +31,9 @@ import { Devs, EquicordDevs, SUPPORT_CHANNEL_IDS } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
+import { chooseFile, saveFile } from "@utils/web";
 import { Message } from "@vencord/discord-types";
-import { React, Select, TextInput, UserStore, useState } from "@webpack/common";
+import { React, Select, showToast, TextInput, UserStore, useState } from "@webpack/common";
 
 const cl = classNameFactory("vc-textReplace-");
 
@@ -66,6 +68,7 @@ const makeEmptyRule: () => Rule = () => ({
 });
 
 const makeEmptyRuleArray = () => [makeEmptyRule()];
+const RULE_SETTINGS: ("stringRules" | "regexRules")[] = ["stringRules", "regexRules"];
 
 const settings = definePluginSettings({
     replace: {
@@ -87,6 +90,7 @@ const settings = definePluginSettings({
                         rulesArray={regexRules}
                         isRegex
                     />
+                    <TextReplaceImportExport />
                 </>
             );
         }
@@ -102,6 +106,49 @@ const settings = definePluginSettings({
         description: "Rules for replacing text using regular expressions."
     }
 });
+
+function TextReplaceImportExport() {
+    return (
+        <div>
+            <Heading className={Margins.bottom8}>Import and Export</Heading>
+            <Paragraph>Export your rules as a JSON file or import rules to add them to your existing rules.</Paragraph>
+            <Flex className={cl("import-export-buttons")}>
+                <Button onClick={exportRules}>Export JSON</Button>
+                <Button onClick={importRules}>Import JSON</Button>
+            </Flex>
+        </div>
+    );
+}
+
+function exportRules() {
+    const { stringRules, regexRules } = settings.plain;
+    const json = JSON.stringify({ stringRules, regexRules }, (key, value) => key === "id" ? undefined : value, 4);
+
+    if (IS_DISCORD_DESKTOP) DiscordNative.fileManager.saveWithDialog(new TextEncoder().encode(json), "textreplace-rules.json");
+    else saveFile(new File([json], "textreplace-rules.json", { type: "application/json" }));
+}
+
+async function importRules() {
+    const file = await chooseFile("application/json");
+    if (!file) return;
+
+    try {
+        const data = JSON.parse(await file.text());
+
+        for (const key of RULE_SETTINGS) {
+            const imported = (data[key] ?? [])
+                .filter((rule: Rule) => typeof rule?.find === "string" && rule.find)
+                .map((rule: Rule) => ({ ...makeEmptyRule(), ...rule, id: crypto.randomUUID() }));
+
+            settings.store[key] = [...settings.plain[key].filter(rule => !isEmptyRule(rule)), ...imported, makeEmptyRule()];
+        }
+
+        showToast({ text: "Rules imported successfully.", variant: "success" });
+    } catch (err) {
+        new Logger("TextReplace").error("Failed to import rules:", err);
+        showToast({ text: "Could not import rules. Choose a valid TextReplace JSON file.", variant: "critical" });
+    }
+}
 
 function stringToRegex(str: string) {
     const match = str.match(/^(\/)?(.+?)(?:\/([gimsuyv]*))?$/); // Regex to match regex
@@ -246,7 +293,7 @@ function TextReplace({ title, description, rulesArray, isRegex = false }: TextRe
     return (
         <>
             <div>
-                <HeadingSecondary>{title}</HeadingSecondary>
+                <Heading className={Margins.bottom8}>{title}</Heading>
                 <Paragraph>{description}</Paragraph>
                 <div className={cl("search-input")}>
                     <TextInput
@@ -364,7 +411,7 @@ function TextReplaceTesting() {
 
     return (
         <div>
-            <HeadingSecondary>Rule Tester</HeadingSecondary>
+            <Heading className={Margins.bottom8}>Rule Tester</Heading>
             <Flex flexDirection="column" gap={6}>
                 <TextInput placeholder="Type a message to test rules on" onChange={setValue} />
                 <TextInput placeholder="Message with rules applied" editable={false} value={applyRules(value, "allMessages")} style={{ opacity: 0.7 }} />
@@ -425,7 +472,7 @@ export default definePlugin({
     description: "Replace text in your messages. You can find pre-made rules in the #textreplace-rules channel in Vencord's Server",
     dependencies: ["MessagePopoverAPI"],
     tags: ["Chat", "Customisation", "Utility"],
-    authors: [Devs.AutumnVN, Devs.TheKodeToad, EquicordDevs.Etorix, EquicordDevs.Ape],
+    authors: [Devs.AutumnVN, Devs.TheKodeToad, EquicordDevs.Etorix, EquicordDevs.Ape, EquicordDevs.rot],
     isModified: true,
     settings,
     modifyIncomingMessage,

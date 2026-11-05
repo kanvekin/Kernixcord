@@ -74,7 +74,7 @@ export default definePlugin({
     name: "HideServers",
     description: "Allows you to hide servers from the guild list and quick switcher by right clicking them",
     tags: ["Servers", "Utility"],
-    authors: [EquicordDevs.bep],
+    authors: [EquicordDevs.bep, EquicordDevs.Panniku],
     searchTerms: ["guild", "server", "hide", "folder"],
 
     dependencies: ["ServerListAPI"],
@@ -116,7 +116,7 @@ export default definePlugin({
                     replace: "$self.useFilteredGuilds($1)$2"
                 },
                 {
-                    match: /let{disableAppDownload.{0,10}isPlatformEmbedded/,
+                    match: /let.{0,10}{disableAppDownload:\i=\i\.isPlatformEmbedded/,
                     replace: "$self.useStore();$&",
                 }
             ]
