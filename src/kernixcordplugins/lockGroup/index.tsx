@@ -8,12 +8,12 @@ import {
   findGroupChildrenByChildId,
   NavContextMenuPatchCallback,
 } from "@api/ContextMenu";
-import { definePluginSettings } from "@api/Settings";
 import { showNotification } from "@api/Notifications";
+import { definePluginSettings } from "@api/Settings";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { ChannelStore, Menu, RestAPI, UserStore } from "@webpack/common";
 import { Channel } from "@vencord/discord-types";
+import { ChannelStore, Menu, RestAPI, UserStore } from "@webpack/common";
 
 // State of locked groups
 const lockedGroups = new Set<string>();
@@ -321,7 +321,7 @@ export default definePlugin({
 
             // If addition was done by owner, don't kick
             if (addedByUserId === currentUserId) {
-              debugLog(`✅ Addition made by owner - Authorized`);
+              debugLog("✅ Addition made by owner - Authorized");
 
               if (
                 settings.store.showNotifications &&

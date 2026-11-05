@@ -7,7 +7,7 @@
 import { sleep } from "@utils/misc";
 import { ComponentDispatch, createRoot, React, ReactDOM, useEffect, useRef, useState } from "@webpack/common";
 
-import { HOMELANDER_MODEL_OPTIONS, LOCAL_PROVIDER_OPTIONS, SURF_MODEL_OPTIONS, SWISHAI_MODEL_OPTIONS, KernixcordChat } from "../../KernixcordAI/aiProvider";
+import { HOMELANDER_MODEL_OPTIONS, KernixcordChat,LOCAL_PROVIDER_OPTIONS, SURF_MODEL_OPTIONS, SWISHAI_MODEL_OPTIONS } from "../../KernixcordAI/aiProvider";
 
 const DICT_URLS = [
     "https://raw.githubusercontent.com/words/an-array-of-french-words/master/index.json",

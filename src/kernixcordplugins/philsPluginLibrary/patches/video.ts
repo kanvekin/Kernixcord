@@ -22,7 +22,6 @@ import { lodash } from "@webpack/common";
 import { ScreenshareProfile, ScreenshareStore } from "../../betterScreenshare.desktop/stores";
 import { ProfilableStore, replaceObjectValuesIfExist, types, utils } from "../../philsPluginLibrary";
 
-
 export function getDefaultVideoTransportationOptions(connection: types.Connection) {
     return {
         ...connection.videoQualityManager.applyQualityConstraints({}).constraints,

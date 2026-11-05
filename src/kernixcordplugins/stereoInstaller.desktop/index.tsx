@@ -13,12 +13,12 @@ import { Heading } from "@components/Heading";
 import { DeleteIcon, HeadphonesIcon, NoEntrySignIcon, WarningIcon } from "@components/Icons";
 import { Paragraph } from "@components/Paragraph";
 import SettingsPlugin from "@plugins/_core/settings";
+import { Devs } from "@utils/constants";
 import { classes, removeFromArray } from "@utils/misc";
 import definePlugin, { OptionType, PluginNative, ReporterTestable } from "@utils/types";
 import { Alerts, Button, React, Select, SettingsRouter, showToast, TextInput, Toasts } from "@webpack/common";
 
 import type { ActionInfo, InstallInfo, NativeResult } from "./native";
-import { Devs } from "@utils/constants";
 
 const Native = VencordNative.pluginHelpers.StereoInstaller as PluginNative<typeof import("./native")>;
 const SETTINGS_ENTRY_KEY = "kernixcord_stereo_installer";

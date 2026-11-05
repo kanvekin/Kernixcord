@@ -5,17 +5,17 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
+import { Devs } from "@utils/constants";
 import {
     ModalCloseButton, ModalContent, ModalFooter, ModalHeader,
-    ModalRoot, ModalSize, ModalProps, openModal
+ModalProps, ModalRoot, ModalSize, openModal
 } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy, waitFor } from "@webpack";
 import {
-    Button, Forms, React, RestAPI, TextInput,
-    Toasts, PresenceStore, UserProfileStore
+    Button, Forms, PresenceStore, React, RestAPI, TextInput,
+    Toasts, UserProfileStore
 } from "@webpack/common";
-import { Devs } from "@utils/constants";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -31,7 +31,6 @@ const RelationshipStore = findByPropsLazy("getRelationshipType", "getFriendCount
 const AuthStore = findByPropsLazy("getId", "getToken");
 
 const FluxDispatcher = findByPropsLazy("dispatch", "subscribe", "unsubscribe");
-
 
 let UserClass: any = null;
 waitFor(
@@ -262,7 +261,7 @@ export async function syncAccounts() {
 const _orig: Record<string, any> = {};
 let _active = false;
 let _activeAcc: FakeAccount | null = null;
-let _activeFakeUser: any = null;  // keep for profile response building
+let _activeFakeUser: any = null; // keep for profile response building
 
 // ─── Build UserClass instance ─────────────────────────────────────────────────
 
@@ -898,7 +897,7 @@ export default definePlugin({
             try {
                 const u = buildUserObject(acc);
                 if (!u) return null;
-                u.tokenStatus = 2;    // marks as "logged in" in the switcher UI
+                u.tokenStatus = 2; // marks as "logged in" in the switcher UI
                 u.pushSyncToken = null; // required field shape for Discord switcher
                 return u;
             } catch { return null; }

@@ -6,11 +6,11 @@
 
 import { HeaderBarButton } from "@api/HeaderBar";
 import { definePluginSettings } from "@api/Settings";
-import { ModalCloseButton, ModalContent, ModalHeader, ModalRoot, ModalSize, openModal, ModalProps } from "@utils/modal";
+import { Devs } from "@utils/constants";
+import { ModalCloseButton, ModalContent, ModalHeader, ModalProps,ModalRoot, ModalSize, openModal } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
 import { User } from "@vencord/discord-types";
 import { Button, FluxDispatcher, Forms, React, TextInput, UserStore } from "@webpack/common";
-import { Devs } from "@utils/constants";
 
 const settings = definePluginSettings({
     spoofedUsername: {
@@ -92,7 +92,7 @@ export default definePlugin({
     description: "Spoof your own username locally with a management panel in the header.",
     authors: [Devs.feelslove],
     settings,
-    
+
     headerBarButton: {
         icon: SpoofIcon,
         render: () => (

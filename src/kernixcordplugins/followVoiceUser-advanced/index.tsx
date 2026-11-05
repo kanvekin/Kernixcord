@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
 import { Devs } from "@utils/constants";
@@ -70,7 +69,6 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (children, { channel, 
         ></Menu.MenuCheckboxItem>
     );
 };
-
 
 export default definePlugin({
     name: "FollowVoiceUser-Extand",

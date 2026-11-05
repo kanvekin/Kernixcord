@@ -9,6 +9,7 @@ import { showNotification } from "@api/Notifications";
 import { definePluginSettings } from "@api/Settings";
 import { LogIcon } from "@components/Icons";
 import SettingsPlugin from "@plugins/_core/settings";
+import { Devs } from "@utils/constants";
 import { LazyComponent } from "@utils/lazyReact";
 import { removeFromArray } from "@utils/misc";
 import definePlugin, { OptionType } from "@utils/types";
@@ -18,7 +19,6 @@ import { ChannelStore, FluxDispatcher, GuildStore, Menu, PresenceStore, Relation
 
 import { recordEvent, trimEvents } from "./store";
 import type { MessageSnapshot, SurveillanceEvent, SurveillanceEventType, SurveillanceScope, VoiceParticipant, VoiceState, VoiceStateFlag } from "./types";
-import { Devs } from "@utils/constants";
 
 const SETTINGS_ENTRY_KEY = "kernixcord_surveillance";
 const NOTIFICATION_COLOR = "#5865f2";

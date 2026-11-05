@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Devs } from "@utils/constants";
-import { definePluginSettings } from "@api/Settings";
 import { showNotification } from "@api/Notifications";
+import { definePluginSettings } from "@api/Settings";
+import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { Constants, ChannelStore, RestAPI, UserStore } from "@webpack/common";
+import { ChannelStore, Constants, RestAPI, UserStore } from "@webpack/common";
 
 const settings = definePluginSettings({
   enabled: {
@@ -103,20 +103,20 @@ async function leaveGroupDM(channelId: string) {
           },
         });
 
-        log(`✅ Automatic message sent successfully`);
-        verboseLog(`⏱️ Waiting 500ms for message to be delivered...`);
+        log("✅ Automatic message sent successfully");
+        verboseLog("⏱️ Waiting 500ms for message to be delivered...");
 
         // Wait a bit before leaving so the message is sent
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 500));
       } catch (msgError) {
         log(`❌ Error sending automatic message: ${msgError}`, "error");
       }
     } else {
-      verboseLog(`🔇 Automatic message disabled or empty`);
+      verboseLog("🔇 Automatic message disabled or empty");
     }
 
     // Leave the group
-    log(`🚪 Attempting to leave group...`);
+    log("🚪 Attempting to leave group...");
     await RestAPI.del({
       url: Constants.Endpoints.CHANNEL(channelId),
     });
@@ -130,7 +130,7 @@ async function leaveGroupDM(channelId: string) {
         body: `You have automatically left the group "${channelName}"`,
         icon: undefined,
       });
-      verboseLog(`🔔 Success notification displayed`);
+      verboseLog("🔔 Success notification displayed");
     }
 
     // Final log with statistics
@@ -165,7 +165,7 @@ async function leaveGroupDM(channelId: string) {
         body: `Unable to automatically leave group "${channelName}"`,
         icon: undefined,
       });
-      verboseLog(`🔔 Error notification displayed`);
+      verboseLog("🔔 Error notification displayed");
     }
   }
 }
@@ -174,8 +174,8 @@ async function leaveGroupDM(channelId: string) {
 function isUserWhitelisted(userId: string): boolean {
   const whitelist = settings.store.whitelist
     .split(",")
-    .map((id) => id.trim())
-    .filter((id) => id.length > 0);
+    .map(id => id.trim())
+    .filter(id => id.length > 0);
 
   const isWhitelisted = whitelist.includes(userId);
   verboseLog(
@@ -220,7 +220,7 @@ export default definePlugin({
       );
 
       if (!settings.store.enabled) {
-        verboseLog(`🔒 Plugin disabled, ignored`);
+        verboseLog("🔒 Plugin disabled, ignored");
         return;
       }
 
@@ -249,7 +249,7 @@ export default definePlugin({
 
       // Check if user was recently added
       if (!wasRecentlyAdded(channel, currentUserId)) {
-        verboseLog(`⏭️ Ignored: you are the group creator`);
+        verboseLog("⏭️ Ignored: you are the group creator");
         return;
       }
 
@@ -292,14 +292,14 @@ export default definePlugin({
 
       // Wait for configured delay before leaving
       setTimeout(() => {
-        verboseLog(`⏰ Delay elapsed, executing automatic leave`);
+        verboseLog("⏰ Delay elapsed, executing automatic leave");
         leaveGroupDM(channel.id);
       }, settings.store.delay);
     },
   },
 
   start() {
-    log(`🚀 AntiGroup plugin started`);
+    log("🚀 AntiGroup plugin started");
     log(`⚙️ Current configuration:
 - Notifications: ${settings.store.showNotifications ? "ON" : "OFF"}
 - Verbose logs: ${settings.store.verboseLogs ? "ON" : "OFF"}
@@ -317,7 +317,7 @@ export default definePlugin({
   },
 
   stop() {
-    log(`🛑 AntiGroup plugin stopped`);
+    log("🛑 AntiGroup plugin stopped");
 
     if (settings.store.showNotifications) {
       showNotification({

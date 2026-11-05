@@ -64,7 +64,6 @@ export interface Dev {
     badge?: boolean;
 }
 
-
 /**
  * If you made a plugin or substantial contribution, add yourself here.
  * This object is used for the plugin author list, as well as to add a contributor badge to your profile.
@@ -1506,6 +1505,14 @@ export const EquicordDevs = Object.freeze({
     rot: {
         name: "rot",
         id: 1021210809164111932n
+    },
+    tie: {
+        name: "tie",
+        id: 783087994419675201n
+    },
+    itzmeshadow999: {
+        name: "ItzMeShadow999",
+        id: 1065604516399026176n
     },
 } satisfies Record<string, Dev>);
 

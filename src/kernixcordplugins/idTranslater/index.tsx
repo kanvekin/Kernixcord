@@ -159,7 +159,7 @@ function translateIds(content: string, channelId?: string): string {
 
   while ((match = idRegex.exec(content)) !== null) {
     const id = match[0];
-    const index = match.index;
+    const { index } = match;
 
     // Check if ID is in a special context
     if (isIdInContext(content, id, index)) {

@@ -7,12 +7,12 @@
 import "./styles.css";
 
 import { HeaderBarButton } from "@api/HeaderBar";
+import { Devs } from "@utils/constants";
 import { sleep } from "@utils/misc";
 import { ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalRoot, openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import { Forms, React, useEffect, useMemo, useState } from "@webpack/common";
-import { Devs } from "@utils/constants";;
 
 import { t, useTranslation } from "../autoTranslateKernixcord";
 

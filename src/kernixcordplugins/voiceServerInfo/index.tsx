@@ -11,13 +11,13 @@ import { HeaderBarButton } from "@api/HeaderBar";
 import { showNotification } from "@api/Notifications";
 import { definePluginSettings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
+import { Devs } from "@utils/constants";
 import { makeCodeblock } from "@utils/text";
 import definePlugin, { OptionType, type PluginNative } from "@utils/types";
 import type { CommandArgument, CommandContext } from "@vencord/discord-types";
 import { openModal, RTCConnectionStore } from "@webpack/common";
 
 import { getLocation, type IPInfo, VoiceServerIcon, type VoiceServerInfo, VoiceServerModal } from "./VoiceServerModal";
-import { Devs } from "@utils/constants";
 
 const Native = VencordNative.pluginHelpers.VoiceServerInfo as PluginNative<typeof import("./native")>;
 const REQUEST_TIMEOUT_MS = 12_000;

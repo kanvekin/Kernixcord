@@ -5,9 +5,9 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
+import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { ChannelStore, FluxDispatcher, IconUtils, UserStore } from "@webpack/common";
-import { Devs } from "@utils/constants";
 
 const OVERLAY_ID = "vcl-overlay";
 const LOCKED_EVENT = "vencord-discordlock-locked";

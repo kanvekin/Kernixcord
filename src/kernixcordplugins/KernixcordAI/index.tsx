@@ -9,14 +9,14 @@ import "./styles.css";
 import { findGroupChildrenByChildId } from "@api/ContextMenu";
 import { DataStore } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
+import { Devs } from "@utils/constants";
 import { sleep } from "@utils/misc";
 import { ModalCloseButton, ModalRoot, openModal } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy } from "@webpack";
 import { ChannelStore, FluxDispatcher, Menu, React, RelationshipStore, RestAPI, useEffect, useMemo, useRef, UserStore, useState } from "@webpack/common";
-import { Devs } from "@utils/constants";
-import { GROQ_MODEL_OPTIONS, PROVIDER_OPTIONS, REIDVERSE_MODEL_OPTIONS, KernixcordChat, POLLINATIONS_MODEL_OPTIONS } from "./aiProvider";
-import { getReidverseKey } from "./groqManager";
+
+import { GROQ_MODEL_OPTIONS, KernixcordChat, POLLINATIONS_MODEL_OPTIONS,PROVIDER_OPTIONS, REIDVERSE_MODEL_OPTIONS } from "./aiProvider";
 
 // ── Settings ───────────────────────────────────────────────────────────────────
 

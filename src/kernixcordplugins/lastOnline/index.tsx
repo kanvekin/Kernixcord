@@ -4,11 +4,10 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import * as DataStore from "@api/DataStore";
 import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
-import { User } from "@vencord/discord-types";
 import { moment, React } from "@webpack/common";
-import * as DataStore from "@api/DataStore";
 
 interface PresenceStatus {
     hasBeenOnline: boolean;
@@ -76,7 +75,7 @@ export default definePlugin({
     },
     renderMemberListDecorator({ user }) {
         if (!user || recentlyOnlineList.get(user.id)?.hasBeenOnline !== true) return null;
-        
+
         const presenceStatus = recentlyOnlineList.get(user.id);
         if (!presenceStatus || presenceStatus.lastOffline === null) return null;
 

@@ -5,8 +5,8 @@
  */
 
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
-import definePlugin from "@utils/types";
 import { Devs } from "@utils/constants";
+import definePlugin from "@utils/types";
 import { findByPropsLazy } from "@webpack";
 import {
     ChannelStore,

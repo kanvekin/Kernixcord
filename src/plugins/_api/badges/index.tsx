@@ -17,7 +17,7 @@ import { Logger } from "@utils/Logger";
 import { shouldShowContributorBadge, shouldShowEquicordContributorBadge, shouldShowKernixcordContributorBadge } from "@utils/misc";
 import definePlugin from "@utils/types";
 import { ContextMenuApi, Menu, showToast, UserStore } from "@webpack/common";
-import Plugins, { PluginMeta } from "~plugins";
+
 import { EquicordDonorModal, EquicordTranslatorModal, KernixcordDonorModal, VencordDonorModal } from "./modals";
 
 const CONTRIBUTOR_BADGE = "https://cdn.discordapp.com/emojis/1092089799109775453.png?size=64";
@@ -98,6 +98,7 @@ const KernixcordDonorBadge: ProfileBadge = {
 let DonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
 let EquicordDonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
 let KernixcordDonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
+let DirectoryBadges = {} as Record<string, DirectoryBadge>;
 
 async function loadBadges(url: string, noCache = false) {
     const init = {} as RequestInit;

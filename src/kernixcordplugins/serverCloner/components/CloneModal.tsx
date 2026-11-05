@@ -1,10 +1,16 @@
-import { React, GuildStore, GuildRoleStore, UserStore, SearchableSelect, Checkbox, Button } from "@webpack/common";
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+import { getTheme, Theme } from "@utils/discord";
 import { ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, openModal } from "@utils/modal";
 import { Guild } from "@vencord/discord-types";
+import { Button,Checkbox, GuildRoleStore, GuildStore, React, SearchableSelect, UserStore } from "@webpack/common";
+
 import { CloneOptions } from "../types";
 import { extractChannels } from "../utils/api";
-import { getTheme, Theme } from "@utils/discord";
-
 
 function ConfirmOverwriteModal({
     props,
@@ -58,7 +64,6 @@ function ConfirmOverwriteModal({
     );
 }
 
-
 function BoostWarning({
     guild,
     targetGuildId,
@@ -74,8 +79,8 @@ function BoostWarning({
 }) {
     const boostFeatures = React.useMemo(() => {
         const features: string[] = [];
-        if ((guild as any).banner)  features.push("Server Banner (Level 2)");
-        if ((guild as any).splash)  features.push("Invite Splash (Level 2)");
+        if ((guild as any).banner) features.push("Server Banner (Level 2)");
+        if ((guild as any).splash) features.push("Invite Splash (Level 2)");
         const roles = GuildRoleStore.getSortedRoles(guild.id) || [];
         if (roles.some((r: any) => r.icon)) features.push("Role Icons (Level 2)");
         if (((guild as any).premiumTier || 0) >= 1) features.push("High Bitrate Voice (Level 1+)");
@@ -116,7 +121,6 @@ function BoostWarning({
     );
 }
 
-
 function ModeButton({
     label,
     active,
@@ -150,7 +154,6 @@ function ModeButton({
     );
 }
 
-
 export const CloneModal = ({
     props,
     guild,
@@ -162,15 +165,15 @@ export const CloneModal = ({
     onClone: (options: CloneOptions) => void;
     initialOptions?: Partial<CloneOptions>;
 }) => {
-    const [cloneChannels, setCloneChannels]       = React.useState(initialOptions?.cloneChannels ?? true);
-    const [cloneRoles, setCloneRoles]             = React.useState(initialOptions?.cloneRoles ?? true);
-    const [cloneOnboarding, setCloneOnboarding]   = React.useState(initialOptions?.cloneOnboarding ?? true);
+    const [cloneChannels, setCloneChannels] = React.useState(initialOptions?.cloneChannels ?? true);
+    const [cloneRoles, setCloneRoles] = React.useState(initialOptions?.cloneRoles ?? true);
+    const [cloneOnboarding, setCloneOnboarding] = React.useState(initialOptions?.cloneOnboarding ?? true);
     const [cloneSystemFlags, setCloneSystemFlags] = React.useState(initialOptions?.cloneSystemFlags ?? true);
-    const [cloneEmojis, setCloneEmojis]           = React.useState(initialOptions?.cloneEmojis ?? true);
-    const [cloneStickers, setCloneStickers]       = React.useState(initialOptions?.cloneStickers ?? true);
-    const [cloneSoundboard, setCloneSoundboard]   = React.useState(initialOptions?.cloneSoundboard ?? true);
-    const [resumeMode, setResumeMode]             = React.useState(initialOptions?.resumeMode ?? false);
-    const [targetGuildId, setTargetGuildId]       = React.useState<string | null>(null);
+    const [cloneEmojis, setCloneEmojis] = React.useState(initialOptions?.cloneEmojis ?? true);
+    const [cloneStickers, setCloneStickers] = React.useState(initialOptions?.cloneStickers ?? true);
+    const [cloneSoundboard, setCloneSoundboard] = React.useState(initialOptions?.cloneSoundboard ?? true);
+    const [resumeMode, setResumeMode] = React.useState(initialOptions?.resumeMode ?? false);
+    const [targetGuildId, setTargetGuildId] = React.useState<string | null>(null);
     const [sourceEmojisCount, setSourceEmojisCount] = React.useState(0);
     const [sourceStickersCount, setSourceStickersCount] = React.useState(0);
     const [sourceSoundsCount, setSourceSoundsCount] = React.useState(0);
@@ -210,10 +213,10 @@ export const CloneModal = ({
     const nothingSelected = !cloneChannels && !cloneRoles && !cloneOnboarding && !cloneSystemFlags && !cloneEmojis && !cloneStickers && !cloneSoundboard;
 
     const itemSummaryStr = React.useMemo(() => {
-        const roleCount     = cloneRoles    ? (GuildRoleStore.getSortedRoles(guild.id) || []).filter((r: any) => r.name !== "@everyone").length : 0;
-        const channelCount  = cloneChannels ? extractChannels(guild.id, true).length : 0;
-        const emojiEst      = cloneEmojis ? sourceEmojisCount : 0;
-        const stickerEst    = cloneStickers ? sourceStickersCount : 0;
+        const roleCount = cloneRoles ? (GuildRoleStore.getSortedRoles(guild.id) || []).filter((r: any) => r.name !== "@everyone").length : 0;
+        const channelCount = cloneChannels ? extractChannels(guild.id, true).length : 0;
+        const emojiEst = cloneEmojis ? sourceEmojisCount : 0;
+        const stickerEst = cloneStickers ? sourceStickersCount : 0;
         const soundboardEst = cloneSoundboard ? sourceSoundsCount : 0;
 
         const parts: string[] = [];
@@ -235,10 +238,10 @@ export const CloneModal = ({
         if (nothingSelected) return;
 
         if (targetGuildId && !resumeMode) {
-            const targetName    = ownedGuilds.find((g: Guild) => g.id === targetGuildId)?.name ?? "the target server";
+            const targetName = ownedGuilds.find((g: Guild) => g.id === targetGuildId)?.name ?? "the target server";
             const deletingParts: string[] = [];
             if (cloneChannels) deletingParts.push("channels");
-            if (cloneRoles)    deletingParts.push("roles");
+            if (cloneRoles) deletingParts.push("roles");
             if (cloneStickers) deletingParts.push("stickers");
             if (cloneSoundboard) deletingParts.push("soundboard sounds");
 

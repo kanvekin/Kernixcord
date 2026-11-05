@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import definePlugin from "@utils/types";
 import { Devs } from "@utils/constants";
+import definePlugin from "@utils/types";
 
 export type TranslationMap = Record<string, { en: string; es: string; ru: string; zh: string; }>;
 

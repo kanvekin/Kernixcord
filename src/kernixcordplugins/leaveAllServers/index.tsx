@@ -8,12 +8,12 @@ import "./styles.css";
 
 import { addContextMenuPatch, NavContextMenuPatchCallback, removeContextMenuPatch } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
+import { Devs } from "@utils/constants";
 import { sleep } from "@utils/misc";
 import { ModalCloseButton, ModalContent, ModalHeader, ModalRoot, openModal } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByProps, findByPropsLazy, findStoreLazy } from "@webpack";
 import { Forms, Menu, React, showToast, Toasts, useEffect, useMemo, useState } from "@webpack/common";
-import { Devs } from "@utils/constants";
 
 const GuildStore = findStoreLazy("GuildStore");
 const GuildActions = findByPropsLazy("leaveGuild");

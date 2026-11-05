@@ -7,6 +7,7 @@
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
+import { IpcEvents } from "@shared/IpcEvents";
 import { Devs } from "@utils/constants";
 import { classes } from "@utils/misc";
 import { closeModal, ModalCloseButton, ModalContent, ModalHeader, ModalProps, ModalRoot, ModalSize, openModal } from "@utils/modal";
@@ -29,7 +30,6 @@ import {
     VoiceStateStore
 } from "@webpack/common";
 import type { PropsWithChildren, ReactNode, SVGProps } from "react";
-import { IpcEvents } from "@shared/IpcEvents";
 
 const HeaderBarIcon = findComponentByCodeLazy(".HEADER_BAR_BADGE_TOP:", '.iconBadge,"top"');
 
@@ -557,8 +557,6 @@ export default definePlugin({
     contextMenus: {
         "user-context": UserContext
     },
-
-    
 
     start() {
         // Listen for custom event from separate window

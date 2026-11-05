@@ -4,18 +4,18 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { definePluginSettings } from "@api/Settings";
 import * as DataStore from "@api/DataStore";
+import { definePluginSettings } from "@api/Settings";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
+import { findByPropsLazy } from "@webpack";
 import {
+  Constants,
   FluxDispatcher,
   MessageStore,
   RestAPI,
   UserStore,
-  Constants,
 } from "@webpack/common";
-import { findByPropsLazy } from "@webpack";
 
 const MessageActions = findByPropsLazy("deleteMessage", "startEditMessage");
 
@@ -300,7 +300,7 @@ function messageSendWrapper(content: string, nonce: string, channelId: string) {
 }
 
 async function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function messageDeleteWrapper(channelId: string, messageId: string) {
@@ -406,7 +406,7 @@ export default definePlugin({
     }
 
     // Cancel all pending timeouts
-    this.trackedMessages.forEach((message) => {
+    this.trackedMessages.forEach(message => {
       if (message.timeoutId) {
         clearTimeout(message.timeoutId);
       }
@@ -420,7 +420,7 @@ export default definePlugin({
   async saveTrackedMessages() {
     try {
       const messagesToSave = Array.from(this.trackedMessages.values()).map(
-        (msg) => ({
+        msg => ({
           id: msg.id,
           channelId: msg.channelId,
           timestamp: msg.timestamp,
@@ -579,8 +579,8 @@ export default definePlugin({
     const mode = settings.store.channelMode;
     const channelList = settings.store.channelList
       .split(",")
-      .map((id) => id.trim())
-      .filter((id) => id.length > 0);
+      .map(id => id.trim())
+      .filter(id => id.length > 0);
 
     switch (mode) {
       case "all":
@@ -604,8 +604,8 @@ export default definePlugin({
 
     const guildList = settings.store.guildList
       .split(",")
-      .map((id) => id.trim())
-      .filter((id) => id.length > 0);
+      .map(id => id.trim())
+      .filter(id => id.length > 0);
 
     return guildList.includes(guildId);
   },
@@ -616,12 +616,12 @@ export default definePlugin({
     // Check preserve keywords
     const keywords = settings.store.preserveKeywords
       .split(",")
-      .map((keyword) => keyword.trim().toLowerCase())
-      .filter((keyword) => keyword.length > 0);
+      .map(keyword => keyword.trim().toLowerCase())
+      .filter(keyword => keyword.length > 0);
 
     if (keywords.length > 0) {
       const lowerContent = content.toLowerCase();
-      if (keywords.some((keyword) => lowerContent.includes(keyword))) {
+      if (keywords.some(keyword => lowerContent.includes(keyword))) {
         return true;
       }
     }
@@ -676,13 +676,13 @@ export default definePlugin({
 
     const keywords = settings.store.deleteKeywords
       .split(",")
-      .map((keyword) => keyword.trim().toLowerCase())
-      .filter((keyword) => keyword.length > 0);
+      .map(keyword => keyword.trim().toLowerCase())
+      .filter(keyword => keyword.length > 0);
 
     if (keywords.length === 0) return false;
 
     const lowerContent = content.toLowerCase();
-    return keywords.some((keyword) => lowerContent.includes(keyword));
+    return keywords.some(keyword => lowerContent.includes(keyword));
   },
 
   calculateSmartDelay(message: any): number {
@@ -764,7 +764,7 @@ export default definePlugin({
   scheduleMessageDeletion(message: any, customDelay?: number) {
     const delay = customDelay || this.getDelayInMs();
     const scheduledTime = Date.now() + delay;
-    const deletionMode = settings.store.deletionMode;
+    const { deletionMode } = settings.store;
 
     this.debug(
       `Scheduling deletion of message ${message.id
@@ -850,7 +850,7 @@ export default definePlugin({
       try {
         await this.deleteMessage(item.messageId, item.channelId, item.mode);
       } catch (error) {
-        this.error(`Error in batch deletion:`, error);
+        this.error("Error in batch deletion:", error);
       }
     }
   },
@@ -969,7 +969,7 @@ export default definePlugin({
       );
     } finally {
       // Remove message from tracking and cache only if not in retry
-      if (!this.retryQueue.some((item) => item.messageId === messageId)) {
+      if (!this.retryQueue.some(item => item.messageId === messageId)) {
         this.trackedMessages.delete(messageId);
         this.messageCache.delete(messageId);
         // Save after deletion
@@ -1108,7 +1108,7 @@ export default definePlugin({
   processRetryQueue() {
     const now = Date.now();
     const readyToRetry = this.retryQueue.filter(
-      (item) => item.nextRetry <= now
+      item => item.nextRetry <= now
     );
 
     if (readyToRetry.length === 0) {
@@ -1239,7 +1239,7 @@ export default definePlugin({
     message: string,
     type: "success" | "error" | "info" = "info"
   ) {
-    const notificationType = settings.store.notificationType;
+    const { notificationType } = settings.store;
     const prefix = type === "error" ? "❌" : type === "success" ? "✅" : "ℹ️";
     const logMessage = `[AutoDeleter] ${prefix} ${message}`;
 
@@ -1326,7 +1326,7 @@ export default definePlugin({
     this.log("EMERGENCY STOP ACTIVATED - Canceling all scheduled deletions");
 
     // Cancel all timeouts
-    this.trackedMessages.forEach((message) => {
+    this.trackedMessages.forEach(message => {
       if (message.timeoutId) {
         clearTimeout(message.timeoutId);
       }
@@ -1489,7 +1489,7 @@ export default definePlugin({
     try {
       const importedSettings = JSON.parse(settingsData);
       // Validate and apply imported settings
-      Object.keys(importedSettings).forEach((key) => {
+      Object.keys(importedSettings).forEach(key => {
         if (Object.prototype.hasOwnProperty.call(settings.store, key)) {
           settings.store[key] = importedSettings[key];
         }

@@ -4,15 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { ApplicationCommandInputType, sendBotMessage } from "@api/Commands";
-import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
-import { HeaderBarButton } from "@api/HeaderBar";
-import { addMessagePreSendListener, removeMessagePreSendListener } from "@api/MessageEvents";
-import { isPluginEnabled } from "@api/PluginManager";
-import { definePluginSettings, migratePluginToSettings, Settings } from "@api/Settings";
-import { ShieldIcon, WarningIcon } from "@components/Icons";
-import customRPC from "@plugins/customRPC";
-import { Devs, EquicordDevs, GUILD_ID, KernixcordDevs, SUPPORT_CHANNEL_ID, SUPPORT_CHANNEL_IDS, VC_SUPPORT_CHANNEL_IDS } from "@utils/constants";
+import { Settings } from "@api/Settings";
+import { Devs, EquicordDevs, GUILD_ID, SUPPORT_CHANNEL_ID, SUPPORT_CHANNEL_IDS, VC_SUPPORT_CHANNEL_IDS } from "@utils/constants";
 import { isAnyPluginDev } from "@utils/misc";
 import definePlugin from "@utils/types";
 import { Alerts, NavigationRouter, UserStore } from "@webpack/common";

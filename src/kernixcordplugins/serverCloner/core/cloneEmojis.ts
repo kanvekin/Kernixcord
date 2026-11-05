@@ -1,8 +1,15 @@
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 import { RestAPI } from "@webpack/common";
+
+import { state,throwIfCancelled } from "../store";
+import { handleCloneError } from "../utils/errorHandler";
 import { arrayBufferToBase64 } from "../utils/helpers";
 import { updateWithTime } from "../utils/notifications";
-import { throwIfCancelled, state } from "../store";
-import { handleCloneError } from "../utils/errorHandler";
 import { CloneContext } from "./types";
 
 export async function cloneEmojis(ctx: CloneContext) {
@@ -69,7 +76,7 @@ export async function cloneEmojis(ctx: CloneContext) {
                     if (createResp?.body?.id) {
                         state.emojiIdMap[emoji.id] = createResp.body.id;
                     }
-                }, (msg) => updateWithTime(msg, 20 + (emojiStep / sourceEmojis.length) * 5));
+                }, msg => updateWithTime(msg, 20 + (emojiStep / sourceEmojis.length) * 5));
 
                 emojiStep++;
                 updateWithTime(`Cloned emoji ${emoji.name} (${emojiStep}/${sourceEmojis.length})...`, 20 + (emojiStep / sourceEmojis.length) * 5);

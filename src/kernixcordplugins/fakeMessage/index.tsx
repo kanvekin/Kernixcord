@@ -1,11 +1,12 @@
 /*
- * SahteMesaj
- * Equicord / Vencord UserPlugin
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 import { ChatBarButton, type ChatBarButtonFactory } from "@api/ChatButtons";
-import { openModal } from "@utils/modal";
 import { Devs } from "@utils/constants";
+import { openModal } from "@utils/modal";
 import definePlugin, { type IconComponent } from "@utils/types";
 import type { Channel } from "@vencord/discord-types";
 import {
@@ -123,19 +124,19 @@ function FakeMessageModal({ channelId, onClose }: { channelId: string; onClose: 
 
         if (e.key === "ArrowUp") {
             e.preventDefault();
-            setSelectedIndex((prev) => (prev > 0 ? prev - 1 : availableUsers.length - 1));
+            setSelectedIndex(prev => (prev > 0 ? prev - 1 : availableUsers.length - 1));
             return;
         }
 
         if (e.key === "ArrowDown") {
             e.preventDefault();
-            setSelectedIndex((prev) => (prev < availableUsers.length - 1 ? prev + 1 : 0));
+            setSelectedIndex(prev => (prev < availableUsers.length - 1 ? prev + 1 : 0));
             return;
         }
     };
 
     return (
-        <div 
+        <div
             style={{
                 padding: "20px",
                 backgroundColor: "#313338",
@@ -163,8 +164,8 @@ function FakeMessageModal({ channelId, onClose }: { channelId: string; onClose: 
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     {availableUsers.map((user, idx) => {
                         const isSelected = selectedIndex === idx;
-                        const avatarUrl = user.avatar 
-                            ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` 
+                        const avatarUrl = user.avatar
+                            ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
                             : "https://cdn.discordapp.com/embed/avatars/0.png";
 
                         return (
@@ -180,10 +181,10 @@ function FakeMessageModal({ channelId, onClose }: { channelId: string; onClose: 
                                     border: isSelected ? "2px solid #5865f2" : "2px solid transparent"
                                 }}
                             >
-                                <img 
-                                    src={avatarUrl} 
-                                    alt={user.username} 
-                                    style={{ width: "32px", height: "32px", borderRadius: "50%" }} 
+                                <img
+                                    src={avatarUrl}
+                                    alt={user.username}
+                                    style={{ width: "32px", height: "32px", borderRadius: "50%" }}
                                 />
                                 <div style={{ display: "flex", flexDirection: "column" }}>
                                     <span style={{ fontSize: "14px", fontWeight: "bold", color: "white" }}>
@@ -206,15 +207,15 @@ function FakeMessageModal({ channelId, onClose }: { channelId: string; onClose: 
                     rows={3}
                     value={content}
                     placeholder="Type your message... (Enter: Send | Esc: Cancel | ↑↓: Select Contact)"
-                    onChange={(e) => setContent(e.target.value)}
+                    onChange={e => setContent(e.target.value)}
                     onKeyDown={handleKeyDown}
                     autoFocus
-                    style={{ 
-                        padding: "10px", 
-                        borderRadius: "4px", 
-                        border: "none", 
-                        backgroundColor: "#1e1f22", 
-                        color: "white", 
+                    style={{
+                        padding: "10px",
+                        borderRadius: "4px",
+                        border: "none",
+                        backgroundColor: "#1e1f22",
+                        color: "white",
                         resize: "none",
                         fontSize: "14px",
                         outline: "none"
@@ -241,7 +242,7 @@ const SahteMesajChatBarButton: ChatBarButtonFactory = ({ channel }) => (
     <ChatBarButton
         tooltip="Fake Message"
         onClick={() => {
-            openModal((props) => (
+            openModal(props => (
                 <FakeMessageModal
                     channelId={channel.id}
                     onClose={props.onClose}

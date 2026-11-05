@@ -28,8 +28,6 @@ export async function uploadFileToGofileNative(_, url: string, fileBuffer: Array
     }
 }
 
-
-
 export async function uploadFileToCatboxNative(_, url: string, fileBuffer: ArrayBuffer, fileName: string, fileType: string, userHash: string): Promise<string> {
     try {
         const formData = new FormData();

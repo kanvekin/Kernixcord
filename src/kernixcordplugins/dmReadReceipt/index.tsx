@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { MessageStore, React, TypingStore, UserStore, useStateFromStores } from "@webpack/common";
-import { Devs } from "@utils/constants";
 
 import { MessageDecorationProps } from "../../api/MessageDecorations";
 

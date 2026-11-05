@@ -20,7 +20,6 @@ import { React } from "@webpack/common";
 
 import { panelClasses } from "../../discordModules";
 
-
 export interface SettingsPanelProps {
     children: React.ComponentProps<"div">["children"];
 }

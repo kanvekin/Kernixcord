@@ -64,5 +64,3 @@ export default definePlugin({
         if (i !== -1) customSettingsSections.splice(i, 1);
     },
 });
-
-

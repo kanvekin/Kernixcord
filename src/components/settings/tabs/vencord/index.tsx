@@ -8,7 +8,6 @@ import "./VencordTab.css";
 
 import { openNotificationLogModal } from "@api/Notifications/notificationLog";
 import { useSettings } from "@api/Settings";
-import { classNameFactory } from "@utils/css";
 import { Button } from "@components/Button";
 import { Divider } from "@components/Divider";
 import { FormSwitch } from "@components/FormSwitch";
@@ -24,6 +23,7 @@ import NoTrack from "@plugins/_core/noTrack";
 import SettingsPlugin from "@plugins/_core/settings";
 import { gitRemote } from "@shared/vencordUserAgent";
 import { DONOR_ROLE_ID, GUILD_ID, IS_WINDOWS, KERNIXCORD_DONOR_ROLE_ID, KERNIXCORD_GUILD_ID, VC_DONOR_ROLE_ID, VC_GUILD_ID } from "@utils/constants";
+import { classNameFactory } from "@utils/css";
 import { Margins } from "@utils/margins";
 import { isAnyPluginDev } from "@utils/misc";
 import { relaunch } from "@utils/native";
@@ -324,4 +324,3 @@ export function isKernixcordDonor(userId: string): boolean {
     const donorBadges = BadgeAPI.getKernixcordDonorBadges(userId);
     return GuildMemberStore.getMember(KERNIXCORD_GUILD_ID, userId)?.roles.includes(KERNIXCORD_DONOR_ROLE_ID) || !!donorBadges;
 }
-

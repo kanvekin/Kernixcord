@@ -6,7 +6,7 @@
 
 import { Settings } from "@api/Settings";
 
-import { getReidverseKey, groqChat, reidverseChat, pollinationsChat } from "./groqManager";
+import { getReidverseKey, groqChat, pollinationsChat,reidverseChat } from "./groqManager";
 
 export const REIDVERSE_BASE = "https://reidverse-ai.up.railway.app";
 
@@ -172,4 +172,4 @@ export function effectiveProviderRequiresGroqKey(provider?: string): boolean {
     return resolveProviderOptions({ messages: [], provider }).provider === "groq";
 }
 
-export { getReidverseKey, reidverseChat, pollinationsChat };
+export { getReidverseKey, pollinationsChat,reidverseChat };

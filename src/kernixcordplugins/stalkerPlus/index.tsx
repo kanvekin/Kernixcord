@@ -1,7 +1,7 @@
 /*
- * StalkerPlus - Real-time Voice, Profile, and Presence Surveillance
- * Author: xen (https://github.com/xenover1991)
- * License: MIT
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 import "./styles.css";
@@ -12,9 +12,9 @@ import { definePluginSettings } from "@api/Settings";
 import { Devs } from "@utils/constants";
 import { openUserProfile } from "@utils/discord";
 import definePlugin, { OptionType } from "@utils/types";
+import type { User } from "@vencord/discord-types";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import { ChannelStore, GuildStore, Menu, PresenceStore, React, RestAPI, Toasts, UserStore } from "@webpack/common";
-import type { User } from "@vencord/discord-types";
 
 import { StalkerSettings } from "./SettingsUI";
 import {

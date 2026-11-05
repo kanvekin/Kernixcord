@@ -25,7 +25,6 @@ import { IpcEvents } from "@shared/IpcEvents";
 import { app, BrowserWindow, dialog, ipcMain, nativeTheme, shell, systemPreferences } from "electron";
 import { FSWatcher, mkdirSync, readFileSync, watch, writeFileSync } from "fs";
 import { open, readdir, readFile, unlink } from "fs/promises";
-import { release } from "os";
 import { join } from "path";
 
 import { registerCspIpcHandlers } from "./csp/manager";

@@ -19,10 +19,10 @@
 import { DataStore } from "@api/index";
 import { showNotification } from "@api/Notifications";
 import { PlainSettings, Settings } from "@api/Settings";
+import { getCloudAuth, getCloudUrl } from "@api/SettingsSync/cloudSetup";
 import { moment, SettingsRouter, Toasts } from "@webpack/common";
 import { deflateSync, inflateSync } from "fflate";
 
-import { getCloudAuth, getCloudUrl } from "@api/SettingsSync/cloudSetup";
 import { Logger } from "./Logger";
 import { relaunch } from "./native";
 import { chooseFile, saveFile } from "./web";

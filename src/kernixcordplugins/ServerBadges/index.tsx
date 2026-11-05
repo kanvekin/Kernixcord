@@ -28,11 +28,11 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
+import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import type { Guild, GuildFeatures } from "@vencord/discord-types";
 import { findStoreLazy } from "@webpack";
 import { GuildStore, React, UserStore } from "@webpack/common";
-import { Devs } from "@utils/constants";
 
 // UserProfileStore.getUserProfile(id).badges  -> the profile badge row
 // GuildProfileStore.getGuildProfile(id)       -> the "server profile" card

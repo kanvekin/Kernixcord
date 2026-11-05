@@ -16,10 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import type { ComponentType } from "react";
-
 import { filters, findComponentByCodeLazy, mapMangledModuleLazy } from "@webpack";
 import { closeAllModals, closeModal, openMediaModal, openModal, openModalLazy } from "@webpack/common";
+import type { ComponentType } from "react";
 
 import { LazyComponent } from "./react";
 

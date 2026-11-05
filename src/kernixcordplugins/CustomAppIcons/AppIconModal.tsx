@@ -8,8 +8,6 @@ import { localStorage } from "@utils/localStorage";
 import { ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, ModalSize } from "@utils/modal";
 import { findByProps } from "@webpack";
 import { Button, FluxDispatcher, Forms, React, showToast, Text, TextInput, Toasts, useState } from "@webpack/common";
-import { Divider } from "@components/Divider";
-
 
 interface AppIcon {
     id: string,
@@ -30,7 +28,6 @@ function AppIconModal(props: ModalProps) {
             "isPremium": false,
             "name": name
         } as AppIcon;
-
 
         appIcons.push(icon);
         findByProps("UZ", "QA").UZ.push(icon);

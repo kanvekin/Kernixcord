@@ -17,11 +17,8 @@
 */
 
 import ErrorBoundary from "@components/ErrorBoundary";
-import globalBadges from "@equicordplugins/globalBadges";
 import BadgeAPIPlugin from "@plugins/_api/badges";
 import { ComponentType, HTMLProps } from "react";
-
-import { isPluginEnabled } from "./PluginManager";
 
 export const enum BadgePosition {
     START,

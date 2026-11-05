@@ -1,12 +1,18 @@
-import { Devs } from "@utils/constants";
-import definePlugin, { OptionType } from "@utils/types";
-import { definePluginSettings } from "@api/Settings";
-import { showNotification } from "@api/Notifications";
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 import {
   ApplicationCommandInputType,
   ApplicationCommandOptionType,
   sendBotMessage,
 } from "@api/Commands";
+import { showNotification } from "@api/Notifications";
+import { definePluginSettings } from "@api/Settings";
+import { Devs } from "@utils/constants";
+import definePlugin, { OptionType } from "@utils/types";
 
 const settings = definePluginSettings({
   apiKey: {
@@ -176,7 +182,7 @@ export default definePlugin({
       ],
       execute: async (opts, ctx) => {
         try {
-          const question = opts.find((opt) => opt.name === "question")?.value;
+          const question = opts.find(opt => opt.name === "question")?.value;
 
           if (!question) {
             sendBotMessage(ctx.channel.id, {
@@ -195,7 +201,7 @@ export default definePlugin({
           }
 
           // Use the API key from settings
-          const apiKey = settings.store.apiKey;
+          const { apiKey } = settings.store;
 
           if (!validateApiKey(apiKey)) {
             sendBotMessage(ctx.channel.id, {
@@ -244,7 +250,7 @@ export default definePlugin({
 
         sendBotMessage(ctx.channel.id, {
           content:
-            `🤖 **ChatGPT Configuration**\n\n` +
+            "🤖 **ChatGPT Configuration**\n\n" +
             `**API Key**: ${keyStatus}\n` +
             `**Model**: ${settings.store.model}\n` +
             `**Max Tokens**: ${settings.store.maxTokens}\n` +

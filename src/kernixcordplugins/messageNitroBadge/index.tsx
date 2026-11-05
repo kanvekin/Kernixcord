@@ -11,7 +11,6 @@ import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { FluxDispatcher as Flux, Forms } from "@webpack/common";
 
-
 const options = {
     type: "EXPERIMENT_OVERRIDE_BUCKET" as const,
     experimentId: "2023-10_social_proofing_message_nitro_badge",

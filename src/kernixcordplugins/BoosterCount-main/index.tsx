@@ -7,13 +7,13 @@
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { Flex } from "@components/Flex";
+import { Devs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { openUserProfile } from "@utils/discord";
 import { Logger } from "@utils/Logger";
 import definePlugin from "@utils/types";
 import { findByPropsLazy } from "@webpack";
 import { FluxDispatcher, GuildMemberStore, Menu, Modal, openModal, ScrollerThin, Text, useEffect, UserStore, useStateFromStores } from "@webpack/common";
-import { Devs } from "@utils/constants";
 
 const cl = classNameFactory("bc-");
 

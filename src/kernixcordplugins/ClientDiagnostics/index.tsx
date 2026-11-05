@@ -15,6 +15,7 @@ import { CodeBlock } from "@components/CodeBlock";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { ClockIcon, CopyIcon, MagnifyingGlassIcon, ResetIcon } from "@components/Icons";
 import SettingsPlugin from "@plugins/_core/settings";
+import { Devs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { copyWithToast } from "@utils/discord";
 import { Logger } from "@utils/Logger";
@@ -22,7 +23,6 @@ import { isObject, removeFromArray } from "@utils/misc";
 import { useFixedTimer } from "@utils/react";
 import definePlugin, { OptionType, type Plugin, StartAt } from "@utils/types";
 import { React, SettingsRouter, TabBar, TextInput, useState } from "@webpack/common";
-import { Devs } from "@utils/constants";
 
 type SortBy = "impact" | "cpu" | "memory" | "calls" | "resources";
 type ClientDiagnosticsTab = "diagnostics" | "analysis" | "monitor" | "guide";

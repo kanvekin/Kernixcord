@@ -9,7 +9,6 @@ import { Logger } from "@utils/Logger";
 
 import { settings } from "./index";
 
-
 export function addToWhitelist(id: string) {
     const items = settings.store.whitelistedIds ? settings.store.whitelistedIds.split(",") : [];
     items.push(id);

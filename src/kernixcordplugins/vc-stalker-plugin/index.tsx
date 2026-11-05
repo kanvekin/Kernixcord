@@ -32,7 +32,6 @@ async function importLoggedMessages() {
     return module ? module.loggedMessages : null;
 }
 
-
 const settings = definePluginSettings({
     whitelistedIds: {
         default: "",
@@ -65,7 +64,6 @@ const settings = definePluginSettings({
         description: "Character limit for notifications. Set to 0 for no limit. Default=100"
     }
 });
-
 
 const switchToMsg = (gid?: string, cid?: string, mid?: string) => {
     if (gid) findByProps("transitionToGuildSync").transitionToGuildSync(gid);

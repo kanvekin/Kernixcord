@@ -8,7 +8,7 @@ import { Flex } from "@components/Flex";
 import { DonateButton, InviteButton } from "@components/settings/DonateButton";
 import BadgeAPI from "@plugins/_api/badges";
 import { KERNIXCORD_DONOR_ROLE_ID, KERNIXCORD_GUILD_ID } from "@utils/constants";
-import { Button, GuildMemberStore } from "@webpack/common";
+import { GuildMemberStore } from "@webpack/common";
 
 export const isDonor = (userId: string) => !!(
     BadgeAPI.getDonorBadges(userId)?.length > 0

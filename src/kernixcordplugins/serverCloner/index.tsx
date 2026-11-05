@@ -1,23 +1,28 @@
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+import "./styles.css";
+
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
+import { DataStore } from "@api/index";
+import { Devs } from "@utils/constants";
 import { ModalProps, openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
 import { Guild } from "@vencord/discord-types";
 import { Menu, React } from "@webpack/common";
-import { DataStore } from "@api/index";
-import { Devs } from "@utils/constants";
 
-import "./styles.css";
-
-import { PLUGIN_VERSION, UPDATE_CHECK_ENABLED, UPDATE_CHECK_URL } from "./constants";
-import { settings } from "./settings";
-import { showUpdateModal } from "./components/UpdateModal";
 import { CloneModal } from "./components/CloneModal";
+import { showUpdateModal } from "./components/UpdateModal";
+import { PLUGIN_VERSION, UPDATE_CHECK_ENABLED, UPDATE_CHECK_URL } from "./constants";
 import { cloneServer } from "./core/clone";
-import { state } from "./store";
-import { cleanupContainer } from "./utils/notifications";
-import { compareVersions } from "./utils/helpers";
 import { registerDevTools, unregisterDevTools } from "./devTools";
-
+import { settings } from "./settings";
+import { state } from "./store";
+import { compareVersions } from "./utils/helpers";
+import { cleanupContainer } from "./utils/notifications";
 
 async function checkForUpdates(): Promise<void> {
     if (!UPDATE_CHECK_ENABLED) return;
@@ -30,7 +35,7 @@ async function checkForUpdates(): Promise<void> {
 
         const response = await fetch(UPDATE_CHECK_URL, {
             signal: controller.signal,
-            headers: { 'Accept': 'application/vnd.github.v3+json' }
+            headers: { "Accept": "application/vnd.github.v3+json" }
         });
 
         clearTimeout(timeoutId);
@@ -39,7 +44,7 @@ async function checkForUpdates(): Promise<void> {
 
         const data = await response.json();
         let latestVersion = data.tag_name || data.name || "";
-        latestVersion = latestVersion.replace(/^v/i, '').trim();
+        latestVersion = latestVersion.replace(/^v/i, "").trim();
 
         if (!latestVersion) return;
 
@@ -67,7 +72,7 @@ const guildContextMenuPatch: NavContextMenuPatchCallback = (children: any[], pro
                     <CloneModal
                         props={modalProps}
                         guild={props.guild!}
-                        onClone={(options) => cloneServer(props.guild!, options)}
+                        onClone={options => cloneServer(props.guild!, options)}
                     />
                 ));
             }}
@@ -92,8 +97,6 @@ export default definePlugin({
         setTimeout(() => checkForUpdates(), 5000);
         registerDevTools();
     },
-
-
 
     stop() {
         unregisterDevTools();

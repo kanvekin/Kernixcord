@@ -4,9 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Constants, RestAPI } from "@webpack/common";
 import { Guild, Role } from "@vencord/discord-types";
-
+import { Constants, RestAPI } from "@webpack/common";
 
 async function fetchBlob(url: string) {
     const res = await fetch(url);

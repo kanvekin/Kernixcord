@@ -167,7 +167,6 @@ async function runUpdateCheck() {
     }
 }
 
-
 async function init() {
     // Performance optimizations for faster startup
     const startTime = performance.now();
@@ -230,7 +229,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!Menu.Menu) {
                 console.warn("[Kernixcord] Menu components not loaded, attempting refresh");
                 // Force menu component refresh
-                const event = new Event('resize');
+                const event = new Event("resize");
                 window.dispatchEvent(event);
             } else {
                 console.log("[Kernixcord] Menu components verified as loaded");

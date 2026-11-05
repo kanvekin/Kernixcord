@@ -1,14 +1,19 @@
-import { RestAPI, GuildStore } from "@webpack/common";
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 import { findByPropsLazy } from "@webpack";
-import { arrayBufferToBase64 } from "../utils/helpers";
-import { updateWithTime, notify } from "../utils/notifications";
-import { handleCloneError } from "../utils/errorHandler";
+import { GuildStore,RestAPI } from "@webpack/common";
+
 import { state, throwIfCancelled } from "../store";
+import { handleCloneError } from "../utils/errorHandler";
+import { arrayBufferToBase64 } from "../utils/helpers";
+import { notify,updateWithTime } from "../utils/notifications";
 import { CloneContext } from "./types";
 
 const AuthStore = findByPropsLazy("getToken");
-
-
 
 const STICKER_SLOTS: Record<number, number> = { 0: 5, 1: 15, 2: 30, 3: 60 };
 const SOUNDBOARD_SLOTS: Record<number, number> = { 0: 8, 1: 24, 2: 36, 3: 48 };
@@ -17,8 +22,6 @@ function getTargetTier(guildId: string): number {
     const guild = GuildStore.getGuild(guildId);
     return (guild as any)?.premiumTier || 0;
 }
-
-
 
 export async function cloneStickers(ctx: CloneContext): Promise<number> {
     const { sourceGuild, newGuildId, options, taskQueue, assetQueue, stickersProgressStart, stickersProgressEnd } = ctx;
@@ -35,7 +38,6 @@ export async function cloneStickers(ctx: CloneContext): Promise<number> {
             return 0;
         }
 
-
         let targetStickers: any[] = [];
         try {
             const targetResp = await RestAPI.get({ url: `/guilds/${newGuildId}/stickers` });
@@ -43,7 +45,6 @@ export async function cloneStickers(ctx: CloneContext): Promise<number> {
         } catch (e) {
             console.warn("[ServerCloner] Failed to fetch target stickers:", e);
         }
-
 
         if (!options.resumeMode && targetStickers.length > 0) {
             updateWithTime(`Deleting ${targetStickers.length} existing stickers...`, stickersProgressStart);
@@ -60,19 +61,16 @@ export async function cloneStickers(ctx: CloneContext): Promise<number> {
             targetStickers = [];
         }
 
-
         const tier = getTargetTier(newGuildId);
         const maxSlots = STICKER_SLOTS[tier] ?? 5;
         const usedSlots = targetStickers.length;
         const availableSlots = Math.max(0, maxSlots - usedSlots);
-
 
         let stickersToClone = sourceStickers;
         if (options.resumeMode) {
             const existingNames = new Set(targetStickers.map((s: any) => s.name));
             stickersToClone = sourceStickers.filter((s: any) => !existingNames.has(s.name));
         }
-
 
         const skipped = Math.max(0, stickersToClone.length - availableSlots);
         stickersToClone = stickersToClone.slice(0, availableSlots);
@@ -134,7 +132,7 @@ export async function cloneStickers(ctx: CloneContext): Promise<number> {
                         const errBody = await resp.json().catch(() => ({}));
                         throw new Error(errBody.message || `Sticker upload failed: ${resp.status}`);
                     }
-                }, (msg) => {
+                }, msg => {
                     const cur = stickersToClone.indexOf(sticker);
                     updateWithTime(msg, stickersProgressStart + ((cur / stickersToClone.length) * (stickersProgressEnd - stickersProgressStart)));
                 });
@@ -155,8 +153,6 @@ export async function cloneStickers(ctx: CloneContext): Promise<number> {
     return clonedCount;
 }
 
-
-
 export async function cloneSoundboard(ctx: CloneContext): Promise<number> {
     const { sourceGuild, newGuildId, options, taskQueue, assetQueue, deleteQueue, soundboardProgressStart, soundboardProgressEnd } = ctx;
     let clonedCount = 0;
@@ -172,7 +168,6 @@ export async function cloneSoundboard(ctx: CloneContext): Promise<number> {
             return 0;
         }
 
-
         let targetSounds: any[] = [];
         try {
             const targetResp = await RestAPI.get({ url: `/guilds/${newGuildId}/soundboard-sounds` });
@@ -180,7 +175,6 @@ export async function cloneSoundboard(ctx: CloneContext): Promise<number> {
         } catch (e) {
             console.warn("[ServerCloner] Failed to fetch target soundboard sounds:", e);
         }
-
 
         if (!options.resumeMode && targetSounds.length > 0) {
             updateWithTime(`Deleting ${targetSounds.length} existing soundboard sounds...`, soundboardProgressStart);
@@ -197,19 +191,16 @@ export async function cloneSoundboard(ctx: CloneContext): Promise<number> {
             targetSounds = [];
         }
 
-
         const tier = getTargetTier(newGuildId);
         const maxSlots = SOUNDBOARD_SLOTS[tier] ?? 8;
         const usedSlots = targetSounds.length;
         const availableSlots = Math.max(0, maxSlots - usedSlots);
-
 
         let soundsToClone = sourceSounds;
         if (options.resumeMode) {
             const existingNames = new Set(targetSounds.map((s: any) => s.name));
             soundsToClone = sourceSounds.filter((s: any) => !existingNames.has(s.name));
         }
-
 
         const skipped = Math.max(0, soundsToClone.length - availableSlots);
         soundsToClone = soundsToClone.slice(0, availableSlots);
@@ -262,7 +253,7 @@ export async function cloneSoundboard(ctx: CloneContext): Promise<number> {
                         url: `/guilds/${newGuildId}/soundboard-sounds`,
                         body
                     });
-                }, (msg) => {
+                }, msg => {
                     const cur = soundsToClone.indexOf(sound);
                     updateWithTime(msg, soundboardProgressStart + ((cur / soundsToClone.length) * (soundboardProgressEnd - soundboardProgressStart)));
                 });

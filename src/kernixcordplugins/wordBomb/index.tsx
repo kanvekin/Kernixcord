@@ -7,9 +7,9 @@
 import "./styles.css";
 
 import { addHeaderBarButton, HeaderBarButton, removeHeaderBarButton } from "@api/HeaderBar";
+import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { React } from "@webpack/common";
-import { Devs } from "@utils/constants";
 
 import { toggleWordBombOverlay } from "./components/WordBombOverlay";
 

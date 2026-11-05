@@ -7,6 +7,7 @@
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
 import { Button } from "@components/Button";
+import { Devs } from "@utils/constants";
 import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType, PluginNative } from "@utils/types";
 import type { Message, User } from "@vencord/discord-types";
@@ -15,7 +16,6 @@ import { ChannelStore, GuildStore, Menu } from "@webpack/common";
 import * as activity from "./activity";
 import * as status from "./status";
 import * as voice from "./voice";
-import { Devs } from "@utils/constants";
 
 export const logger = new Logger("Stalker");
 

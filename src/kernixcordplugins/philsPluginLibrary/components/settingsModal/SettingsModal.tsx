@@ -24,7 +24,6 @@ import React, { type JSX } from "react";
 import { Author, Contributor } from "../../types";
 import { ContributorAuthorSummary } from "../ContributorAuthorSummary";
 
-
 export interface SettingsModalProps extends React.ComponentProps<typeof ModalRoot> {
     title?: string;
     onClose: () => void;

@@ -1,17 +1,18 @@
 /*
- * FollowMe plugin for Equicord
- * Adds a "Beni Takip Etsin" context-menu option and a management panel.
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
+import { HeaderBarButton } from "@api/HeaderBar";
 import { definePluginSettings } from "@api/Settings";
+import { Devs } from "@utils/constants";
 // Devs is imported below via this file's existing import; avoid duplicate import
 import definePlugin, { OptionType } from "@utils/types";
 import { Channel, User, VoiceState } from "@vencord/discord-types";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
-import { Forms, Menu, React, VoiceStateStore, RestAPI, PermissionStore, PermissionsBits, ChannelStore, Toasts, Button, Modal, openModal } from "@webpack/common";
-import { Devs } from "@utils/constants";
-import { HeaderBarButton } from "@api/HeaderBar";
+import { Button, ChannelStore, Forms, Menu, Modal, openModal,PermissionsBits, PermissionStore, React, RestAPI, Toasts, VoiceStateStore } from "@webpack/common";
 
 interface UserContextProps {
     channel: Channel;
@@ -62,7 +63,7 @@ function removeFollowing(id: string) { saveFollowing(getFollowing().filter(f => 
 const UserStore = findStoreLazy("UserStore");
 const voiceChannelAction = findByPropsLazy("selectVoiceChannel");
 
-let modalKey: string | null = null;
+const modalKey: string | null = null;
 
 function FollowMeModal({ props }: { props: any; }) {
     const [, setR] = React.useState(0);
@@ -73,7 +74,7 @@ function FollowMeModal({ props }: { props: any; }) {
 
     return (
         <Modal {...props} size="lg" title="FollowMe Yönetim" actions={[{ text: "Kapat", onClick: () => props.onClose() }]}>
-            <div style={{ display: 'flex', gap: 16 }}>
+            <div style={{ display: "flex", gap: 16 }}>
                 <div style={{ flex: 1 }}>
                     <h4>Takipçiler</h4>
                     {followers.length === 0 && <Forms.FormText>Hiç takipçi yok.</Forms.FormText>}
@@ -81,7 +82,7 @@ function FollowMeModal({ props }: { props: any; }) {
                         const u = UserStore.getUser(f.userId);
                         const display = u ? `${u.id} / ${u.username}${(u as any).discriminator ? "#" + (u as any).discriminator : ""} / ${(u as any).global_name ?? u.username}` : f.userId;
                         return (
-                            <div key={f.userId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                            <div key={f.userId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                                 <Forms.FormText>{display}</Forms.FormText>
                                 <Button className="vc-btn vc-btn-danger" onClick={() => { removeFollower(f.userId); Toasts.show(Toasts.create("Takipçi kaldırıldı.", Toasts.Type.SUCCESS)); refresh(); }}>Kaldır</Button>
                             </div>
@@ -95,7 +96,7 @@ function FollowMeModal({ props }: { props: any; }) {
                         const u = UserStore.getUser(f.userId);
                         const display = u ? `${u.id} / ${u.username}${(u as any).discriminator ? "#" + (u as any).discriminator : ""} / ${(u as any).global_name ?? u.username}` : f.userId;
                         return (
-                            <div key={f.userId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                            <div key={f.userId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                                 <Forms.FormText>{display}</Forms.FormText>
                                 <Button className="vc-btn vc-btn-danger" onClick={() => { removeFollowing(f.userId); Toasts.show(Toasts.create("Takipten çıkarıldı.", Toasts.Type.SUCCESS)); refresh(); }}>Kaldır</Button>
                             </div>

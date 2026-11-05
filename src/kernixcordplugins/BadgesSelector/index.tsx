@@ -5,10 +5,10 @@
  */
 
 import * as DataStore from "@api/DataStore";
+import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { findStoreLazy } from "@webpack";
 import { Menu, Toasts } from "@webpack/common";
-import { Devs } from "@utils/constants";
 const UserProfileStore = findStoreLazy("UserProfileStore");
 const userBadgesMap = new Map<string, any[]>();
 

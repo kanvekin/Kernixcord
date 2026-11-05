@@ -10,6 +10,7 @@ import { HeaderBarButton } from "@api/HeaderBar";
 import { definePluginSettings } from "@api/Settings";
 import { Button } from "@components/Button";
 import ErrorBoundary from "@components/ErrorBoundary";
+import { Devs } from "@utils/constants";
 import { classes } from "@utils/misc";
 import { useTimer } from "@utils/react";
 import definePlugin, { OptionType, type PluginNative } from "@utils/types";
@@ -18,7 +19,6 @@ import { Avatar, ContextMenuApi, Menu, Modal, openModal, React, showToast, TextI
 import type { MouseEvent as ReactMouseEvent, SVGProps } from "react";
 
 import type { InstanceMode, InstanceStatus, InstanceUser } from "./native";
-import { Devs } from "@utils/constants";
 
 const Native = VencordNative?.pluginHelpers?.MultiInstance as PluginNative<typeof import("./native")> | undefined;
 

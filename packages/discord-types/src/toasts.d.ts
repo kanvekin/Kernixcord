@@ -26,11 +26,11 @@ export interface ToastData {
     [key: string]: any;
 }
 
-export type showToast = (data: ToastData | string, type?: ToastType | ToastVariant, options?: ToastOptions) => void;
+export type showToast = (data: ToastData) => void;
 export type popToast = (context?: string) => void;
 export type createToast = (message: string, type?: ToastType, options?: ToastOptions) => ToastData;
 
 export interface Toasts {
-    show: showToast;
+    show: (data: ToastData | any) => void;
     pop: popToast;
 }

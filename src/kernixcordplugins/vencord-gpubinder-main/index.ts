@@ -5,12 +5,12 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
+import { Devs } from "@utils/constants";
 import { useAwaiter } from "@utils/react";
 import definePlugin, { OptionType, type PluginNative } from "@utils/types";
 import { Forms, React, Select, Toasts, useState } from "@webpack/common";
 
 import type { GpuInfo, GpuState } from "./native";
-import { Devs } from "@utils/constants";
 
 const Native = VencordNative.pluginHelpers.GpuBinder as PluginNative<typeof import("./native")> | undefined;
 

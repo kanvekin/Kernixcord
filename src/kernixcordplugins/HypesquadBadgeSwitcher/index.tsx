@@ -6,9 +6,9 @@
 
 import { ApplicationCommandInputType, ApplicationCommandOptionType, sendBotMessage } from "@api/Commands";
 import { definePluginSettings } from "@api/Settings";
+import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { RestAPI } from "@webpack/common";
-import { Devs } from "@utils/constants";
 
 const HOUSES = {
     0: "None",

@@ -7,12 +7,12 @@
 import { enableStyle } from "@api/Styles";
 import { getUserSettingLazy } from "@api/UserSettings";
 import { ErrorBoundary } from "@components/index";
+import { Devs } from "@utils/constants";
 import { copyWithToast } from "@utils/discord";
 import { Margins } from "@utils/margins";
 import definePlugin from "@utils/types";
 import { ProfileEffect, User } from "@vencord/discord-types";
 import { Button, Toasts, UserStore } from "@webpack/common";
-import { Devs } from "@utils/constants";
 
 import style from "./index.css?managed";
 import { Decoration } from "./lib/api";

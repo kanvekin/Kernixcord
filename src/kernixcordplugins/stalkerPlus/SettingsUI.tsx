@@ -1,10 +1,10 @@
 /*
- * StalkerPlus - Tactical Surveillance Command Center (Türkçe Arayüz)
- * Author: xen (https://github.com/xenover1991)
- * License: MIT
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { ChannelStore, React, SelectedChannelStore, Toasts, useEffect, useMemo, useState, UserStore } from "@webpack/common";
+import { ChannelStore, React, SelectedChannelStore, Toasts, useEffect, useMemo, UserStore,useState } from "@webpack/common";
 
 import {
     clearNotifiedServerMessages,
@@ -17,9 +17,8 @@ import {
     getTargetUserIds,
     playStalkerAudioCue,
     removeTargetUserId,
-    settings,
-    setTargetUserIds
-} from "./index";
+    setTargetUserIds,
+    settings } from "./index";
 
 interface TacticalSwitchProps {
     checked: boolean;

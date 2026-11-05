@@ -36,7 +36,7 @@ waitFor(["dispatch", "subscribe"], m => {
     // Fallback timeout to prevent infinite loading if CONNECTION_OPEN never fires
     // This can happen in some network conditions or Discord startup issues
     setTimeout(() => {
-        if (typeof _resolveReady === 'function') {
+        if (typeof _resolveReady === "function") {
             console.warn("[Kernixcord] CONNECTION_OPEN timeout reached, forcing webpack ready state");
             try {
                 _resolveReady();
@@ -131,7 +131,7 @@ export const createToast: t.createToast = findByCodeLazy('variant:"default",icon
 
 function normalizeOptions(options?: ToastOptions): t.ToastOptions | undefined {
     if (!options) return undefined;
-    let position = options.position;
+    let { position } = options;
     if (position === "top") position = ToastPosition.TOP;
     else if (position === "bottom") position = ToastPosition.BOTTOM;
     return {

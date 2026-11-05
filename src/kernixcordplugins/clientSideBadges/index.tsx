@@ -5,7 +5,7 @@
  */
 
 //
-import { addProfileBadge, ProfileBadge, BadgePosition } from "@api/Badges";
+import { addProfileBadge, BadgePosition,ProfileBadge } from "@api/Badges";
 import { definePluginSettings } from "@api/Settings";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";

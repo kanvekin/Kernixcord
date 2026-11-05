@@ -6,6 +6,7 @@
 
 import "./styles.css";
 
+import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import type { Channel, User } from "@vencord/discord-types";
 import { ChannelType } from "@vencord/discord-types/enums";
@@ -14,7 +15,6 @@ import { ChannelActionCreators, ChannelActions, ChannelStore, UserProfileStore, 
 import { openBlockedWarningModal } from "./BlockedWarningModal";
 import { DetectBlockBadge } from "./DetectBlockBadge";
 import { clearDetectionState, detectBlockedUsers, primeClear } from "./detection";
-import { Devs } from "@utils/constants";
 
 interface VoiceState {
     userId: string;

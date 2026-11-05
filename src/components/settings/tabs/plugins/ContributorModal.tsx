@@ -17,7 +17,7 @@ import { pluralize } from "@utils/misc";
 import { RenderModalProps, User } from "@vencord/discord-types";
 import { Modal, openModal, showToast, useEffect, useMemo, UserProfileStore, useStateFromStores } from "@webpack/common";
 
-import Plugins, { PluginMeta } from "~plugins";
+import Plugins from "~plugins";
 
 import { PluginCard } from "./PluginCard";
 import { GithubButton, WebsiteButton } from "./PluginModalButtons";
@@ -56,7 +56,6 @@ function ContributorModal({ user, modalProps }: { user: User; modalProps: Render
             .filter(p => !p.name.endsWith("API"))
             .sort((a, b) => Number(a.required ?? false) - Number(b.required ?? false));
     }, [user.id, user.username]);
-
 
     const ContributedHyperLink = <Link href="https://github.com/kanvekin/Kernixcord">contributed</Link>;
 

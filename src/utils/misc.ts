@@ -88,7 +88,6 @@ export const shouldShowEquicordContributorBadge = (id: string) => isEquicordPlug
 export const isKernixcordPluginDev = (id: string) => Object.hasOwn(KernixcordDevsById, id);
 export const shouldShowKernixcordContributorBadge = (id: string) => isKernixcordPluginDev(id) && KernixcordDevsById[id].badge !== false;
 
-
 export const isAnyPluginDev = (id: string) => Object.hasOwn(VencordDevsById, id) || Object.hasOwn(EquicordDevsById, id) || Object.hasOwn(KernixcordDevsById, id);
 
 export function pluralise(amount: number, singular: string, plural = singular + "s") {

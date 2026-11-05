@@ -28,8 +28,8 @@ import { Paragraph } from "@components/Paragraph";
 import { SettingsTab, wrapTab } from "@components/settings/tabs/BaseTab";
 import { Margins } from "@utils/margins";
 import { useAwaiter } from "@utils/react";
-import { changes, checkForUpdates, getRepo, isNewer, update, updateError, UpdateLogger } from "@utils/updater";
-import { Alerts, Forms, Parser, React, Toasts } from "@webpack/common";
+import { getRepo, isNewer, UpdateLogger } from "@utils/updater";
+import { React } from "@webpack/common";
 
 import gitHash from "~git-hash";
 

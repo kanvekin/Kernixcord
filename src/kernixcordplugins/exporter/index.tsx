@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { ChatBarButton } from "@api/ChatButtons";
 import { definePluginSettings } from "@api/Settings";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Message } from "@vencord/discord-types";
 import { ChannelStore, Constants, ContextMenuApi, Menu, React, RestAPI, Toasts } from "@webpack/common";
-import { ChatBarButton } from "@api/ChatButtons";
 
 const settings = definePluginSettings({
     includeImages: { type: OptionType.BOOLEAN, default: true, description: "Include image attachments" },

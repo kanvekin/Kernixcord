@@ -5,11 +5,11 @@
  */
 
 import { CheckedTextInput } from "@components/CheckedTextInput";
+import { getGuildAcronym } from "@utils/discord";
 import { Margins } from "@utils/margins";
 import { ModalContent, ModalHeader, ModalRoot, openModalLazy } from "@utils/modal";
-import { Forms, GuildStore, IconUtils, PermissionsBits, PermissionStore, React, Tooltip, UserStore } from "@webpack/common";
 import { Role } from "@vencord/discord-types";
-import { getGuildAcronym } from "@utils/discord";
+import { Forms, GuildStore, IconUtils, PermissionsBits, PermissionStore, React, Tooltip, UserStore } from "@webpack/common";
 
 import { createRole } from "./api";
 
@@ -29,7 +29,6 @@ function getGuildCandidates() {
         return g;
     }).sort((a, b) => a.name.localeCompare(b.name));
 }
-
 
 function CloneModal({ role, icon }: { role: Role; icon?: string | null; }) {
     const [isCloning, setIsCloning] = React.useState(false);

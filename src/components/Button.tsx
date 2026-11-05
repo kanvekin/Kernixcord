@@ -120,4 +120,3 @@ ButtonCompat.Sizes = {
 } as const;
 
 // #endregion
-
