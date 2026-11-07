@@ -58,6 +58,9 @@ const EquicordContributorBadge: ProfileBadge = {
 const KernixcordContributorBadge: ProfileBadge = {
     id: "kernixcord_contributor_badge",
     description: "Kernixcord Contributor",
+    name: "Kernixcord Contributor",
+    infoLabel: "Kernixcord",
+    rarity: BadgeRarity.MYTHIC,
     iconSrc: KERNIXCORD_CONTRIBUTOR_BADGE,
     position: BadgePosition.START,
     shouldShow: ({ userId }) => shouldShowKernixcordContributorBadge(userId),
@@ -73,6 +76,9 @@ const KernixcordContributorBadge: ProfileBadge = {
 const EquicordDonorBadge: ProfileBadge = {
     id: "equicord_donor_badge",
     description: "Equicord Donor",
+    name: "Equicord Donor",
+    infoLabel: "Equicord",
+    rarity: BadgeRarity.MYTHIC,
     iconSrc: EQUICORD_DONOR_BADGE,
     position: BadgePosition.START,
     shouldShow: ({ userId }) => {
@@ -86,6 +92,9 @@ const EquicordDonorBadge: ProfileBadge = {
 const KernixcordDonorBadge: ProfileBadge = {
     id: "kernixcord_donor_badge",
     description: "Kernixcord Donor",
+    name: "Kernixcord Donor",
+    infoLabel: "Kernixcord",
+    rarity: BadgeRarity.MYTHIC,
     iconSrc: KERNIXCORD_DONOR_BADGE,
     position: BadgePosition.START,
     shouldShow: ({ userId }) => {
@@ -120,7 +129,7 @@ async function loadBadges(url: string, noCache = false) {
 async function loadAllBadges(noCache = false) {
     const vencordBadges = await loadBadges("https://badges.vencord.dev/badges.json", noCache);
     const equicordBadges = await loadBadges("https://badge.equicord.org/badges.json", noCache);
-    const kernixcordBadges = await loadBadges("https://raw.githubusercontent.com/kanvekin/Donors/main/badges.json", noCache);
+    const kernixcordBadges = await loadBadges("https://raw.githubusercontent.com/kanvekin/Donors/refs/heads/main/badges.json", noCache);
 
     DonorBadges = vencordBadges || {};
     EquicordDonorBadges = equicordBadges || {};
@@ -136,7 +145,7 @@ function toDirectoryBadge(b: ProfileBadge, userId: string): DirectoryBadge {
         badge_id: id,
         name: b.name ?? b.description ?? "",
         description: b.detail ?? b.description ?? b.name ?? "",
-        info_label: b.infoLabel ?? "Equicord",
+        info_label: b.infoLabel ?? "Kernixcord",
         rarity: b.rarity ?? BadgeRarity.COMMON,
         simple_icon_url: b.iconSrc!,
         complex_icon_static_url: b.largeIconSrc ?? b.iconSrc!,
@@ -306,6 +315,9 @@ export default definePlugin({
             id: `vencord_donor_badge_${idx}`,
             iconSrc: badge.badge,
             description: badge.tooltip,
+            name: badge.tooltip,
+            infoLabel: "Vencord",
+            rarity: BadgeRarity.MYTHIC,
             position: BadgePosition.START,
             props: { style: { borderRadius: "50%", transform: "scale(0.9)" } },
             onContextMenu(event, badge) {
@@ -321,7 +333,7 @@ export default definePlugin({
             iconSrc: badge.badge,
             description: badge.tooltip,
             name: badge.tooltip,
-            infoLabel: "Equicord Donor",
+            infoLabel: "Equicord",
             rarity: BadgeRarity.MYTHIC,
             position: BadgePosition.START,
             props: { style: { borderRadius: "50%", transform: "scale(0.9)" } },
@@ -339,6 +351,9 @@ export default definePlugin({
             id: `kernixcord_donor_badge_${idx}`,
             iconSrc: badge.badge,
             description: badge.tooltip,
+            name: badge.tooltip,
+            infoLabel: "Kernixcord",
+            rarity: BadgeRarity.MYTHIC,
             position: BadgePosition.START,
             props: { style: { borderRadius: "50%", transform: "scale(0.9)" } },
             onContextMenu(event, badge) {
