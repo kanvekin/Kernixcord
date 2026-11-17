@@ -27,8 +27,7 @@ jobs:
               run: pnpm buildWebStandalone
 
             - name: Create sources zip
-              run:
-                  zip -r dist/extension-sources.zip . -x "node_modules/*" -x "dist/*" -x
+              run: zip -r dist/extension-sources.zip . -x "node_modules/*" -x "dist/*" -x
                   ".git/*"
 
             - name: Skip extension publishing (secrets not configured)

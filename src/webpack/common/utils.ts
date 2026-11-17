@@ -16,8 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import { Logger } from "@utils/Logger";
 import * as t from "@vencord/discord-types";
-import { _resolveReady, filters, findByCodeLazy, findByPropsLazy, findLazy, mapMangledModuleLazy, waitFor } from "@webpack";
+import { _resolveReady, filters, findByCode, findByCodeLazy, findByPropsLazy, findLazy, mapMangledModuleLazy, proxyLazyWebpack, waitFor } from "@webpack";
 import type * as TSPattern from "ts-pattern";
 
 export let FluxDispatcher: t.FluxDispatcher;
@@ -83,103 +84,14 @@ waitFor("parseTopic", m => Parser = m);
 export let Alerts: t.Alerts;
 waitFor(["show", "close"], m => Alerts = m);
 
-const ToastType = {
-    MESSAGE: "message",
-    DEFAULT: "message",
-    SUCCESS: "success",
-    FAILURE: "failure",
-    CUSTOM: "custom",
-    CLIP: "clip",
-    LINK: "link",
-    FORWARD: "forward",
-    BOOKMARK: "bookmark",
-    CLOCK: "clock"
-} as const;
+export const showToast: t.showToast = proxyLazyWebpack(() => {
+    const Toaster = findByCode(".currentToastMap.get(", "setState");
+    if (Toaster) return Toaster;
 
-const ToastPosition = {
-    TOP: 0,
-    BOTTOM: 1
-} as const;
-
-export interface ToastData {
-    message: string;
-    id?: string;
-    /**
-     * Toasts.Type
-     */
-    type?: string;
-    options?: ToastOptions;
-    [key: string]: any;
-}
-
-export interface ToastOptions {
-    /**
-     * Toasts.Position
-     */
-    position?: number | "top" | "bottom";
-    component?: React.ReactNode;
-    duration?: number;
-    [key: string]: any;
-}
-
-const ToastsExports: t.Toasts = mapMangledModuleLazy(".currentToastMap.has(", {
-    show: filters.byCode(".currentToastMap.has("),
-    pop: filters.byCode(".delete(")
+    const logger = new Logger("Toast");
+    logger.error("Failed to find showToast! Falling back to logging");
+    return logger.log.bind(logger);
 });
-
-export const createToast: t.createToast = findByCodeLazy('variant:"default",icon:', ".duration");
-
-function normalizeOptions(options?: ToastOptions): t.ToastOptions | undefined {
-    if (!options) return undefined;
-    let { position } = options;
-    if (position === "top") position = ToastPosition.TOP;
-    else if (position === "bottom") position = ToastPosition.BOTTOM;
-    return {
-        position: position as t.ToastOptions["position"],
-        duration: options.duration
-    };
-}
-
-export const Toasts = {
-    Type: ToastType,
-    Position: ToastPosition,
-    genId: () => (Math.random() || Math.random()).toString(36).slice(2),
-
-    show: (data: ToastData | t.ToastData | any) => {
-        if (data && typeof data === "object" && "message" in data) {
-            const opts = data.options ?? (data.position != null ? { position: data.position } : undefined);
-            ToastsExports.show(createToast(
-                data.message,
-                data.type as t.ToastType,
-                normalizeOptions(opts)
-            ));
-        } else {
-            ToastsExports.show(data);
-        }
-    },
-    pop: (context?: string) => {
-        ToastsExports.pop(context);
-    },
-    create: (message: string, type: t.ToastType | string = "message", options?: ToastOptions) =>
-        createToast(message, type as t.ToastType, normalizeOptions(options)),
-};
-
-/**
- * Show a simple toast. If you need more options, use Toasts.show manually
- */
-export function showToast(message: string | t.ToastData | ToastData, type: t.ToastType = "message", options?: ToastOptions) {
-    // FIXME once Discord makes up their mind and stops changing this API every update
-    try {
-        if (typeof message === "string") {
-            Toasts.show(createToast(message, type, normalizeOptions(options)));
-        } else {
-            Toasts.show(message);
-        }
-    } catch {
-        // @ts-ignore
-        Toasts.show(typeof message === "string" ? { text: message, variant: type } : message);
-    }
-}
 
 export const UserUtils = {
     getUser: findByCodeLazy(".USER(")

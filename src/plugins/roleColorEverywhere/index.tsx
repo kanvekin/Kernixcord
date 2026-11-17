@@ -45,7 +45,7 @@ function makeColorStyle(guildId: string, { colorString, colorStrings }: Pick<Gui
 
     return {
         color: primaryColor,
-        background: `linear-gradient(to right,${colors})`,
+        backgroundImage: `linear-gradient(to right,${colors})`,
         backgroundClip: "text",
         backgroundSize: "100px auto",
         WebkitTextFillColor: "transparent"
@@ -124,7 +124,7 @@ export default definePlugin({
             find: '"text":"locked"',
             replacement: [
                 {
-                    match: /(?<=let\{id:(\i),guildId:\i,channelId:(\i)\}.{0,300}?popoutProps:)\i(?=\})/,
+                    match: /(?<=let\{id:(\i),guildId:\i,channelId:(\i)\}.{0,500}?popoutProps:)\i(?=[},])/,
                     replace: "{...$&,color:$self.getColorInt($1,$2),roleColors:$self.getRoleColors($1,$2)}"
                 }
             ],

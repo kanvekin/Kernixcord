@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { BaseText } from "@components/BaseText";
+import { Text } from "@components/Text";
 import { classNameFactory } from "@utils/css";
 import { classes } from "@utils/misc";
 import { wordsFromCamel, wordsToTitle } from "@utils/text";
 import { DefinedSettings, PluginSettingDefCommon } from "@utils/types";
+import { useEffect, useState } from "@webpack/common";
 import { PropsWithChildren } from "react";
 
 export const cl = classNameFactory("vc-plugins-setting-");
@@ -27,6 +28,14 @@ interface SettingBaseProps<T> {
 
 export type SettingProps<T extends PluginSettingDefCommon> = SettingBaseProps<T>;
 export type ComponentSettingProps<T extends Omit<PluginSettingDefCommon, "description" | "placeholder">> = SettingBaseProps<T>;
+
+// Local state that resets whenever the stored value changes, e.g. when a setting is changed from outside the settings modal
+export function useSettingState<T>(value: T) {
+    const [state, setState] = useState(value);
+    useEffect(() => setState(value), [value]);
+
+    return [state, setState] as const;
+}
 
 export function resolveError(isValidResult: boolean | string) {
     if (typeof isValidResult === "string") return isValidResult;
@@ -48,12 +57,12 @@ export function SettingsSection({ tag: Tag = "div", name, id, description, error
         <Tag className={cl("section")}>
             <div className={classes(cl("content"), inlineSetting && cl("inline"))}>
                 <div className={cl("label")}>
-                    <BaseText className={cl("title")} size="md" weight="medium">{name ?? wordsToTitle(wordsFromCamel(id))}</BaseText>
-                    {description && <BaseText className={cl("description")} size="sm">{description}</BaseText>}
+                    <Text className={cl("title")} size="md" weight="medium">{name ?? wordsToTitle(wordsFromCamel(id))}</Text>
+                    {description && <Text className={cl("description")} size="sm">{description}</Text>}
                 </div>
                 {children}
             </div>
-            {error && <BaseText className={cl("error")} size="sm">{error}</BaseText>}
+            {error && <Text className={cl("error")} size="sm">{error}</Text>}
         </Tag>
     );
 }
