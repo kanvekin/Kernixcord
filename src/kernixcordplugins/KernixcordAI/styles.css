@@ -98,7 +98,7 @@
     width: 38px;
     height: 38px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #5865F2 0%, #EB459E 100%);
+    background: linear-gradient(135deg, #5865f2 0%, #eb459e 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -163,7 +163,6 @@
 }
 
 @keyframes nai-pulse {
-
     0%,
     100% {
         opacity: 1;
@@ -192,7 +191,9 @@
     color: var(--interactive-normal);
     display: flex;
     align-items: center;
-    transition: background 0.15s, color 0.15s;
+    transition:
+        background 0.15s,
+        color 0.15s;
 }
 
 .nai-icon-btn:hover {
@@ -338,12 +339,12 @@
 }
 
 .nai-msg--user .nai-msg-avatar {
-    background: linear-gradient(135deg, #5865F2, #EB459E);
+    background: linear-gradient(135deg, #5865f2, #eb459e);
     color: white;
 }
 
 .nai-msg--assistant .nai-msg-avatar {
-    background: linear-gradient(135deg, #5865F2 0%, #EB459E 100%);
+    background: linear-gradient(135deg, #5865f2 0%, #eb459e 100%);
     color: #ffffff;
     border: none;
 }
@@ -379,7 +380,7 @@
 }
 
 .nai-msg--assistant .nai-msg-author {
-    color: #EB459E;
+    color: #eb459e;
 }
 
 .nai-msg-time {
@@ -427,7 +428,6 @@
 }
 
 @keyframes nai-bob {
-
     0%,
     60%,
     100% {
@@ -515,11 +515,13 @@
     border: 1.5px solid var(--background-modifier-accent);
     border-radius: 14px;
     padding: 8px 8px 8px 14px;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    transition:
+        border-color 0.15s,
+        box-shadow 0.15s;
 }
 
 .nai-input-box:focus-within {
-    border-color: #5865F2;
+    border-color: #5865f2;
     box-shadow: 0 0 0 2.5px rgba(88, 101, 242, 0.18);
 }
 
@@ -555,7 +557,7 @@
     height: 36px;
     border-radius: 10px;
     border: none;
-    background: linear-gradient(135deg, #5865F2, #4752c4);
+    background: linear-gradient(135deg, #5865f2, #4752c4);
     color: white;
     cursor: pointer;
     display: flex;
@@ -606,11 +608,13 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    transition: color 0.15s, background 0.15s;
+    transition:
+        color 0.15s,
+        background 0.15s;
 }
 
 .nai-attach-btn:hover:not(:disabled) {
-    color: #5865F2;
+    color: #5865f2;
     background: rgba(88, 101, 242, 0.1);
 }
 
@@ -725,7 +729,9 @@
     border-radius: 8px !important;
     cursor: pointer !important;
     color: var(--channels-default) !important;
-    transition: color 0.12s, background-color 0.12s !important;
+    transition:
+        color 0.12s,
+        background-color 0.12s !important;
     user-select: none !important;
     box-sizing: border-box !important;
     text-decoration: none !important;
@@ -772,7 +778,7 @@
 .nai-nav-pill {
     font-size: 10px !important;
     font-weight: 700 !important;
-    background: linear-gradient(135deg, #5865F2, #EB459E) !important;
+    background: linear-gradient(135deg, #5865f2, #eb459e) !important;
     color: #fff !important;
     padding: 2px 6px !important;
     border-radius: 6px !important;

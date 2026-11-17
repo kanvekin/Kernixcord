@@ -1,9 +1,15 @@
 #!/usr/bin/env node
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 // Build remote runtime bundles for plugins under src/kernixcordplugins
 // Output: remote-plugins/<PluginName>.js and updates remote-plugins/manifest.json
 
 import { build } from "esbuild";
-import { mkdir, readdir, readFile, rm, writeFile, stat } from "fs/promises";
+import { mkdir, readdir, readFile, rm, stat,writeFile } from "fs/promises";
 import { dirname, join, resolve } from "path";
 import { fileURLToPath } from "url";
 
@@ -12,7 +18,7 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..",
 const srcPriv = join(repoRoot, "src/kernixcordplugins");
 const outDir = join(repoRoot, "remote-plugins");
 
-const PluginDefinitionNameMatcher = /definePlugin\(\{\s*(\"|')?name\1:\s*(\"|'|`)(.+?)\2/;
+const PluginDefinitionNameMatcher = /definePlugin\(\{\s*("|')?name\1:\s*("|'|`)(.+?)\2/;
 
 async function resolvePluginName(entryFile) {
   const content = await readFile(entryFile, "utf-8");
@@ -60,7 +66,7 @@ async function main() {
   const plugins = [];
 
   for (const d of entries) {
-    const name = d.name;
+    const { name } = d;
     if (name.startsWith("_") || name.startsWith(".")) continue;
     if (!d.isDirectory()) continue;
 

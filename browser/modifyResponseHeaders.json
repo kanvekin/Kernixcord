@@ -15,10 +15,7 @@
             ]
         },
         "condition": {
-            "resourceTypes": [
-                "main_frame",
-                "sub_frame"
-            ],
+            "resourceTypes": ["main_frame", "sub_frame"],
             "urlFilter": "||discord.com^"
         }
     },
@@ -35,9 +32,7 @@
             ]
         },
         "condition": {
-            "resourceTypes": [
-                "stylesheet"
-            ],
+            "resourceTypes": ["stylesheet"],
             "urlFilter": "||raw.githubusercontent.com^"
         }
     }

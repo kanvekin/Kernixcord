@@ -8,7 +8,10 @@
     font-size: 12px;
     cursor: pointer;
     font-weight: 500;
-    transition: background 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
+    transition:
+        background 0.15s ease,
+        opacity 0.15s ease,
+        transform 0.15s ease;
 }
 
 .cloner-btn:hover {
@@ -59,7 +62,9 @@
     backdrop-filter: blur(12px) saturate(160%);
     -webkit-backdrop-filter: blur(12px) saturate(160%);
     color: white;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.09);
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.09);
     border: 1px solid rgba(255, 255, 255, 0.08);
     pointer-events: auto;
     display: flex;
@@ -141,7 +146,6 @@
     }
 }
 
-
 /* ─── Compact Row ─────────────────────────────────────────── */
 .cloner-pill-compact {
     display: flex;
@@ -160,7 +164,6 @@
 }
 
 @keyframes textReveal {
-
     0%,
     45% {
         opacity: 0;
@@ -175,7 +178,9 @@
 .cloner-pill.hiding .cloner-pill-compact {
     justify-content: center;
     gap: 0;
-    transition: gap 0.15s ease, justify-content 0.15s ease;
+    transition:
+        gap 0.15s ease,
+        justify-content 0.15s ease;
 }
 
 .cloner-pill.hiding .cloner-pill-title,
@@ -242,7 +247,9 @@
     border-top-color: #5865f2;
     border-radius: 50%;
     flex-shrink: 0;
-    animation: spin 0.9s linear infinite, textReveal 0.75s both;
+    animation:
+        spin 0.9s linear infinite,
+        textReveal 0.75s both;
     will-change: transform;
 }
 
@@ -256,7 +263,8 @@
 .cloner-pill-expanded {
     display: grid;
     grid-template-rows: 0fr;
-    transition: grid-template-rows 0.35s cubic-bezier(0.25, 1, 0.5, 1),
+    transition:
+        grid-template-rows 0.35s cubic-bezier(0.25, 1, 0.5, 1),
         opacity 0.25s ease;
     width: 100%;
     pointer-events: none;
@@ -268,7 +276,6 @@
     opacity: 1;
     pointer-events: auto;
 }
-
 
 .cloner-pill-expanded-inner {
     overflow: hidden;
@@ -300,9 +307,11 @@
     width: 100%;
     transform: scaleX(0);
     transform-origin: left center;
-    background: linear-gradient(90deg, #5865F2, #7289DA);
+    background: linear-gradient(90deg, #5865f2, #7289da);
     border-radius: 2px;
-    transition: transform 0.25s ease, background 0.3s ease;
+    transition:
+        transform 0.25s ease,
+        background 0.3s ease;
     will-change: transform;
 }
 
@@ -334,7 +343,20 @@
     border-color: transparent;
     animation: none;
     background: #ed4245;
-    clip-path: polygon(20% 0%, 0% 20%, 30% 50%, 0% 80%, 20% 100%, 50% 70%, 80% 100%, 100% 80%, 70% 50%, 100% 20%, 80% 0%, 50% 30%);
+    clip-path: polygon(
+        20% 0%,
+        0% 20%,
+        30% 50%,
+        0% 80%,
+        20% 100%,
+        50% 70%,
+        80% 100%,
+        100% 80%,
+        70% 50%,
+        100% 20%,
+        80% 0%,
+        50% 30%
+    );
 }
 
 .cloner-pill.error .cloner-pill-percent {
@@ -404,7 +426,6 @@
         border-width: 0;
     }
 }
-
 
 .cloner-sub-pill-icon {
     width: 22px;

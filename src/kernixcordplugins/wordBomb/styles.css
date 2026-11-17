@@ -13,12 +13,14 @@
     z-index: 999999;
     will-change: top, left; /* Optimisation pour le mouvement */
     color: #f1f5f9;
-    font-family: 'Inter', 'Roboto', sans-serif;
+    font-family: "Inter", "Roboto", sans-serif;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     user-select: none;
-    transition: backdrop-filter 0.2s, background 0.2s;
+    transition:
+        backdrop-filter 0.2s,
+        background 0.2s;
 }
 
 .nc-wb-overlay.dragging {

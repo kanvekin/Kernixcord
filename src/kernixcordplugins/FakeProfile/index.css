@@ -3,7 +3,8 @@
 }
 
 [class*="NonPremium"]:has([class*="bannerPremium"]) [class*="avatarPositionNormal"],
-[class*="PremiumWithoutBanner"]:has([class*="bannerPremium"]) [class*="avatarPositionPremiumNoBanner"] {
+[class*="PremiumWithoutBanner"]:has([class*="bannerPremium"])
+    [class*="avatarPositionPremiumNoBanner"] {
     top: 76px;
 }
 

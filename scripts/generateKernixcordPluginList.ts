@@ -169,7 +169,7 @@ async function parseFile(fileName: string) {
                 case "commands":
                     data.hasCommands = true;
                     if (isArrayLiteralExpression(value)) {
-                        data.commands = value.elements.map((e) => {
+                        data.commands = value.elements.map(e => {
                             if (isObjectLiteralExpression(e)) {
                                 const nameProperty = e.properties.find((p): p is PropertyAssignment =>
                                     isPropertyAssignment(p) && isIdentifier(p.name) && p.name.escapedText === "name"

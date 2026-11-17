@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+
 import { ToastPosition as ToastPositionEnum } from "../enums";
 
 export type ToastType = "message" | "success" | "failure" | "custom" | "clip" | "link" | "forward" | "bookmark" | "clock";

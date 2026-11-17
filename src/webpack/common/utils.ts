@@ -84,7 +84,62 @@ waitFor("parseTopic", m => Parser = m);
 export let Alerts: t.Alerts;
 waitFor(["show", "close"], m => Alerts = m);
 
-export const showToast: t.showToast = proxyLazyWebpack(() => {
+const ToastType = {
+    MESSAGE: "message",
+    DEFAULT: "message",
+    SUCCESS: "success",
+    FAILURE: "failure",
+    CUSTOM: "custom",
+    CLIP: "clip",
+    LINK: "link",
+    FORWARD: "forward",
+    BOOKMARK: "bookmark",
+    CLOCK: "clock"
+} as const;
+
+const ToastPosition = {
+    TOP: 0,
+    BOTTOM: 1
+} as const;
+
+export interface ToastData {
+    message?: string;
+    text?: string;
+    id?: string;
+    type?: string;
+    variant?: string;
+    options?: ToastOptions;
+    position?: any;
+    duration?: number;
+    [key: string]: any;
+}
+
+export interface ToastOptions {
+    position?: number | "top" | "bottom";
+    component?: React.ReactNode;
+    duration?: number;
+    [key: string]: any;
+}
+
+const ToastsExports: t.Toasts = mapMangledModuleLazy(".currentToastMap.has(", {
+    show: filters.byCode(".currentToastMap.has("),
+    pop: filters.byCode(".delete(")
+});
+
+export const createToast: t.createToast = findByCodeLazy('variant:"default",icon:', ".duration");
+
+function normalizeOptions(options?: ToastOptions): t.ToastOptions | undefined {
+    if (!options) return undefined;
+    let { position } = options;
+    if (position === "top" || position === 0) position = ToastPosition.TOP;
+    else if (position === "bottom" || position === 1) position = ToastPosition.BOTTOM;
+    return {
+        position: position as t.ToastOptions["position"],
+        duration: options.duration
+    };
+}
+
+const rawShowToast: t.showToast = proxyLazyWebpack(() => {
     const Toaster = findByCode(".currentToastMap.get(", "setState");
     if (Toaster) return Toaster;
 
@@ -92,6 +147,92 @@ export const showToast: t.showToast = proxyLazyWebpack(() => {
     logger.error("Failed to find showToast! Falling back to logging");
     return logger.log.bind(logger);
 });
+
+export const Toasts = {
+    Type: ToastType,
+    Position: ToastPosition,
+    genId: () => (Math.random() || Math.random()).toString(36).slice(2),
+
+    show: (data: ToastData | t.ToastData | any) => {
+        if (!data) return;
+        if (typeof data === "string") {
+            showToast(data);
+            return;
+        }
+        if ("message" in data) {
+            const variant = data.type === "failure" ? "critical" : (data.type === "success" ? "success" : "default");
+            const position = (data.options?.position === 0 || data.position === 0 || data.position === "top") ? "top" : "bottom";
+            try {
+                ToastsExports.show(createToast(
+                    data.message,
+                    data.type as t.ToastType,
+                    normalizeOptions(data.options ?? (data.position != null ? { position: data.position } : undefined))
+                ));
+            } catch {
+                rawShowToast({
+                    text: data.message,
+                    variant: variant as any,
+                    position: position as any,
+                    duration: data.duration ?? data.options?.duration
+                });
+            }
+        } else {
+            try {
+                ToastsExports.show(data);
+            } catch {
+                rawShowToast(data);
+            }
+        }
+    },
+    pop: (context?: string) => {
+        try {
+            ToastsExports.pop(context);
+        } catch {
+            // ignore
+        }
+    },
+    create: (message: string, type: t.ToastType | string = "message", options?: ToastOptions) => {
+        try {
+            return createToast(message, type as t.ToastType, normalizeOptions(options));
+        } catch {
+            const variant = type === "failure" ? "critical" : (type === "success" ? "success" : "default");
+            const position = (options?.position === 0 || options?.position === "top") ? "top" : "bottom";
+            return {
+                text: message,
+                variant: variant as any,
+                position: position as any,
+                duration: options?.duration
+            } as any;
+        }
+    }
+};
+
+/**
+ * Show a simple toast. If you need more options, use Toasts.show manually
+ */
+export function showToast(messageOrData: string | t.ToastData | ToastData, type: t.ToastType | string = "message", options?: ToastOptions) {
+    if (!messageOrData) return;
+    if (typeof messageOrData === "object") {
+        if ("message" in messageOrData) {
+            Toasts.show(messageOrData);
+        } else {
+            rawShowToast(messageOrData as t.ToastData);
+        }
+        return;
+    }
+    const variant = type === "failure" ? "critical" : (type === "success" ? "success" : "default");
+    const position = (options?.position === 0 || options?.position === "top") ? "top" : "bottom";
+    try {
+        Toasts.show(createToast(messageOrData, type as t.ToastType, normalizeOptions(options)));
+    } catch {
+        rawShowToast({
+            text: messageOrData,
+            variant: variant as any,
+            position: position as any,
+            duration: options?.duration
+        });
+    }
+}
 
 export const UserUtils = {
     getUser: findByCodeLazy(".USER(")

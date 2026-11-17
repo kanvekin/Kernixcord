@@ -1,6 +1,6 @@
-:root{
+:root {
     /* stylelint-disable-next-line alpha-value-notation */
-    --vc-info-warning-background: hsl(var(--yellow-300-hsl)/0.1)
+    --vc-info-warning-background: hsl(var(--yellow-300-hsl)/0.1);
 }
 
 .vc-plugin-messageNitroBadge-notice {

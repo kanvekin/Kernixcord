@@ -56,6 +56,16 @@ let LayoutTypes = {
 };
 waitFor(["SECTION", "SIDEBAR_ITEM", "PANEL", "CUSTOM"], v => LayoutTypes = v);
 
+interface SectionTypes {
+    HEADER: string;
+    DIVIDER: string;
+}
+
+const FallbackSectionTypes: SectionTypes = {
+    HEADER: "HEADER",
+    DIVIDER: "DIVIDER"
+};
+
 type SettingsLocation =
     | "top"
     | "aboveNitro"

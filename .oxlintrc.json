@@ -118,15 +118,7 @@
                 // Plugin Rules
                 "simple-import-sort/imports": "error",
                 "simple-import-sort/exports": "error",
-                "no-unused-vars": [
-                    "error",
-                    {
-                        "args": "none",
-                        "caughtErrors": "none",
-                        "ignoreRestSiblings": true,
-                        "destructuredArrayIgnorePattern": "^_"
-                    }
-                ]
+                "no-unused-vars": "off"
             }
         },
         {

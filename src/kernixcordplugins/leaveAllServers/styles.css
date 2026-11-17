@@ -98,8 +98,13 @@
     scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
 }
 
-.las-guild-list::-webkit-scrollbar { width: 4px; }
-.las-guild-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 2px; }
+.las-guild-list::-webkit-scrollbar {
+    width: 4px;
+}
+.las-guild-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+}
 
 .las-empty {
     text-align: center;
@@ -186,9 +191,18 @@
     font-size: 13px;
 }
 
-.las-status--running { background: rgba(250, 166, 26, 0.12); color: #faa61a; }
-.las-status--done    { background: rgba(59, 165, 92, 0.12);  color: #3ba55c; }
-.las-status--error   { background: rgba(237, 66, 69, 0.12);  color: #ed4245; }
+.las-status--running {
+    background: rgba(250, 166, 26, 0.12);
+    color: #faa61a;
+}
+.las-status--done {
+    background: rgba(59, 165, 92, 0.12);
+    color: #3ba55c;
+}
+.las-status--error {
+    background: rgba(237, 66, 69, 0.12);
+    color: #ed4245;
+}
 
 /* ── Footer info ── */
 .las-footer-info {
@@ -218,5 +232,10 @@
     font-family: inherit;
 }
 
-.las-leave-btn:hover:not(:disabled) { opacity: 0.85; }
-.las-leave-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.las-leave-btn:hover:not(:disabled) {
+    opacity: 0.85;
+}
+.las-leave-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}

@@ -21,6 +21,7 @@
 
 // Be very careful with imports in this file to avoid circular dependency issues.
 // Only import pure modules that don't import other parts of Vencord.
+import monacoHtmlLocal from "file://monacoWin.html?minify";
 import * as DataStore from "@api/DataStore";
 import type { Settings } from "@api/Settings";
 import { getThemeInfo } from "@main/themes";

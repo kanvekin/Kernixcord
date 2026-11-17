@@ -22,7 +22,7 @@ import BadgeAPI from "@plugins/_api/badges";
 import NoTrack from "@plugins/_core/noTrack";
 import SettingsPlugin from "@plugins/_core/settings";
 import { gitRemote } from "@shared/vencordUserAgent";
-import { DONOR_ROLE_ID, GUILD_ID, IS_WINDOWS, VC_DONOR_ROLE_ID, VC_GUILD_ID } from "@utils/constants";
+import { DONOR_ROLE_ID, GUILD_ID, IS_WINDOWS, KERNIXCORD_DONOR_ROLE_ID, KERNIXCORD_GUILD_ID, VC_DONOR_ROLE_ID, VC_GUILD_ID } from "@utils/constants";
 import { Margins } from "@utils/margins";
 import { isAnyPluginDev } from "@utils/misc";
 import { relaunch } from "@utils/native";
