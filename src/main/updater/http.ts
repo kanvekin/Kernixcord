@@ -18,7 +18,8 @@
 
 import { fetchBuffer, fetchJson } from "@main/utils/http";
 import { VENCORD_USER_AGENT } from "@shared/vencordUserAgent";
-import { writeFileSync } from "original-fs";
+import { existsSync, mkdirSync, statSync, writeFileSync } from "original-fs";
+import { join } from "path";
 
 import gitHash from "~git-hash";
 import gitRemote from "~git-remote";
@@ -61,16 +62,59 @@ async function fetchUpdate() {
         return false;
 
     const asset = data.assets.find(a => a.name === ASAR_FILE);
+    if (!asset) return false;
     PendingUpdate = asset.browser_download_url;
 
     return true;
+}
+
+function extractAsar(buffer: Buffer, targetDir: string) {
+    const headerSize = buffer.readUInt32LE(4);
+    const strLen = buffer.readUInt32LE(12);
+    const jsonStr = buffer.subarray(16, 16 + strLen).toString("utf8");
+    const { files } = JSON.parse(jsonStr);
+    const dataStart = 8 + headerSize;
+
+    function extractEntry(dir: string, entries: Record<string, any>) {
+        for (const [name, entry] of Object.entries(entries)) {
+            const entryPath = join(dir, name);
+            if (entry.files) {
+                if (!existsSync(entryPath)) mkdirSync(entryPath, { recursive: true });
+                extractEntry(entryPath, entry.files);
+            } else if (typeof entry.offset === "string" && typeof entry.size === "number") {
+                const offset = parseInt(entry.offset, 10);
+                const fileBuf = buffer.subarray(dataStart + offset, dataStart + offset + entry.size);
+                writeFileSync(entryPath, fileBuf, { flush: true });
+            }
+        }
+    }
+
+    extractEntry(targetDir, files);
 }
 
 async function applyUpdate() {
     if (!PendingUpdate) return true;
 
     const data = await fetchBuffer(PendingUpdate);
-    writeFileSync(__dirname, data, { flush: true });
+
+    let isDirectory = false;
+    try {
+        isDirectory = statSync(__dirname).isDirectory();
+    } catch {}
+
+    if (isDirectory) {
+        extractAsar(data, __dirname);
+        const parentAsar = join(__dirname, "..", ASAR_FILE);
+        if (existsSync(parentAsar)) {
+            try {
+                writeFileSync(parentAsar, data, { flush: true });
+            } catch (err) {
+                console.error("[Kernixcord] Failed to update parent asar", err);
+            }
+        }
+    } else {
+        writeFileSync(__dirname, data, { flush: true });
+    }
 
     PendingUpdate = null;
 
